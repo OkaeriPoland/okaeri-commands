@@ -57,7 +57,7 @@ public class OkaeriCommands {
 
         String[] parts = command.split(" ", 2);
         String label = parts[0];
-        String args = parts[1];
+        String args = (parts.length > 1) ? parts[1] : "";
 
         List<CommandMeta> commandMetas = this.findByLabelAndArgs(label, args);
         if (commandMetas.isEmpty()) {
@@ -74,8 +74,8 @@ public class OkaeriCommands {
         String[] argsArr = args.split(" ");
 
         for (ArgumentMeta argument : arguments) {
-            String value = pattern.getValueByNamedParameter(argument.getName(), args);
-            callArguments.put(argument.getIndex(), value);
+            String value = pattern.getValueByArgument(argument, args);
+            callArguments.put(argument.getIndex(), argument.wrap(value));
         }
 
         if (arguments.size() != callArguments.size()) {

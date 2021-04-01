@@ -1,5 +1,6 @@
 package eu.okaeri.commands.meta.pattern;
 
+import eu.okaeri.commands.meta.ArgumentMeta;
 import eu.okaeri.commands.meta.pattern.element.OptionalElement;
 import eu.okaeri.commands.meta.pattern.element.PatternElement;
 import eu.okaeri.commands.meta.pattern.element.RequiredElement;
@@ -85,15 +86,25 @@ public class PatternMeta {
                 .findAny();
     }
 
-    public String getValueByNamedParameter(String name, String args) {
+    public String getValueByArgument(ArgumentMeta argument, String args) {
+
         String[] parts = args.split(" ");
+        String name = argument.getName();
+
         for (int i = 0; i < this.elements.size(); i++) {
+
             PatternElement element = this.elements.get(i);
             if (!name.equals(element.getName())) {
                 continue;
             }
+
+            if (element instanceof OptionalElement) {
+                return  (parts.length <= i) ? null : parts[i];
+            }
+
             return parts[i];
         }
+
         throw new IllegalArgumentException("no such element for named parameter '" + name + " in " + args);
     }
 }
