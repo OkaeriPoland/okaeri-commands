@@ -1,9 +1,9 @@
 package eu.okaeri.commands.meta;
 
 import eu.okaeri.commands.annotation.Arg;
-import eu.okaeri.commands.annotation.RawArgs;
 import eu.okaeri.commands.service.Option;
-import lombok.*;
+import lombok.Data;
+import lombok.SneakyThrows;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
@@ -13,17 +13,16 @@ import java.util.Optional;
 public class ArgumentMeta {
 
     public static boolean isArg(Parameter parameter) {
-        return (parameter.getAnnotation(Arg.class) != null) && (parameter.getAnnotation(RawArgs.class) != null);
+        return parameter.getAnnotation(Arg.class) != null;
     }
 
     @SneakyThrows
     public static ArgumentMeta of(Parameter parameter) {
 
         Arg arg = parameter.getAnnotation(Arg.class);
-        RawArgs rawArgs = parameter.getAnnotation(RawArgs.class);
 
-        if ((arg == null) && (rawArgs == null)) {
-            throw new IllegalArgumentException("cannot create ArgumentMeta from Parameter without @Arg/@RawArgs annotation");
+        if (arg == null) {
+            throw new IllegalArgumentException("cannot create ArgumentMeta from Parameter without @Arg annotation");
         }
 
         Class<? extends Parameter> parameterClass = parameter.getClass();
@@ -34,8 +33,7 @@ public class ArgumentMeta {
         indexField.setAccessible(accessible);
 
         ArgumentMeta meta = new ArgumentMeta();
-        meta.name = (arg == null) ? null : arg.value();
-        meta.rawArgs = rawArgs != null;
+        meta.name = arg.value().isEmpty() ? parameter.getName() : arg.value();
         meta.index = indexValue;
         meta.type = parameter.getType();
         meta.optional = Option.class.isAssignableFrom(meta.type) || Optional.class.isAssignableFrom(meta.type);
@@ -43,7 +41,6 @@ public class ArgumentMeta {
         return meta;
     }
 
-    private boolean rawArgs;
     private boolean optional;
     private String name;
     private int index;

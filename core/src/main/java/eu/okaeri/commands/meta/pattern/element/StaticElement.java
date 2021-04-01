@@ -2,8 +2,8 @@ package eu.okaeri.commands.meta.pattern.element;
 
 public class StaticElement extends PatternElement {
 
-    public StaticElement(String name) {
-        super(name);
+    public StaticElement(String name, int index) {
+        super(name, index);
     }
 
     @Override

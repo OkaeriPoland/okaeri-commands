@@ -3,32 +3,46 @@ package eu.okaeri.commands.meta.pattern;
 import eu.okaeri.commands.meta.ArgumentMeta;
 import eu.okaeri.commands.meta.pattern.element.OptionalElement;
 import eu.okaeri.commands.meta.pattern.element.PatternElement;
-import eu.okaeri.commands.meta.pattern.element.RequiredElement;
 import eu.okaeri.commands.meta.pattern.element.StaticElement;
 import lombok.Data;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Data
 public class PatternMeta {
 
     public static PatternMeta of(String pattern) {
+        return of(pattern, Collections.emptyList());
+    }
+
+    public static PatternMeta of(String pattern, List<ArgumentMeta> arguments) {
 
         // create meta
+        AtomicInteger position = new AtomicInteger();
+        AtomicInteger argumentIndex = new AtomicInteger();
         PatternMeta meta = new PatternMeta();
         List<PatternElement> patternElements = Arrays.stream(pattern.split(" "))
                 .map(part -> {
-                    if (part.startsWith("<") && (part.charAt(part.length() - 1) == '>')) {
-                        return new RequiredElement(part.substring(1, part.length() - 1));
-                    } else if (part.startsWith("[") && (part.charAt(part.length() - 1) == ']')) {
-                        return new OptionalElement(part.substring(1, part.length() - 1));
-                    } else {
-                        return new StaticElement(part);
+                    int positionValue = position.getAndIncrement();
+                    int argumentValue = argumentIndex.getAndIncrement();
+
+                    PatternElement element = PatternElement.of(part, positionValue);
+                    if (!(element instanceof StaticElement)) {
+
+                        if (element.getName() == null) {
+                            String metaName = (argumentValue < arguments.size())
+                                    ? arguments.get(argumentValue).getName()
+                                    : null;
+                            element.setName(metaName);
+                        }
+
+                        return element;
                     }
+
+                    argumentIndex.decrementAndGet();
+                    return element;
                 })
                 .collect(Collectors.toList());
         meta.elements = Collections.unmodifiableList(patternElements);
@@ -47,7 +61,7 @@ public class PatternMeta {
         }
 
         // validate rendering
-        if (!pattern.equals(meta.raw)) {
+        if (!meta.applicable(pattern)) {
             throw new IllegalArgumentException("failed to create PatternMeta, rendered version (" + meta.raw + ") does not match original (" + pattern + ")");
         }
 
@@ -56,6 +70,41 @@ public class PatternMeta {
 
     private List<PatternElement> elements;
     private String raw;
+
+    public boolean applicable(String pattern) {
+
+        String[] parts = pattern.split(" ");
+        if (parts.length != this.elements.size()) {
+            return false;
+        }
+
+        for (int i = 0; i < this.elements.size(); i++) {
+
+            String part = parts[i];
+            PatternElement currentElement = this.elements.get(i);
+            PatternElement testElement = PatternElement.of(part, i);
+
+            String currentName = currentElement.getName();
+            String testName = testElement.getName();
+
+            // check type equality
+            if (!currentElement.getClass().isAssignableFrom(testElement.getClass())) {
+                return false;
+            }
+
+            // unnamed parameter
+            if ((testName == null) && (currentName != null)) {
+                continue;
+            }
+
+            // check name equality
+            if (!Objects.equals(currentName, testName)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 
     public boolean matches(String args) {
 
