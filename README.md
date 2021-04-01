@@ -16,7 +16,10 @@ commands.register(ExampleCommand.class); // built for DI (accepts empty construc
 // commands.register(new ExampleCommand()); // pass own instance (e.g. with custom constructor parameters)
 
 // call manually
-commands.call("cmd hello siema");
+commands.call("cmd hello");
+
+// call and get result
+Object result =commands.call("cmd woah");
 
 // TODO
 ```
