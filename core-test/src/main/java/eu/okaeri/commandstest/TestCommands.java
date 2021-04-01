@@ -14,13 +14,19 @@ public final class TestCommands {
         commands.register(ExampleCommand.class); // DI
         // commands.register(new ExampleCommand());
 
+        test(commands);
+    }
+
+    public static void test(OkaeriCommands commands) throws InvocationTargetException, IllegalAccessException {
         commands.call("cmd hello siema");
         commands.call("cmd bk");
         commands.call("cmd bk xdd");
         commands.call("cmd bk xddd ddd");
-
-        System.out.println(commands.call("cmd player Daffit set essentials.spawn true world_nether"));;
-        System.out.println(commands.call("cmd player Daffit set essentials.spawn true"));
-        System.out.println("test: " + commands.call("cmd player Daffit sett essentials.spawn true"));
+        commands.call("cmd player Daffit set essentials.spawn true world_nether");
+        commands.call("cmd player Daffit set essentials.spawn true");
+        commands.call("cmd player Daffit sett essentials.spawn true");
+        commands.call("cmd bk xdxd");
+        commands.call("cmd bk xddd ddxd");
+        commands.call("cmd player Daffit set essentials.spawn true world");
     }
 }

@@ -1,11 +1,13 @@
 package eu.okaeri.commands;
 
+import eu.okaeri.commands.adapter.CommandsAdapter;
 import eu.okaeri.commands.annotation.Executor;
 import eu.okaeri.commands.annotation.RawArgs;
 import eu.okaeri.commands.meta.ArgumentMeta;
 import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.meta.ExecutorMeta;
 import eu.okaeri.commands.meta.pattern.PatternMeta;
+import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandService;
 import lombok.AccessLevel;
 import lombok.Data;
@@ -24,11 +26,11 @@ public class OkaeriCommands {
     private List<CommandMeta> registeredCommands = new ArrayList<>();
     private final CommandsAdapter adapter;
 
-    public void register(Class<? extends CommandService> clazz) {
-        this.register(this.adapter.createInstance(clazz));
+    public OkaeriCommands register(Class<? extends CommandService> clazz) {
+        return this.register(this.adapter.createInstance(clazz));
     }
 
-    public void register(CommandService service) {
+    public OkaeriCommands register(CommandService service) {
 
         Class<? extends CommandService> clazz = service.getClass();
         for (Method method : clazz.getDeclaredMethods()) {
@@ -44,6 +46,8 @@ public class OkaeriCommands {
                 this.adapter.onRegister(command);
             }
         }
+
+        return this;
     }
 
     public List<CommandMeta> findByLabel(String label) {
@@ -60,6 +64,10 @@ public class OkaeriCommands {
     }
 
     public Object call(String command) throws InvocationTargetException, IllegalAccessException {
+        return this.call(command, new CommandContext());
+    }
+
+    public Object call(String command, CommandContext context) throws InvocationTargetException, IllegalAccessException {
 
         String[] parts = command.split(" ", 2);
         String label = parts[0];
@@ -70,7 +78,6 @@ public class OkaeriCommands {
             throw new IllegalArgumentException("cannot call '" + command + "', no executor available");
         }
 
-        commandMetas.forEach(meta -> System.out.println(meta.getExecutor().getMethod() + " " + meta.getExecutor().getPattern()));
         CommandMeta commandMeta = commandMetas.get(0);
         ExecutorMeta executor = commandMeta.getExecutor();
         PatternMeta pattern = executor.getPattern();
@@ -121,7 +128,7 @@ public class OkaeriCommands {
             }
 
             // pass to adapter for missing elements
-            call[i] = this.adapter.resolveMissingArgument(commandMeta, param, i);
+            call[i] = this.adapter.resolveMissingArgument(context, commandMeta, param, i);
         }
 
         return executorMethod.invoke(commandMeta.getService().getImplementor(), call);

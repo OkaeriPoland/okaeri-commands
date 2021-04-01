@@ -17,7 +17,8 @@
 
     <modules>
         <module>core</module>
-        <module>okaeri-commands-cli</module>
+        <module>bukkit</module>
+        <module>cli</module>
     </modules>
 
     <dependencies>

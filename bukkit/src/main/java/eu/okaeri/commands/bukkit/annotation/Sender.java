@@ -1,4 +1,4 @@
-package eu.okaeri.commands.annotation;
+package eu.okaeri.commands.bukkit.annotation;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
