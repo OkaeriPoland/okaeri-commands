@@ -6,9 +6,11 @@ import eu.okaeri.commands.annotation.RawArgs;
 import eu.okaeri.commands.meta.ArgumentMeta;
 import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.meta.ExecutorMeta;
+import eu.okaeri.commands.meta.InvocationMeta;
 import eu.okaeri.commands.meta.pattern.PatternMeta;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandService;
+import eu.okaeri.commands.service.InvocationContext;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -63,11 +65,16 @@ public class OkaeriCommands {
                 .collect(Collectors.toList());
     }
 
+    @Deprecated
     public Object call(String command) throws InvocationTargetException, IllegalAccessException {
-        return this.call(command, new CommandContext());
+        Optional<InvocationContext> context = this.invocationMatch(command);
+        if (!context.isPresent()) {
+            throw new IllegalArgumentException("cannot call '" + command + "', no executor available");
+        }
+        return this.invocationPrepare(context.get(), new CommandContext()).call();
     }
 
-    public Object call(String command, CommandContext context) throws InvocationTargetException, IllegalAccessException {
+    public Optional<InvocationContext> invocationMatch(String command) {
 
         String[] parts = command.split(" ", 2);
         String label = parts[0];
@@ -75,11 +82,18 @@ public class OkaeriCommands {
 
         List<CommandMeta> commandMetas = this.findByLabelAndArgs(label, args);
         if (commandMetas.isEmpty()) {
-            throw new IllegalArgumentException("cannot call '" + command + "', no executor available");
+            return Optional.empty();
         }
 
         CommandMeta commandMeta = commandMetas.get(0);
-        ExecutorMeta executor = commandMeta.getExecutor();
+        return Optional.of(InvocationContext.of(commandMeta, commandMeta.getExecutor(), args));
+    }
+
+    public InvocationMeta invocationPrepare(InvocationContext invocationContext, CommandContext commandContext) {
+
+        String args = invocationContext.getArgs();
+        CommandMeta commandMeta = invocationContext.getCommand();
+        ExecutorMeta executor = invocationContext.getExecutor();
         PatternMeta pattern = executor.getPattern();
         List<ArgumentMeta> arguments = executor.getArguments();
 
@@ -103,8 +117,9 @@ public class OkaeriCommands {
         for (int i = 0; i < parametersLength; i++) {
 
             // argument present
-            if (callArguments.containsKey(i)) {
-                call[i] = callArguments.get(i);
+            Object callArgument = callArguments.get(i);
+            if (callArgument != null) {
+                call[i] = callArgument;
                 continue;
             }
 
@@ -124,13 +139,13 @@ public class OkaeriCommands {
                     call[i] = argsArr;
                     continue;
                 }
-                throw new IllegalAccessException("@RawArgs type cannot be " + paramType + " [allowed: String, List<String>, String[]]");
+                throw new IllegalArgumentException("@RawArgs type cannot be " + paramType + " [allowed: String, List<String>, String[]]");
             }
 
             // pass to adapter for missing elements
-            call[i] = this.adapter.resolveMissingArgument(context, commandMeta, param, i);
+            call[i] = this.adapter.resolveMissingArgument(commandContext, commandMeta, param, i);
         }
 
-        return executorMethod.invoke(commandMeta.getService().getImplementor(), call);
+        return InvocationMeta.of(executorMethod, call, commandMeta.getService(), executor);
     }
 }
