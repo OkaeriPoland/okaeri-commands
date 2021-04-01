@@ -32,5 +32,9 @@ public class Option<T> {
         return this.value;
     }
 
+    public T getOr(T element) {
+        return (this.value == null) ? element : this.value;
+    }
+
     private final T value;
 }
