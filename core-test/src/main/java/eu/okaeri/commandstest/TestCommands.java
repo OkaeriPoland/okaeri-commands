@@ -14,6 +14,9 @@ public final class TestCommands {
         commands.register(new ExampleCommand());
 
         commands.call("cmd hello siema");
+        commands.call("cmd bk");
+        commands.call("cmd bk xdd");
+        commands.call("cmd bk xddd ddd");
     }
 }
 
