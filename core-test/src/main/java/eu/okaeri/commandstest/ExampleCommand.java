@@ -43,7 +43,7 @@ public class ExampleCommand implements CommandService {
     // cmd bk [name]
     @Executor(pattern = "bk [name]", description = "Prints beka message with name")
     public void testOptionalParam(@Arg("name") Option<String> name) {
-        System.out.println("beka z " + name + "!");
+        System.out.println("beka z " + name.getOr("guest") + "!");
     }
 
     // cmd test
