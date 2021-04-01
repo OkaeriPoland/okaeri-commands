@@ -1,5 +1,7 @@
 package eu.okaeri.commands;
 
+import eu.okaeri.commands.adapter.CommandsAdapter;
+
 public final class CommandsManager {
 
     public static OkaeriCommands create(CommandsAdapter adapter) {

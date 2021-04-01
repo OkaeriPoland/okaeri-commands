@@ -14,48 +14,48 @@ import java.util.List;
 public class ExampleCommand implements CommandService {
 
     @Executor(fallback = true)
-    private void defaultExecutor(@RawArgs List<String> args) {
-        System.out.println("called default method: " + args);
+    private String defaultExecutor(@RawArgs List<String> args) {
+        return "called default method: " + args;
     }
 
     // cmd hello
     // cmd hello siema
     // cmd siema
     @Executor(pattern = {"hello", "siema", "hello siema"}, description = "Prints hello message")
-    public void testHello() {
-        System.out.println("HELLO!");
+    public String testHello() {
+        return "HELLO!";
     }
 
     // cmd hi
     // cmd hii
     // overwrite usage 'cmd <hi|hi> with custom key processed by CommandsAdapter#resolveText()
     @Executor(pattern = {"hi", "hii"}, description = "Prints hello message", usage = "!command-cmd-test-hi-usage")
-    public void testHi() {
-        System.out.println("Hi!");
+    public String testHi() {
+        return ("Hi!");
     }
 
     // cmd hello <name>
     @Executor(pattern = "hello <name>", description = "Prints hello message with name")
-    public void testHelloParam(@Arg("name") String name) {
-        System.out.println("HELLO " + name + "!");
+    public String testHelloParam(@Arg("name") String name) {
+        return ("HELLO " + name + "!");
     }
 
     // cmd bk [name]
     @Executor(pattern = "bk [name]", description = "Prints beka message with name")
-    public void testOptionalParam(@Arg("name") Option<String> name) {
-        System.out.println("beka z " + name.getOr("guest") + "!");
+    public String testOptionalParam(@Arg("name") Option<String> name) {
+        return ("beka z " + name.getOr("guest") + "!");
     }
 
     // cmd test
     @Executor(description = "Prints test message")
-    public void test() {
-        System.out.println("TEST!");
+    public String test() {
+        return ("TEST!");
     }
 
     // cmd ping
     @Executor(description = "Responds to pings")
-    public void ping() {
-        System.out.println("PONG!");
+    public String ping() {
+        return ("PONG!");
     }
 
     // elo

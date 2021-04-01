@@ -47,12 +47,19 @@ public class ArgumentMeta {
     private Class<?> type;
 
     public Object wrap(Object value) {
-        if (Option.class.isAssignableFrom(this.type)) {
-            return Option.of(value);
-        } else if (Optional.class.isAssignableFrom(this.type)) {
-            return Optional.of(value);
-        } else {
+
+        if (!this.optional) {
             return value;
         }
+
+        if (Option.class.isAssignableFrom(this.type)) {
+            return Option.of(value);
+        }
+
+        if (Optional.class.isAssignableFrom(this.type)) {
+            return Optional.of(value);
+        }
+
+        return value;
     }
 }
