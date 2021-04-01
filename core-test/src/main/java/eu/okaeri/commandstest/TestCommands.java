@@ -17,6 +17,7 @@ public final class TestCommands {
         commands.call("cmd bk");
         commands.call("cmd bk xdd");
         commands.call("cmd bk xddd ddd");
+        commands.call("cmd player Daffit set essentials.spawn true world_nether");
     }
 }
 

@@ -56,4 +56,10 @@ public class ExampleCommand implements CommandService {
     public void ping() {
         System.out.println("PONG!");
     }
+
+    // elo
+    @Executor(pattern = "player <player> set <perm> <value> [flag]", description = "Complex command test")
+    public void testPermExample(@Arg("player") String name, @Arg("perm") String perm, @Arg("value") String value, @Arg("flag") Option<String> flag) {
+        System.out.println(name + " " + perm + " " + value + " " + flag);
+    }
 }
