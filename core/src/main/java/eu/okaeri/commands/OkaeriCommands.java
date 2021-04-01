@@ -24,6 +24,10 @@ public class OkaeriCommands {
     private List<CommandMeta> registeredCommands = new ArrayList<>();
     private final CommandsAdapter adapter;
 
+    public void register(Class<? extends CommandService> clazz) {
+        this.register(this.adapter.createInstance(clazz));
+    }
+
     public void register(CommandService service) {
 
         Class<? extends CommandService> clazz = service.getClass();
@@ -94,23 +98,30 @@ public class OkaeriCommands {
             // argument present
             if (callArguments.containsKey(i)) {
                 call[i] = callArguments.get(i);
+                continue;
             }
 
-            // no argument in call stack
+            // check for RawArgs
             Parameter param = methodParameters[i];
             if (param.getAnnotation(RawArgs.class) != null) {
                 Class<?> paramType = param.getType();
                 if (CharSequence.class.isAssignableFrom(paramType)) {
                     call[i] = args;
-                } else if (List.class.isAssignableFrom(paramType)) {
-                    call[i] = Arrays.asList(argsArr);
-                } else if (paramType.isArray() && CharSequence.class.isAssignableFrom(paramType.getComponentType())) {
-                    call[i] = argsArr;
-                } else {
-                    System.out.println(paramType);
-                    throw new IllegalAccessException("@RawArgs type cannot be " + paramType + " [allowed: String, List<String>, String[]]");
+                    continue;
                 }
+                if (List.class.isAssignableFrom(paramType)) {
+                    call[i] = Arrays.asList(argsArr);
+                    continue;
+                }
+                if (paramType.isArray() && CharSequence.class.isAssignableFrom(paramType.getComponentType())) {
+                    call[i] = argsArr;
+                    continue;
+                }
+                throw new IllegalAccessException("@RawArgs type cannot be " + paramType + " [allowed: String, List<String>, String[]]");
             }
+
+            // pass to adapter for missing elements
+            call[i] = this.adapter.resolveMissingArgument(commandMeta, param, i);
         }
 
         return executorMethod.invoke(commandMeta.getService().getImplementor(), call);

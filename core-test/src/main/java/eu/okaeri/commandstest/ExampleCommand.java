@@ -75,4 +75,10 @@ public class ExampleCommand implements CommandService {
     public String testPermExample3(@Arg String name, @Arg String perm, @RawArgs String[] args, @Arg String value, @Arg Option<String> flag) {
         return ("kozak " + name + " " + perm + " " + value + " " + flag + "\n" + Arrays.toString(args));
     }
+
+    // elo
+    @Executor(pattern = "player * xx * * ?", description = "Complex command test")
+    public String testPermExample3(@Arg String name, int huh, @Arg String perm, @RawArgs String[] args, @Arg String value, String randomElement, @Arg Option<String> flag) {
+        return ("kozak " + name + " " + perm + " " + value + " " + flag + "\n" + Arrays.toString(args));
+    }
 }

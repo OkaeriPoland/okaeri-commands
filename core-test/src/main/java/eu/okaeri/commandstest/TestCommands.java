@@ -11,7 +11,8 @@ public final class TestCommands {
     public static void main(String[] args) throws InvocationTargetException, IllegalAccessException {
 
         OkaeriCommands commands = CommandsManager.create(new CommandsCli());
-        commands.register(new ExampleCommand());
+        commands.register(ExampleCommand.class); // DI
+        // commands.register(new ExampleCommand());
 
         commands.call("cmd hello siema");
         commands.call("cmd bk");
@@ -23,4 +24,3 @@ public final class TestCommands {
         System.out.println("test: " + commands.call("cmd player Daffit sett essentials.spawn true"));
     }
 }
-
