@@ -31,10 +31,13 @@ public class ExecutorMeta {
             // create
             ExecutorMeta cmdExecutor = new ExecutorMeta();
             cmdExecutor.method = method;
-            cmdExecutor.arguments = Collections.unmodifiableList(Arrays.stream(method.getParameters()).map(ArgumentMeta::of).collect(Collectors.toList()));
+            cmdExecutor.arguments = Collections.unmodifiableList(Arrays.stream(method.getParameters())
+                    .filter(ArgumentMeta::isArg)
+                    .map(ArgumentMeta::of)
+                    .collect(Collectors.toList()));
             cmdExecutor.fallback = executor.fallback();
             cmdExecutor.async = executor.async();
-            cmdExecutor.pattern = PatternMeta.of(pattern);
+            cmdExecutor.pattern = PatternMeta.of(pattern, cmdExecutor.arguments);
             cmdExecutor.description = executor.description();
             cmdExecutor.usage = executor.usage();
 
@@ -43,10 +46,6 @@ public class ExecutorMeta {
 
                 String argumentName = argument.getName();
                 String patternRaw = cmdExecutor.pattern.getRaw();
-
-                if (argument.isRawArgs()) {
-                    continue;
-                }
 
                 if (!cmdExecutor.pattern.getElementByName(argumentName).isPresent()) {
                     throw new IllegalArgumentException("method argument '" + argumentName + "' not found in the pattern '" + patternRaw + "' from [method: " + method + "]");

@@ -1,6 +1,7 @@
 package eu.okaeri.commands;
 
 import eu.okaeri.commands.annotation.Executor;
+import eu.okaeri.commands.annotation.RawArgs;
 import eu.okaeri.commands.meta.ArgumentMeta;
 import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.meta.ExecutorMeta;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -53,7 +55,7 @@ public class OkaeriCommands {
                 .collect(Collectors.toList());
     }
 
-    public void call(String command) throws InvocationTargetException, IllegalAccessException {
+    public Object call(String command) throws InvocationTargetException, IllegalAccessException {
 
         String[] parts = command.split(" ", 2);
         String label = parts[0];
@@ -82,8 +84,35 @@ public class OkaeriCommands {
             throw new IllegalArgumentException("method arguments size (" + arguments.size() + ") does not match call arguments size (" + callArguments.size() + ")");
         }
 
-        Object[] call = new Object[arguments.size()];
-        callArguments.forEach((key, value) -> call[key] = value);
-        executor.getMethod().invoke(commandMeta.getService().getImplementor(), call);
+        Method executorMethod = executor.getMethod();
+        Parameter[] methodParameters = executorMethod.getParameters();
+        int parametersLength = methodParameters.length;
+        Object[] call = new Object[parametersLength];
+
+        for (int i = 0; i < parametersLength; i++) {
+
+            // argument present
+            if (callArguments.containsKey(i)) {
+                call[i] = callArguments.get(i);
+            }
+
+            // no argument in call stack
+            Parameter param = methodParameters[i];
+            if (param.getAnnotation(RawArgs.class) != null) {
+                Class<?> paramType = param.getType();
+                if (CharSequence.class.isAssignableFrom(paramType)) {
+                    call[i] = args;
+                } else if (List.class.isAssignableFrom(paramType)) {
+                    call[i] = Arrays.asList(argsArr);
+                } else if (paramType.isArray() && CharSequence.class.isAssignableFrom(paramType.getComponentType())) {
+                    call[i] = argsArr;
+                } else {
+                    System.out.println(paramType);
+                    throw new IllegalAccessException("@RawArgs type cannot be " + paramType + " [allowed: String, List<String>, String[]]");
+                }
+            }
+        }
+
+        return executorMethod.invoke(commandMeta.getService().getImplementor(), call);
     }
 }

@@ -7,6 +7,7 @@ import eu.okaeri.commands.annotation.ServiceDescriptor;
 import eu.okaeri.commands.service.CommandService;
 import eu.okaeri.commands.service.Option;
 
+import java.util.Arrays;
 import java.util.List;
 
 @ServiceDescriptor(label = "cmd", description = "Example command service")
@@ -59,7 +60,19 @@ public class ExampleCommand implements CommandService {
 
     // elo
     @Executor(pattern = "player <player> set <perm> <value> [flag]", description = "Complex command test")
-    public void testPermExample(@Arg("player") String name, @Arg("perm") String perm, @Arg("value") String value, @Arg("flag") Option<String> flag) {
-        System.out.println(name + " " + perm + " " + value + " " + flag);
+    public String testPermExample(@Arg("player") String name, @Arg("perm") String perm, @Arg("value") String value, @Arg("flag") Option<String> flag) {
+        return (name + " " + perm + " " + value + " " + flag);
+    }
+
+    // elo
+    @Executor(pattern = "player <arg0> set <arg1> <arg2> [arg3]", description = "Complex command test")
+    public String testPermExample2(@Arg String name, @Arg String perm, @Arg String value, @Arg Option<String> flag) {
+        return (name + " " + perm + " " + value + " " + flag);
+    }
+
+    // elo
+    @Executor(pattern = "player * sett * * ?", description = "Complex command test")
+    public String testPermExample3(@Arg String name, @Arg String perm, @RawArgs String[] args, @Arg String value, @Arg Option<String> flag) {
+        return ("kozak " + name + " " + perm + " " + value + " " + flag + "\n" + Arrays.toString(args));
     }
 }
