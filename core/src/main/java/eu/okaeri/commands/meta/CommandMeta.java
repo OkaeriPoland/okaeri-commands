@@ -1,0 +1,29 @@
+package eu.okaeri.commands.meta;
+
+import eu.okaeri.commands.service.CommandService;
+import lombok.Data;
+
+import java.lang.reflect.Method;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Data
+public class CommandMeta {
+
+    public static List<CommandMeta> of(CommandService service, Method method) {
+        return ExecutorMeta.of(method).stream()
+                .map(meta -> {
+                    CommandMeta command = new CommandMeta();
+                    command.service = ServiceMeta.of(service);
+                    command.executor = meta;
+                    return command;
+                }).collect(Collectors.toList());
+    }
+
+    private ServiceMeta service;
+    private ExecutorMeta executor;
+
+    public boolean isLabelApplicable(String label) {
+        return label.equals(this.service.getLabel()) || this.service.getAliases().contains(label);
+    }
+}
