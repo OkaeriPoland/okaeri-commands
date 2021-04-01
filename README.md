@@ -19,7 +19,7 @@ commands.register(ExampleCommand.class); // built for DI (accepts empty construc
 commands.call("cmd hello");
 
 // call and get result
-Object result =commands.call("cmd woah");
+Object result = commands.call("cmd woah");
 
 // TODO
 ```
