@@ -59,13 +59,13 @@ public class ExampleCommand implements CommandService {
     }
 
     // cmd hello <name>: use <param> or * for required arguments
-    @Executor(pattern = "hello <name>", description = "Prints hello message with name")
+    @Executor(pattern = "hello <name>" /* or with unnamed parameter "hmm *" */, description = "Prints hello message with name")
     public void testHelloParam(@Arg("name") String name) {
         System.out.println("HELLO " + name + "!");
     }
 
     // cmd hmm [name]
-    @Executor(pattern = "hmm [name]", description = "Prints hmm message with optional name")
+    @Executor(pattern = "hmm [name]" /* or with unnamed parameter "hmm ?" */, description = "Prints hmm message with optional name")
     public void testOptionalParam(@Arg("name") Option<String> name) {
         System.out.println("hmm, " + name.getOr("guest") + "!");
     }
