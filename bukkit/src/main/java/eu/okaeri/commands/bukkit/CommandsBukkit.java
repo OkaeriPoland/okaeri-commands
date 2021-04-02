@@ -4,6 +4,11 @@ import eu.okaeri.commands.OkaeriCommands;
 import eu.okaeri.commands.adapter.CommandsAdapter;
 import eu.okaeri.commands.bukkit.annotation.Permission;
 import eu.okaeri.commands.bukkit.annotation.Sender;
+import eu.okaeri.commands.bukkit.exception.ExceptionSource;
+import eu.okaeri.commands.bukkit.exception.NoPermissionException;
+import eu.okaeri.commands.bukkit.exception.NoSuchCommandException;
+import eu.okaeri.commands.bukkit.handler.DefaultErrorHandler;
+import eu.okaeri.commands.bukkit.handler.ErrorHandler;
 import eu.okaeri.commands.bukkit.response.BukkitResponse;
 import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.meta.ExecutorMeta;
@@ -28,9 +33,19 @@ import java.util.Optional;
 public class CommandsBukkit extends CommandsAdapter {
 
     private final CommandMap commandMap;
-    private final JavaPlugin plugin;
+    private ErrorHandler errorHandler = new DefaultErrorHandler();
+    private JavaPlugin plugin;
 
-    public CommandsBukkit(JavaPlugin plugin) {
+    public static CommandsBukkit of(JavaPlugin plugin) {
+        return new CommandsBukkit(plugin);
+    }
+
+    public CommandsBukkit errorHandler(ErrorHandler errorHandler) {
+        this.errorHandler = errorHandler;
+        return this;
+    }
+
+    protected CommandsBukkit(JavaPlugin plugin) {
         this.plugin = plugin;
         try {
             Server server = plugin.getServer();
@@ -73,46 +88,44 @@ public class CommandsBukkit extends CommandsAdapter {
         String serviceLabel = service.getLabel();
         String servicePermission = CommandsBukkit.this.getPermission(service);
 
-        this.commandMap.register(serviceLabel, new Command(serviceLabel) {
+        Command bukkitCommand = new Command(serviceLabel) {
+
             @Override
             public boolean execute(CommandSender sender, String label, String[] args) {
+
+                CommandContext commandContext = new CommandContext();
+                commandContext.add("sender", sender);
+
                 try {
-                    return CommandsBukkit.this.executeCommand(sender, label, args, servicePermission);
-                }
-                catch (Exception exception) {
-
-                    // exception originating from the core system
-                    if (exception instanceof CommandException) {
-                        sender.sendMessage("Exception (system): " + exception.getMessage());
-                        exception.printStackTrace();
-                        return true;
-                    }
-
-                    // unexpected exception
-                    sender.sendMessage("Unexpected exception occured: " + exception.getMessage());
-                    exception.printStackTrace();
+                    return CommandsBukkit.this.executeCommand(commandContext, sender, label, args, servicePermission);
+                } catch (Exception exception) {
+                    CommandsBukkit.this.handleError(commandContext, exception, ExceptionSource.UNKNOWN);
                     return true;
                 }
             }
-        });
+        };
+
+        bukkitCommand.setAliases(service.getAliases());
+        bukkitCommand.setDescription(service.getDescription());
+        this.commandMap.register(serviceLabel, bukkitCommand);
 
         super.onRegister(command);
     }
 
-    private boolean executeCommand(CommandSender sender, String label, String[] args, String servicePermission) {
+    private boolean executeCommand(CommandContext commandContext, CommandSender sender, String label, String[] args, String servicePermission) {
 
         OkaeriCommands core = CommandsBukkit.super.getCore();
         String fullCommand = (label + " " + String.join(" ", args)).trim();
-        CommandContext commandContext = new CommandContext();
-        commandContext.add("sender", sender);
 
         if ((servicePermission != null) && !sender.hasPermission(servicePermission)) {
-            throw new CommandException("No permission " + servicePermission + "!"); // FIXME: better error handling
+            this.handleError(commandContext, new NoPermissionException(servicePermission), ExceptionSource.SYSTEM);
+            return true;
         }
 
         Optional<InvocationContext> invocationOptional = core.invocationMatch(fullCommand);
         if (!invocationOptional.isPresent()) {
-            throw new CommandException("No such command!"); // FIXME: better error handling
+            this.handleError(commandContext, new NoSuchCommandException(fullCommand), ExceptionSource.SYSTEM);
+            return true;
         }
 
         InvocationContext invocationContext = invocationOptional.get();
@@ -120,7 +133,8 @@ public class CommandsBukkit extends CommandsAdapter {
 
         String executorPermission = CommandsBukkit.this.getPermission(invocationContext.getExecutor());
         if ((executorPermission != null) && !sender.hasPermission(executorPermission)) {
-            throw new CommandException("No permission " + executorPermission + "!"); // FIXME: better error handling
+            this.handleError(commandContext, new NoPermissionException(executorPermission), ExceptionSource.SYSTEM);
+            return true;
         }
 
         if (invocationContext.getExecutor().isAsync()) {
@@ -131,6 +145,31 @@ public class CommandsBukkit extends CommandsAdapter {
 
         this.handleExecution(sender, core, invocationContext, commandContext);
         return true;
+    }
+
+    private void handleError(CommandContext context, Throwable throwable, ExceptionSource source) {
+
+        Object result = this.errorHandler.onError(context, throwable, source);
+        if (result == null) {
+            return;
+        }
+
+        CommandSender sender = context.get("sender", CommandSender.class);
+        if (sender == null) {
+            throw new RuntimeException("Cannot dispatch error", throwable);
+        }
+
+        if (result instanceof BukkitResponse) {
+            sender.sendMessage(((BukkitResponse) result).render());
+            return;
+        }
+
+        if (result instanceof CharSequence) {
+            sender.sendMessage(String.valueOf(result));
+            return;
+        }
+
+        throw new RuntimeException("Unknown return type for errorHandler [allowed: BukkitResponse, String]", throwable);
     }
 
     private void handleExecution(CommandSender sender, OkaeriCommands core, InvocationContext invocationContext, CommandContext commandContext) {
@@ -148,20 +187,17 @@ public class CommandsBukkit extends CommandsAdapter {
             if (exception instanceof InvocationTargetException) {
 
                 if (exception.getCause() instanceof CommandException) {
-                    sender.sendMessage("Exception (method): " + exception.getCause().getMessage());
-                    exception.printStackTrace();
+                    this.handleError(commandContext, exception.getCause(), ExceptionSource.COMMAND);
                     return;
                 }
 
-                sender.sendMessage("Unexpected exception (method): " + exception.getCause().getMessage());
-                exception.printStackTrace();
+                this.handleError(commandContext, exception, ExceptionSource.COMMAND);
                 return;
             }
 
             // exception originating from the core system
             if (exception.getCause() instanceof CommandException) {
-                sender.sendMessage("Exception (system): " + exception.getMessage());
-                exception.printStackTrace();
+                this.handleError(commandContext, exception.getCause(), ExceptionSource.COMMAND);
                 return;
             }
 

@@ -8,6 +8,7 @@ import eu.okaeri.commands.service.CommandService;
 import eu.okaeri.injector.Injectable;
 import eu.okaeri.injector.Injector;
 import eu.okaeri.injector.annotation.Inject;
+import eu.okaeri.injector.exception.InjectorException;
 
 import java.lang.reflect.Parameter;
 import java.util.Optional;
@@ -16,9 +17,28 @@ public class CommandsInjector extends WrappedCommandsAdapter {
 
     private final Injector injector;
 
-    public CommandsInjector(CommandsAdapter adapter, Injector injector) {
+    public static CommandsInjector of(CommandsAdapter adapter, Injector injector) {
+        return new CommandsInjector(adapter, injector);
+    }
+
+    protected CommandsInjector(CommandsAdapter adapter, Injector injector) {
         super(adapter);
         this.injector = injector;
+    }
+
+    public <T> CommandsInjector registerInjectable(String name, T object, Class<T> type) throws InjectorException {
+        this.injector.registerInjectable(name, object, type);
+        return this;
+    }
+
+    public <T> CommandsInjector registerInjectable(String name, T object) throws InjectorException {
+        this.injector.registerInjectable(name, object);
+        return this;
+    }
+
+    public <T> CommandsInjector registerInjectable(T object) throws InjectorException {
+        this.injector.registerInjectable(object);
+        return this;
     }
 
     @Override
