@@ -2,6 +2,7 @@ package eu.okaeri.commands;
 
 import eu.okaeri.commands.adapter.CommandsAdapter;
 import eu.okaeri.commands.annotation.Executor;
+import eu.okaeri.commands.annotation.Label;
 import eu.okaeri.commands.annotation.RawArgs;
 import eu.okaeri.commands.meta.ArgumentMeta;
 import eu.okaeri.commands.meta.CommandMeta;
@@ -86,7 +87,7 @@ public class OkaeriCommands {
         }
 
         CommandMeta commandMeta = commandMetas.get(0);
-        return Optional.of(InvocationContext.of(commandMeta, commandMeta.getExecutor(), args));
+        return Optional.of(InvocationContext.of(commandMeta, commandMeta.getExecutor(), label, args));
     }
 
     public InvocationMeta invocationPrepare(InvocationContext invocationContext, CommandContext commandContext) {
@@ -125,8 +126,8 @@ public class OkaeriCommands {
 
             // check for RawArgs
             Parameter param = methodParameters[i];
+            Class<?> paramType = param.getType();
             if (param.getAnnotation(RawArgs.class) != null) {
-                Class<?> paramType = param.getType();
                 if (CharSequence.class.isAssignableFrom(paramType)) {
                     call[i] = args;
                     continue;
@@ -140,6 +141,15 @@ public class OkaeriCommands {
                     continue;
                 }
                 throw new IllegalArgumentException("@RawArgs type cannot be " + paramType + " [allowed: String, List<String>, String[]]");
+            }
+
+            // check for label
+            if (param.getAnnotation(Label.class) != null) {
+                if (CharSequence.class.isAssignableFrom(paramType)) {
+                    call[i] = invocationContext.getLabel();
+                    continue;
+                }
+                throw new IllegalArgumentException("@Label type cannot be " + paramType + " [allowed: String]");
             }
 
             // pass to adapter for missing elements
