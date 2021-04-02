@@ -18,6 +18,7 @@
     <modules>
         <module>core</module>
         <module>bukkit</module>
+        <module>injector</module>
         <module>cli</module>
     </modules>
 
