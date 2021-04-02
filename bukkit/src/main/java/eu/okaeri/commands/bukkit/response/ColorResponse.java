@@ -14,6 +14,10 @@ public class ColorResponse extends RawResponse {
         this.color = color;
     }
 
+    public static ColorResponse of(String... value) {
+        return new ColorResponse(null, value);
+    }
+
     public static ColorResponse of(ChatColor color, String... value) {
         return new ColorResponse(color, value);
     }
