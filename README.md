@@ -6,7 +6,7 @@
 ![Contributors](https://img.shields.io/github/contributors/OkaeriPoland/okaeri-commands)
 [![Discord](https://img.shields.io/discord/589089838200913930)](https://discord.gg/hASN5eX)
 
-Simple command framework with yet powerful features and ability to adapt.
+Simple command framework with yet powerful features and ability to adapt. Part of the [okaeri-platform](https://github.com/OkaeriPoland/okaeri-platform).
 
 ## Example Usage
 
