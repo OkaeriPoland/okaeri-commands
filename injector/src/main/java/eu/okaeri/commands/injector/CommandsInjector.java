@@ -23,6 +23,7 @@ public class CommandsInjector extends WrappedCommandsAdapter {
 
     protected CommandsInjector(CommandsAdapter adapter, Injector injector) {
         super(adapter);
+        if (injector == null) throw new IllegalArgumentException("injector cannot be null");
         this.injector = injector;
     }
 
@@ -44,8 +45,12 @@ public class CommandsInjector extends WrappedCommandsAdapter {
     @Override
     public Object resolveMissingArgument(CommandContext context, CommandMeta command, Parameter param, int i) {
 
+        if (context == null) throw new IllegalArgumentException("context cannot be null");
+        if (command == null) throw new IllegalArgumentException("command cannot be null");
+        if (param == null) throw new IllegalArgumentException("param cannot be null");
+
         Class<?> paramType = param.getType();
-        String name = (param.getAnnotation(Inject.class) != null) ? param.getAnnotation(Inject.class).value() : "";
+        String name = (param.getAnnotation(Inject.class) == null) ? "" : param.getAnnotation(Inject.class).value();
 
         Optional<? extends Injectable<?>> injectable = this.injector.getInjectable(name, paramType);
         if (injectable.isPresent()) {
