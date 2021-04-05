@@ -30,7 +30,7 @@ public class ColorResponse extends RawResponse {
     public String render() {
 
         if (this.color != null) {
-            return Arrays.stream(this.getValue())
+            return Arrays.stream(this.raw())
                     .map(line -> this.color + line)
                     .collect(Collectors.joining("\n"));
         }

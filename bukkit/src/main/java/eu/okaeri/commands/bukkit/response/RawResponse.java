@@ -1,11 +1,15 @@
 package eu.okaeri.commands.bukkit.response;
 
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
-@Data
+import java.util.Arrays;
+
+@ToString
+@EqualsAndHashCode
 public class RawResponse implements BukkitResponse {
 
-    private final String[] value;
+    private String[] value;
 
     protected RawResponse(String... value) {
         this.value = value;
@@ -16,7 +20,25 @@ public class RawResponse implements BukkitResponse {
     }
 
     @Override
+    public String[] raw() {
+        return this.value;
+    }
+
+    @Override
+    public BukkitResponse withField(String field, String value) {
+
+        if (field == null) throw new IllegalArgumentException("field cannot be null");
+        if (value == null) throw new IllegalArgumentException("value cannot be null");
+
+        this.value = Arrays.stream(this.raw())
+                .map(line -> line.replace(field, value))
+                .toArray(String[]::new);
+
+        return this;
+    }
+
+    @Override
     public String render() {
-        return String.join("\n", this.value);
+        return String.join("\n", this.raw());
     }
 }
