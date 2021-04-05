@@ -17,7 +17,7 @@ public class ErrorResponse extends RawResponse {
 
     @Override
     public String render() {
-        return Arrays.stream(this.getValue())
+        return Arrays.stream(this.raw())
                 .map(line -> ChatColor.RED + line)
                 .collect(Collectors.joining("\n"));
     }
