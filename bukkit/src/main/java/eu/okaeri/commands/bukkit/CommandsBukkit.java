@@ -10,6 +10,7 @@ import eu.okaeri.commands.bukkit.exception.NoSuchCommandException;
 import eu.okaeri.commands.bukkit.handler.DefaultErrorHandler;
 import eu.okaeri.commands.bukkit.handler.ErrorHandler;
 import eu.okaeri.commands.bukkit.response.BukkitResponse;
+import eu.okaeri.commands.bukkit.response.RawResponse;
 import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.meta.ExecutorMeta;
 import eu.okaeri.commands.meta.InvocationMeta;
@@ -17,6 +18,7 @@ import eu.okaeri.commands.meta.ServiceMeta;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandException;
 import eu.okaeri.commands.service.InvocationContext;
+import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
@@ -159,17 +161,11 @@ public class CommandsBukkit extends CommandsAdapter {
             throw new RuntimeException("Cannot dispatch error", throwable);
         }
 
-        if (result instanceof BukkitResponse) {
-            sender.sendMessage(((BukkitResponse) result).render());
+        if (this.handleResult(result, sender)) {
             return;
         }
 
-        if (result instanceof CharSequence) {
-            sender.sendMessage(String.valueOf(result));
-            return;
-        }
-
-        throw new RuntimeException("Unknown return type for errorHandler [allowed: BukkitResponse, String]", throwable);
+        throw new RuntimeException("Unknown return type for errorHandler [allowed: BukkitResponse, String, BaseComponent]", throwable);
     }
 
     private void handleExecution(CommandSender sender, OkaeriCommands core, InvocationContext invocationContext, CommandContext commandContext) {
@@ -177,9 +173,11 @@ public class CommandsBukkit extends CommandsAdapter {
             InvocationMeta invocationMeta = core.invocationPrepare(invocationContext, commandContext);
             Object result = invocationMeta.call();
 
-            if (result instanceof BukkitResponse) {
-                sender.sendMessage(((BukkitResponse) result).render());
+            if (this.handleResult(result, sender)) {
+                return;
             }
+
+            throw new RuntimeException("Unknown return type for excutor [allowed: BukkitResponse, String, BaseComponent]");
         }
         catch (InvocationTargetException | IllegalAccessException | CommandException exception) {
 
@@ -203,6 +201,31 @@ public class CommandsBukkit extends CommandsAdapter {
 
             throw new RuntimeException("ThatShouldNotBePossibleException", exception);
         }
+    }
+
+    private boolean handleResult(Object result, CommandSender sender) {
+
+        if (result instanceof BukkitResponse) {
+            ((BukkitResponse) result).sendTo(sender);
+            return true;
+        }
+
+        if (result instanceof CharSequence) {
+            RawResponse.of(String.valueOf(result)).sendTo(sender);
+            return true;
+        }
+
+        if (result instanceof BaseComponent) {
+            sender.spigot().sendMessage((BaseComponent) result);
+            return true;
+        }
+
+        if (result instanceof BaseComponent[]) {
+            sender.spigot().sendMessage((BaseComponent[]) result);
+            return true;
+        }
+
+        return false;
     }
 
     private String getPermission(ServiceMeta service) {
