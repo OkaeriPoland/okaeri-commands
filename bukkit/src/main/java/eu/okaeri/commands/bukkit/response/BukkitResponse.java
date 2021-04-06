@@ -1,5 +1,6 @@
 package eu.okaeri.commands.bukkit.response;
 
+import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
@@ -13,20 +14,20 @@ import java.util.stream.Collectors;
 
 public interface BukkitResponse {
 
-    String render();
+    BaseComponent[] render();
 
-    String[] raw();
+    String raw();
 
     BukkitResponse withField(String field, String value);
 
     default BukkitResponse sendTo(CommandSender target) {
-        target.sendMessage(this.render());
+        target.spigot().sendMessage(this.render());
         return this;
     }
 
     default BukkitResponse sendTo(Collection<? extends CommandSender> targets) {
-        String render = this.render();
-        targets.forEach(target -> target.sendMessage(render));
+        BaseComponent[] render = this.render();
+        targets.forEach(target -> target.spigot().sendMessage(render));
         return this;
     }
 

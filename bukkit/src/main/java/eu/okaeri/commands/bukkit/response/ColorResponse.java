@@ -1,9 +1,9 @@
 package eu.okaeri.commands.bukkit.response;
 
+import eu.okaeri.commands.bukkit.response.placeholder.Placeholers;
 import net.md_5.bungee.api.ChatColor;
-
-import java.util.Arrays;
-import java.util.stream.Collectors;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
 
 public class ColorResponse extends RawResponse {
 
@@ -27,14 +27,17 @@ public class ColorResponse extends RawResponse {
     }
 
     @Override
-    public String render() {
+    public BaseComponent[] render() {
 
-        if (this.color != null) {
-            return Arrays.stream(this.raw())
-                    .map(line -> this.color + line)
-                    .collect(Collectors.joining("\n"));
+        if (this.color == null) {
+            String render = ChatColor.translateAlternateColorCodes('&', super.raw());
+            render = Placeholers.replaceAll(render, this.fields());
+            return TextComponent.fromLegacyText(render);
         }
 
-        return ChatColor.translateAlternateColorCodes('&', super.render());
+        TextComponent component = new TextComponent();
+        component.setText(Placeholers.replaceAll(this.raw(), this.fields()));
+        component.setColor(this.color);
+        return new TextComponent[]{component};
     }
 }
