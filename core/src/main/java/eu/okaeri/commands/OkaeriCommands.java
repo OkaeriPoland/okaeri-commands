@@ -24,16 +24,18 @@ import java.util.stream.Collectors;
 
 @Data
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
-public class OkaeriCommands {
+public class OkaeriCommands implements Commands {
 
     private List<CommandMeta> registeredCommands = new ArrayList<>();
     private final CommandsAdapter adapter;
 
-    public OkaeriCommands register(Class<? extends CommandService> clazz) {
+    @Override
+    public Commands register(Class<? extends CommandService> clazz) {
         return this.register(this.adapter.createInstance(clazz));
     }
 
-    public OkaeriCommands register(CommandService service) {
+    @Override
+    public Commands register(CommandService service) {
 
         Class<? extends CommandService> clazz = service.getClass();
         for (Method method : clazz.getDeclaredMethods()) {
@@ -53,12 +55,14 @@ public class OkaeriCommands {
         return this;
     }
 
+    @Override
     public List<CommandMeta> findByLabel(String label) {
         return this.registeredCommands.stream()
                 .filter(candidate -> candidate.isLabelApplicable(label))
                 .collect(Collectors.toList());
     }
 
+    @Override
     public List<CommandMeta> findByLabelAndArgs(String label, String args) {
         return this.findByLabel(label).stream()
                 .sorted(Comparator.comparing(meta -> meta.getExecutor().getPattern().getRaw(), Comparator.reverseOrder()))
@@ -66,6 +70,7 @@ public class OkaeriCommands {
                 .collect(Collectors.toList());
     }
 
+    @Override
     @Deprecated
     public Object call(String command) throws InvocationTargetException, IllegalAccessException {
         Optional<InvocationContext> context = this.invocationMatch(command);
@@ -75,6 +80,7 @@ public class OkaeriCommands {
         return this.invocationPrepare(context.get(), new CommandContext()).call();
     }
 
+    @Override
     public Optional<InvocationContext> invocationMatch(String command) {
 
         String[] parts = command.split(" ", 2);
@@ -90,6 +96,7 @@ public class OkaeriCommands {
         return Optional.of(InvocationContext.of(commandMeta, commandMeta.getExecutor(), label, args));
     }
 
+    @Override
     public InvocationMeta invocationPrepare(InvocationContext invocationContext, CommandContext commandContext) {
 
         String args = invocationContext.getArgs();

@@ -1,7 +1,7 @@
 package eu.okaeri.commandstest;
 
+import eu.okaeri.commands.Commands;
 import eu.okaeri.commands.CommandsManager;
-import eu.okaeri.commands.OkaeriCommands;
 import eu.okaeri.commands.cli.CommandsCli;
 import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
@@ -16,7 +16,7 @@ public class BenchmarkCommands {
 
     @State(Scope.Benchmark)
     public static class Data {
-        public OkaeriCommands commands = CommandsManager.create(new CommandsCli())
+        public Commands commands = CommandsManager.create(new CommandsCli())
                 .register(ExampleCommand.class);
     }
 

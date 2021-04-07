@@ -11,7 +11,7 @@ Simple command framework with yet powerful features and ability to adapt. Part o
 ## Example Usage
 
 ```java
-OkaeriCommands commands=CommandsManager.create(new CommandsCli());
+Commands commands = CommandsManager.create(new CommandsCli());
 commands.register(ExampleCommand.class); // built for DI (accepts empty constructor by default)
 // commands.register(new ExampleCommand()); // pass own instance (e.g. with custom constructor parameters)
 

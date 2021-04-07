@@ -1,6 +1,6 @@
 package eu.okaeri.commands.adapter;
 
-import eu.okaeri.commands.OkaeriCommands;
+import eu.okaeri.commands.Commands;
 import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandService;
@@ -18,12 +18,12 @@ public class WrappedCommandsAdapter extends CommandsAdapter {
     }
 
     @Override
-    public OkaeriCommands getCore() {
+    public Commands getCore() {
         return this.adapter.getCore();
     }
 
     @Override
-    public void setCore(OkaeriCommands core) {
+    public void setCore(Commands core) {
         this.adapter.setCore(core);
     }
 

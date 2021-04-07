@@ -1,6 +1,6 @@
 package eu.okaeri.commands.bukkit;
 
-import eu.okaeri.commands.OkaeriCommands;
+import eu.okaeri.commands.Commands;
 import eu.okaeri.commands.adapter.CommandsAdapter;
 import eu.okaeri.commands.bukkit.annotation.Permission;
 import eu.okaeri.commands.bukkit.annotation.Sender;
@@ -116,7 +116,7 @@ public class CommandsBukkit extends CommandsAdapter {
 
     private boolean executeCommand(CommandContext commandContext, CommandSender sender, String label, String[] args, String servicePermission) {
 
-        OkaeriCommands core = CommandsBukkit.super.getCore();
+        Commands core = CommandsBukkit.super.getCore();
         String fullCommand = (label + " " + String.join(" ", args)).trim();
 
         if ((servicePermission != null) && !sender.hasPermission(servicePermission)) {
@@ -168,7 +168,7 @@ public class CommandsBukkit extends CommandsAdapter {
         throw new RuntimeException("Unknown return type for errorHandler [allowed: BukkitResponse, String, BaseComponent]", throwable);
     }
 
-    private void handleExecution(CommandSender sender, OkaeriCommands core, InvocationContext invocationContext, CommandContext commandContext) {
+    private void handleExecution(CommandSender sender, Commands core, InvocationContext invocationContext, CommandContext commandContext) {
         try {
             InvocationMeta invocationMeta = core.invocationPrepare(invocationContext, commandContext);
             Object result = invocationMeta.call();

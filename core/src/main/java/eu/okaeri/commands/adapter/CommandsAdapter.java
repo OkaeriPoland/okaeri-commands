@@ -1,6 +1,6 @@
 package eu.okaeri.commands.adapter;
 
-import eu.okaeri.commands.OkaeriCommands;
+import eu.okaeri.commands.Commands;
 import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandService;
@@ -14,7 +14,7 @@ import java.lang.reflect.Parameter;
 @Setter
 public abstract class CommandsAdapter {
 
-    private OkaeriCommands core;
+    private Commands core;
 
     public String resolveText(CommandContext context, String text) {
         return text;
