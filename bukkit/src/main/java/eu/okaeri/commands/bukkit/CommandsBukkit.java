@@ -8,9 +8,9 @@ import eu.okaeri.commands.bukkit.exception.ExceptionSource;
 import eu.okaeri.commands.bukkit.exception.NoPermissionException;
 import eu.okaeri.commands.bukkit.exception.NoSuchCommandException;
 import eu.okaeri.commands.bukkit.handler.DefaultErrorHandler;
+import eu.okaeri.commands.bukkit.handler.DefaultResultHandler;
 import eu.okaeri.commands.bukkit.handler.ErrorHandler;
-import eu.okaeri.commands.bukkit.response.BukkitResponse;
-import eu.okaeri.commands.bukkit.response.RawResponse;
+import eu.okaeri.commands.bukkit.handler.ResultHandler;
 import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.meta.ExecutorMeta;
 import eu.okaeri.commands.meta.InvocationMeta;
@@ -18,7 +18,6 @@ import eu.okaeri.commands.meta.ServiceMeta;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandException;
 import eu.okaeri.commands.service.InvocationContext;
-import net.md_5.bungee.api.chat.BaseComponent;
 import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
@@ -35,8 +34,10 @@ import java.util.Optional;
 public class CommandsBukkit extends CommandsAdapter {
 
     private final CommandMap commandMap;
+    private final JavaPlugin plugin;
+
     private ErrorHandler errorHandler = new DefaultErrorHandler();
-    private JavaPlugin plugin;
+    private ResultHandler resultHandler = new DefaultResultHandler();
 
     public static CommandsBukkit of(JavaPlugin plugin) {
         return new CommandsBukkit(plugin);
@@ -44,6 +45,11 @@ public class CommandsBukkit extends CommandsAdapter {
 
     public CommandsBukkit errorHandler(ErrorHandler errorHandler) {
         this.errorHandler = errorHandler;
+        return this;
+    }
+
+    public CommandsBukkit resultHandler(ResultHandler resultHandler) {
+        this.resultHandler = resultHandler;
         return this;
     }
 
@@ -161,7 +167,7 @@ public class CommandsBukkit extends CommandsAdapter {
             throw new RuntimeException("Cannot dispatch error", throwable);
         }
 
-        if (this.handleResult(result, sender)) {
+        if (this.resultHandler.onResult(result, sender)) {
             return;
         }
 
@@ -173,7 +179,7 @@ public class CommandsBukkit extends CommandsAdapter {
             InvocationMeta invocationMeta = core.invocationPrepare(invocationContext, commandContext);
             Object result = invocationMeta.call();
 
-            if (this.handleResult(result, sender)) {
+            if (this.resultHandler.onResult(result, sender)) {
                 return;
             }
 
@@ -201,31 +207,6 @@ public class CommandsBukkit extends CommandsAdapter {
 
             throw new RuntimeException("ThatShouldNotBePossibleException", exception);
         }
-    }
-
-    private boolean handleResult(Object result, CommandSender sender) {
-
-        if (result instanceof BukkitResponse) {
-            ((BukkitResponse) result).sendTo(sender);
-            return true;
-        }
-
-        if (result instanceof CharSequence) {
-            RawResponse.of(String.valueOf(result)).sendTo(sender);
-            return true;
-        }
-
-        if (result instanceof BaseComponent) {
-            sender.spigot().sendMessage((BaseComponent) result);
-            return true;
-        }
-
-        if (result instanceof BaseComponent[]) {
-            sender.spigot().sendMessage((BaseComponent[]) result);
-            return true;
-        }
-
-        return false;
     }
 
     private String getPermission(ServiceMeta service) {
