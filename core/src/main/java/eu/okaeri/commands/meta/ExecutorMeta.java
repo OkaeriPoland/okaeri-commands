@@ -7,6 +7,8 @@ import eu.okaeri.commands.meta.pattern.element.StaticElement;
 import lombok.Data;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -31,10 +33,17 @@ public class ExecutorMeta {
             // create
             ExecutorMeta cmdExecutor = new ExecutorMeta();
             cmdExecutor.method = method;
-            cmdExecutor.arguments = Collections.unmodifiableList(Arrays.stream(method.getParameters())
-                    .filter(ArgumentMeta::isArg)
-                    .map(ArgumentMeta::of)
-                    .collect(Collectors.toList()));
+
+            List<ArgumentMeta> arguments = new ArrayList<>();
+            for (int i = 0; i < method.getParameters().length; i++) {
+                Parameter parameter = method.getParameters()[i];
+                if (!ArgumentMeta.isArg(parameter)) {
+                    continue;
+                }
+                arguments.add(ArgumentMeta.of(parameter, i));
+            }
+            cmdExecutor.arguments = Collections.unmodifiableList(arguments);
+
             cmdExecutor.fallback = executor.fallback();
             cmdExecutor.async = executor.async();
             cmdExecutor.pattern = PatternMeta.of(pattern, cmdExecutor.arguments);
