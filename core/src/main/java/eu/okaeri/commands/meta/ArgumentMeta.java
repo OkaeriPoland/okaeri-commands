@@ -5,7 +5,6 @@ import eu.okaeri.commands.service.Option;
 import lombok.Data;
 import lombok.SneakyThrows;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
 import java.util.Optional;
 
@@ -17,7 +16,7 @@ public class ArgumentMeta {
     }
 
     @SneakyThrows
-    public static ArgumentMeta of(Parameter parameter) {
+    public static ArgumentMeta of(Parameter parameter, int index) {
 
         Arg arg = parameter.getAnnotation(Arg.class);
 
@@ -25,16 +24,9 @@ public class ArgumentMeta {
             throw new IllegalArgumentException("cannot create ArgumentMeta from Parameter without @Arg annotation");
         }
 
-        Class<? extends Parameter> parameterClass = parameter.getClass();
-        Field indexField = parameterClass.getDeclaredField("index");
-        boolean accessible = indexField.isAccessible();
-        indexField.setAccessible(true);
-        int indexValue = (int) indexField.get(parameter);
-        indexField.setAccessible(accessible);
-
         ArgumentMeta meta = new ArgumentMeta();
         meta.name = arg.value().isEmpty() ? parameter.getName() : arg.value();
-        meta.index = indexValue;
+        meta.index = index;
         meta.type = parameter.getType();
         meta.optional = Option.class.isAssignableFrom(meta.type) || Optional.class.isAssignableFrom(meta.type);
 
