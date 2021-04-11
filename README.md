@@ -24,6 +24,18 @@ Object result = commands.call("cmd woah");
 // TODO
 ```
 
+## Performance
+
+Benchmark sources available in the [BenchmarkCommands](https://github.com/OkaeriPoland/okaeri-commands/blob/master/core-test/src/main/java/eu/okaeri/commandstest/BenchmarkCommands.java).
+
+```console
+# single thread performance on ryzen 3600, about 1,000,000 invocations per second
+Benchmark                           Mode  Cnt        Score       Error  Units
+BenchmarkCommands.command_complex  thrpt    5  1109842.766 ± 47168.401  ops/s
+BenchmarkCommands.command_medium   thrpt    5  1112048.204 ± 46700.652  ops/s
+BenchmarkCommands.command_simple   thrpt    5  1253307.288 ± 31533.820  ops/s
+```
+
 ## Example CommandService
 
 ```java

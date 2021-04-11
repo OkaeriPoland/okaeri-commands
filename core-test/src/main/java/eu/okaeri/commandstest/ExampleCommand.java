@@ -41,8 +41,8 @@ public class ExampleCommand implements CommandService {
     }
 
     // cmd bk [name]
-    @Executor(pattern = "bk [name]", description = "Prints beka message with name")
-    public String testOptionalParam(@Arg("name") Option<String> name) {
+    @Executor(pattern = "bk <a> [name]", description = "Prints beka message with name")
+    public String testOptionalParam(@Arg("a") String a, @Arg("name") Option<String> name) {
         return ("beka z " + name.getOr("guest") + "!");
     }
 
