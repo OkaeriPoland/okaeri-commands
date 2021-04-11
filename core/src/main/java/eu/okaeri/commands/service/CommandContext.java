@@ -1,8 +1,11 @@
 package eu.okaeri.commands.service;
 
+import lombok.RequiredArgsConstructor;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@RequiredArgsConstructor
 public class CommandContext {
 
     private final Map<String, Object> metadata = new LinkedHashMap<>();

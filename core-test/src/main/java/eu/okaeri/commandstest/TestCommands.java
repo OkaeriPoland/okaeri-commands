@@ -3,6 +3,7 @@ package eu.okaeri.commandstest;
 import eu.okaeri.commands.Commands;
 import eu.okaeri.commands.CommandsManager;
 import eu.okaeri.commands.cli.CommandsCli;
+import eu.okaeri.commands.registry.CommandsRegistry;
 
 import java.lang.reflect.InvocationTargetException;
 
@@ -11,7 +12,8 @@ public final class TestCommands {
     public static void main(String[] args) throws InvocationTargetException, IllegalAccessException {
 
         Commands commands = CommandsManager.create(new CommandsCli());
-        commands.register(ExampleCommand.class); // DI
+        CommandsRegistry registry = commands.getRegistry();
+        registry.register(ExampleCommand.class); // DI
         // commands.register(new ExampleCommand());
 
         test(commands);

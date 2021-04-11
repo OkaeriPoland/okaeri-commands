@@ -47,6 +47,7 @@ public class PatternMeta {
                 .collect(Collectors.toList());
         meta.elements = Collections.unmodifiableList(patternElements);
         meta.raw = meta.elements.stream().map(PatternElement::render).collect(Collectors.joining(" "));
+        meta.staticElements = Math.toIntExact(meta.elements.stream().filter(element -> element instanceof StaticElement).count());
 
         // validate meta
         boolean foundOptional = false;
@@ -69,6 +70,7 @@ public class PatternMeta {
     }
 
     private List<PatternElement> elements;
+    private int staticElements;
     private String raw;
 
     public boolean applicable(String pattern) {
@@ -109,6 +111,9 @@ public class PatternMeta {
     public boolean matches(String args) {
 
         String[] argsArr = args.split(" ");
+        if (argsArr.length < this.staticElements) {
+            return false;
+        }
 
         for (int i = 0; i < this.elements.size(); i++) {
 

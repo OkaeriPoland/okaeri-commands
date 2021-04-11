@@ -12,5 +12,5 @@ public @interface Executor {
     boolean async() default false;
     String[] pattern() default {};
     String description() default "";
-    String usage() default "{label} {params}";
+    String usage() default "{label} {pattern}";
 }

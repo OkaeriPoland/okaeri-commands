@@ -4,6 +4,7 @@ import eu.okaeri.commands.Commands;
 import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandService;
+import eu.okaeri.commands.service.InvocationContext;
 import lombok.Getter;
 
 import java.lang.reflect.Parameter;
@@ -28,13 +29,13 @@ public class WrappedCommandsAdapter extends CommandsAdapter {
     }
 
     @Override
-    public String resolveText(CommandContext context, String text) {
-        return this.adapter.resolveText(context, text);
+    public String resolveText(CommandContext commandContext, InvocationContext invocationContext, String text) {
+        return this.adapter.resolveText(commandContext, invocationContext, text);
     }
 
     @Override
-    public Object resolveMissingArgument(CommandContext context, CommandMeta command, Parameter param, int i) {
-        return this.adapter.resolveMissingArgument(context, command, param, i);
+    public Object resolveMissingArgument(CommandContext commandContext, InvocationContext invocationContext, CommandMeta command, Parameter param, int i) {
+        return this.adapter.resolveMissingArgument(commandContext, invocationContext, command, param, i);
     }
 
     @Override

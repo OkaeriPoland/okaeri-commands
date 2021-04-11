@@ -1,7 +1,6 @@
 package eu.okaeri.commands;
 
 import eu.okaeri.commands.adapter.CommandsAdapter;
-import eu.okaeri.commands.annotation.Executor;
 import eu.okaeri.commands.annotation.Label;
 import eu.okaeri.commands.annotation.RawArgs;
 import eu.okaeri.commands.meta.ArgumentMeta;
@@ -9,6 +8,7 @@ import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.meta.ExecutorMeta;
 import eu.okaeri.commands.meta.InvocationMeta;
 import eu.okaeri.commands.meta.pattern.PatternMeta;
+import eu.okaeri.commands.registry.CommandsRegistry;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandService;
 import eu.okaeri.commands.service.InvocationContext;
@@ -20,54 +20,29 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Data
 @RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public class OkaeriCommands implements Commands {
 
-    private List<CommandMeta> registeredCommands = new ArrayList<>();
     private final CommandsAdapter adapter;
+    private final CommandsRegistry registry;
 
     @Override
-    public Commands register(Class<? extends CommandService> clazz) {
-        return this.register(this.adapter.createInstance(clazz));
+    public CommandsRegistry getRegistry() {
+        return this.registry;
     }
 
     @Override
-    public Commands register(CommandService service) {
-
-        Class<? extends CommandService> clazz = service.getClass();
-        for (Method method : clazz.getDeclaredMethods()) {
-
-            Executor executor = method.getAnnotation(Executor.class);
-            if (executor == null) {
-                continue;
-            }
-
-            List<CommandMeta> commands = CommandMeta.of(service, method);
-            for (CommandMeta command : commands) {
-                this.registeredCommands.add(command);
-                this.adapter.onRegister(command);
-            }
-        }
-
+    public Commands register(Class<? extends CommandService> clazz) {
+        this.registry.register(clazz);
         return this;
     }
 
     @Override
-    public List<CommandMeta> findByLabel(String label) {
-        return this.registeredCommands.stream()
-                .filter(candidate -> candidate.isLabelApplicable(label))
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<CommandMeta> findByLabelAndArgs(String label, String args) {
-        return this.findByLabel(label).stream()
-                .sorted(Comparator.comparing(meta -> meta.getExecutor().getPattern().getRaw(), Comparator.reverseOrder()))
-                .filter(meta -> meta.getExecutor().getPattern().matches(args))
-                .collect(Collectors.toList());
+    public Commands register(CommandService service) {
+        this.registry.register(service);
+        return this;
     }
 
     @Override
@@ -77,7 +52,8 @@ public class OkaeriCommands implements Commands {
         if (!context.isPresent()) {
             throw new IllegalArgumentException("cannot call '" + command + "', no executor available");
         }
-        return this.invocationPrepare(context.get(), new CommandContext()).call();
+        InvocationContext invocationContext = context.get();
+        return this.invocationPrepare(invocationContext, new CommandContext()).call();
     }
 
     @Override
@@ -87,12 +63,12 @@ public class OkaeriCommands implements Commands {
         String label = parts[0];
         String args = (parts.length > 1) ? parts[1] : "";
 
-        List<CommandMeta> commandMetas = this.findByLabelAndArgs(label, args);
-        if (commandMetas.isEmpty()) {
+        Optional<CommandMeta> commandMetas = this.getRegistry().findByLabelAndArgs(label, args);
+        if (!commandMetas.isPresent()) {
             return Optional.empty();
         }
 
-        CommandMeta commandMeta = commandMetas.get(0);
+        CommandMeta commandMeta = commandMetas.get();
         return Optional.of(InvocationContext.of(commandMeta, commandMeta.getExecutor(), label, args));
     }
 
@@ -160,7 +136,7 @@ public class OkaeriCommands implements Commands {
             }
 
             // pass to adapter for missing elements
-            call[i] = this.adapter.resolveMissingArgument(commandContext, commandMeta, param, i);
+            call[i] = this.adapter.resolveMissingArgument(commandContext, invocationContext, commandMeta, param, i);
         }
 
         return InvocationMeta.of(executorMethod, call, commandMeta.getService(), executor);

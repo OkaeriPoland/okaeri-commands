@@ -7,11 +7,11 @@ import org.openjdk.jmh.annotations.*;
 import org.openjdk.jmh.infra.Blackhole;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.concurrent.TimeUnit;
 
-@Fork(value = 1, warmups = 2)
-@BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.NANOSECONDS)
+@Fork(value = 1, warmups = 1)
+@Warmup(iterations = 3, time = 1)
+@Measurement(iterations = 5, time = 1)
+@BenchmarkMode(Mode.Throughput)
 public class BenchmarkCommands {
 
     @State(Scope.Benchmark)

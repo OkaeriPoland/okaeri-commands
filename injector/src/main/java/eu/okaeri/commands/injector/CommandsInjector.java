@@ -5,6 +5,7 @@ import eu.okaeri.commands.adapter.WrappedCommandsAdapter;
 import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandService;
+import eu.okaeri.commands.service.InvocationContext;
 import eu.okaeri.injector.Injectable;
 import eu.okaeri.injector.Injector;
 import eu.okaeri.injector.annotation.Inject;
@@ -43,9 +44,9 @@ public class CommandsInjector extends WrappedCommandsAdapter {
     }
 
     @Override
-    public Object resolveMissingArgument(CommandContext context, CommandMeta command, Parameter param, int i) {
+    public Object resolveMissingArgument(CommandContext commandContext, InvocationContext invocationContext, CommandMeta command, Parameter param, int i) {
 
-        if (context == null) throw new IllegalArgumentException("context cannot be null");
+        if (commandContext == null) throw new IllegalArgumentException("context cannot be null");
         if (command == null) throw new IllegalArgumentException("command cannot be null");
         if (param == null) throw new IllegalArgumentException("param cannot be null");
 
@@ -57,7 +58,7 @@ public class CommandsInjector extends WrappedCommandsAdapter {
             return injectable.get().getObject();
         }
 
-        return super.resolveMissingArgument(context, command, param, i);
+        return super.resolveMissingArgument(commandContext, invocationContext, command, param, i);
     }
 
     @Override
