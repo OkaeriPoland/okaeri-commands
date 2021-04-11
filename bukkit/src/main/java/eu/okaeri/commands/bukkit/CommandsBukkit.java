@@ -36,7 +36,7 @@ public class CommandsBukkit extends CommandsAdapter {
     private final CommandMap commandMap;
     private final JavaPlugin plugin;
 
-    private ErrorHandler errorHandler = new DefaultErrorHandler();
+    private ErrorHandler errorHandler = new DefaultErrorHandler(this);
     private ResultHandler resultHandler = new DefaultResultHandler();
 
     public static CommandsBukkit of(JavaPlugin plugin) {
@@ -67,26 +67,26 @@ public class CommandsBukkit extends CommandsAdapter {
     }
 
     @Override
-    public Object resolveMissingArgument(CommandContext context, CommandMeta command, Parameter param, int i) {
+    public Object resolveMissingArgument(CommandContext commandContext, InvocationContext invocationContext, CommandMeta command, Parameter param, int i) {
 
         Class<?> paramType = param.getType();
 
         // TODO: player only command
         if (Player.class.isAssignableFrom(paramType) && (param.getAnnotation(Sender.class) != null)) {
-            return context.get("sender", Player.class);
+            return commandContext.get("sender", Player.class);
         }
 
         // TODO: console only command
         if (ConsoleCommandSender.class.isAssignableFrom(paramType)) {
-            return context.get("sender", ConsoleCommandSender.class);
+            return commandContext.get("sender", ConsoleCommandSender.class);
         }
 
         // other sender
-        if (CommandSender.class.isAssignableFrom(paramType) && context.has("sender", CommandSender.class)) {
-            return context.get("sender");
+        if (CommandSender.class.isAssignableFrom(paramType) && commandContext.has("sender", CommandSender.class)) {
+            return commandContext.get("sender");
         }
 
-        return super.resolveMissingArgument(context, command, param, i);
+        return super.resolveMissingArgument(commandContext, invocationContext, command, param, i);
     }
 
     @Override
@@ -105,9 +105,10 @@ public class CommandsBukkit extends CommandsAdapter {
                 commandContext.add("sender", sender);
 
                 try {
-                    return CommandsBukkit.this.executeCommand(commandContext, sender, label, args, servicePermission);
-                } catch (Exception exception) {
-                    CommandsBukkit.this.handleError(commandContext, exception, ExceptionSource.UNKNOWN);
+                    return CommandsBukkit.this.executeCommand(command, commandContext, sender, label, args, servicePermission);
+                }
+                catch (Exception exception) {
+                    CommandsBukkit.this.handleError(commandContext, null, exception, ExceptionSource.UNKNOWN);
                     return true;
                 }
             }
@@ -120,19 +121,21 @@ public class CommandsBukkit extends CommandsAdapter {
         super.onRegister(command);
     }
 
-    private boolean executeCommand(CommandContext commandContext, CommandSender sender, String label, String[] args, String servicePermission) {
+    private boolean executeCommand(CommandMeta commandMeta, CommandContext commandContext, CommandSender sender, String label, String[] args, String servicePermission) {
 
         Commands core = CommandsBukkit.super.getCore();
         String fullCommand = (label + " " + String.join(" ", args)).trim();
 
         if ((servicePermission != null) && !sender.hasPermission(servicePermission)) {
-            this.handleError(commandContext, new NoPermissionException(servicePermission), ExceptionSource.SYSTEM);
+            InvocationContext dummyInvocationContext = InvocationContext.of(commandMeta, null, label, String.join(" ", args));
+            this.handleError(commandContext, dummyInvocationContext, new NoPermissionException(servicePermission), ExceptionSource.SYSTEM);
             return true;
         }
 
         Optional<InvocationContext> invocationOptional = core.invocationMatch(fullCommand);
         if (!invocationOptional.isPresent()) {
-            this.handleError(commandContext, new NoSuchCommandException(fullCommand), ExceptionSource.SYSTEM);
+            InvocationContext dummyInvocationContext = InvocationContext.of(commandMeta, null, label, String.join(" ", args));
+            this.handleError(commandContext, dummyInvocationContext, new NoSuchCommandException(fullCommand), ExceptionSource.SYSTEM);
             return true;
         }
 
@@ -141,7 +144,7 @@ public class CommandsBukkit extends CommandsAdapter {
 
         String executorPermission = CommandsBukkit.this.getPermission(invocationContext.getExecutor());
         if ((executorPermission != null) && !sender.hasPermission(executorPermission)) {
-            this.handleError(commandContext, new NoPermissionException(executorPermission), ExceptionSource.SYSTEM);
+            this.handleError(commandContext, invocationContext, new NoPermissionException(executorPermission), ExceptionSource.SYSTEM);
             return true;
         }
 
@@ -155,14 +158,14 @@ public class CommandsBukkit extends CommandsAdapter {
         return true;
     }
 
-    private void handleError(CommandContext context, Throwable throwable, ExceptionSource source) {
+    private void handleError(CommandContext commandContext, InvocationContext invocationContext, Throwable throwable, ExceptionSource source) {
 
-        Object result = this.errorHandler.onError(context, throwable, source);
+        Object result = this.errorHandler.onError(commandContext, invocationContext, throwable, source);
         if (result == null) {
             return;
         }
 
-        CommandSender sender = context.get("sender", CommandSender.class);
+        CommandSender sender = commandContext.get("sender", CommandSender.class);
         if (sender == null) {
             throw new RuntimeException("Cannot dispatch error", throwable);
         }
@@ -191,17 +194,17 @@ public class CommandsBukkit extends CommandsAdapter {
             if (exception instanceof InvocationTargetException) {
 
                 if (exception.getCause() instanceof CommandException) {
-                    this.handleError(commandContext, exception.getCause(), ExceptionSource.COMMAND);
+                    this.handleError(commandContext, invocationContext, exception.getCause(), ExceptionSource.COMMAND);
                     return;
                 }
 
-                this.handleError(commandContext, exception, ExceptionSource.COMMAND);
+                this.handleError(commandContext, invocationContext, exception, ExceptionSource.COMMAND);
                 return;
             }
 
             // exception originating from the core system
             if (exception.getCause() instanceof CommandException) {
-                this.handleError(commandContext, exception.getCause(), ExceptionSource.COMMAND);
+                this.handleError(commandContext, invocationContext, exception.getCause(), ExceptionSource.COMMAND);
                 return;
             }
 

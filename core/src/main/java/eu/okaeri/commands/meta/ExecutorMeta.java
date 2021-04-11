@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 @Data
@@ -24,6 +25,7 @@ public class ExecutorMeta {
             throw new IllegalArgumentException("cannot create ExecutorMeta from Method without @Executor annotation");
         }
 
+        AtomicInteger indexCounter = new AtomicInteger();
         List<String> patterns = (executor.pattern().length == 0)
                 ? Collections.singletonList(method.getName())
                 : Arrays.asList(executor.pattern());
@@ -49,6 +51,7 @@ public class ExecutorMeta {
             cmdExecutor.pattern = PatternMeta.of(pattern, cmdExecutor.arguments);
             cmdExecutor.description = executor.description();
             cmdExecutor.usage = executor.usage();
+            cmdExecutor.index = indexCounter.getAndIncrement();
 
             // validate if all arguments used in method definition ale present in the pattern
             for (ArgumentMeta argument : cmdExecutor.arguments) {
@@ -89,4 +92,5 @@ public class ExecutorMeta {
     private PatternMeta pattern;
     private String description;
     private String usage;
+    private int index;
 }
