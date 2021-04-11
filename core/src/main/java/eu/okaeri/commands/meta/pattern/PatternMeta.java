@@ -3,6 +3,7 @@ package eu.okaeri.commands.meta.pattern;
 import eu.okaeri.commands.meta.ArgumentMeta;
 import eu.okaeri.commands.meta.pattern.element.OptionalElement;
 import eu.okaeri.commands.meta.pattern.element.PatternElement;
+import eu.okaeri.commands.meta.pattern.element.RequiredElement;
 import eu.okaeri.commands.meta.pattern.element.StaticElement;
 import lombok.Data;
 
@@ -45,13 +46,15 @@ public class PatternMeta {
                     return element;
                 })
                 .collect(Collectors.toList());
-        meta.elements = Collections.unmodifiableList(patternElements);
-        meta.raw = meta.elements.stream().map(PatternElement::render).collect(Collectors.joining(" "));
-        meta.staticElements = Math.toIntExact(meta.elements.stream().filter(element -> element instanceof StaticElement).count());
+        meta.setElements(Collections.unmodifiableList(patternElements));
+        meta.setRaw(meta.getElements().stream().map(PatternElement::render).collect(Collectors.joining(" ")));
+        meta.setStaticElements(Math.toIntExact(meta.getElements().stream().filter(element -> element instanceof StaticElement).count()));
+        meta.setStaticOnly(meta.getElements().size() == meta.getStaticElements());
+        meta.setNameToElement(meta.getElements().stream().filter(e -> !(e instanceof StaticElement)).collect(Collectors.toMap(PatternElement::getName, e -> e)));
 
         // validate meta
         boolean foundOptional = false;
-        for (PatternElement element : meta.elements) {
+        for (PatternElement element : meta.getElements()) {
             if (!(element instanceof OptionalElement)) {
                 if (foundOptional) {
                     throw new IllegalArgumentException("only other optional arguments are allowed after optional argument: " + pattern);
@@ -70,20 +73,27 @@ public class PatternMeta {
     }
 
     private List<PatternElement> elements;
+    private Map<String, PatternElement> nameToElement;
+
     private int staticElements;
+    private boolean staticOnly;
     private String raw;
 
     public boolean applicable(String pattern) {
 
         String[] parts = pattern.split(" ");
-        if (parts.length != this.elements.size()) {
+        if (parts.length != this.getElements().size()) {
             return false;
         }
 
-        for (int i = 0; i < this.elements.size(); i++) {
+        if (this.isStaticOnly()) {
+            return this.getRaw().equals(pattern);
+        }
+
+        for (int i = 0; i < this.getElements().size(); i++) {
 
             String part = parts[i];
-            PatternElement currentElement = this.elements.get(i);
+            PatternElement currentElement = this.getElements().get(i);
             PatternElement testElement = PatternElement.of(part, i);
 
             String currentName = currentElement.getName();
@@ -111,13 +121,13 @@ public class PatternMeta {
     public boolean matches(String args) {
 
         String[] argsArr = args.split(" ");
-        if (argsArr.length < this.staticElements) {
+        if (argsArr.length < this.getStaticElements()) {
             return false;
         }
 
-        for (int i = 0; i < this.elements.size(); i++) {
+        for (int i = 0; i < this.getElements().size(); i++) {
 
-            PatternElement element = this.elements.get(i);
+            PatternElement element = this.getElements().get(i);
 
             // no such index in arguments and not optional (missing element)
             if ((argsArr.length <= i) && !(element instanceof OptionalElement)) {
@@ -128,6 +138,11 @@ public class PatternMeta {
             if ((element instanceof StaticElement) && !argsArr[i].equals(element.getName())) {
                 return false;
             }
+
+            // empty element
+            if ((element instanceof RequiredElement) && argsArr[i].isEmpty()) {
+                return false;
+            }
         }
 
         return true;
@@ -135,30 +150,24 @@ public class PatternMeta {
 
     public Optional<PatternElement> getElementByName(String name) {
         if (name == null) throw new IllegalArgumentException("name cannot be null");
-        return this.elements.stream()
+        return this.getElements().stream()
                 .filter(element -> name.equals(element.getName()))
                 .findAny();
     }
 
-    public String getValueByArgument(ArgumentMeta argument, String args) {
+    public String getValueByArgument(ArgumentMeta argument, String[] parts) {
 
-        String[] parts = args.split(" ");
         String name = argument.getName();
+        PatternElement element = this.getNameToElement().get(name);
 
-        for (int i = 0; i < this.elements.size(); i++) {
-
-            PatternElement element = this.elements.get(i);
-            if (!name.equals(element.getName())) {
-                continue;
-            }
-
-            if (element instanceof OptionalElement) {
-                return  (parts.length <= i) ? null : parts[i];
-            }
-
-            return parts[i];
+        if (element instanceof OptionalElement) {
+            return  (parts.length <= element.getIndex()) ? null : parts[element.getIndex()];
         }
 
-        throw new IllegalArgumentException("no such element for named parameter '" + name + " in " + args);
+        if (element != null) {
+            return parts[element.getIndex()];
+        }
+
+        throw new IllegalArgumentException("no such element for named parameter '" + name + " in " + Arrays.toString(parts));
     }
 }

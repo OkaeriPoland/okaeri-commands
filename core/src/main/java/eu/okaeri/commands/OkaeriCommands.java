@@ -85,7 +85,7 @@ public class OkaeriCommands implements Commands {
         String[] argsArr = args.split(" ");
 
         for (ArgumentMeta argument : arguments) {
-            String value = pattern.getValueByArgument(argument, args);
+            String value = pattern.getValueByArgument(argument, argsArr);
             callArguments.put(argument.getIndex(), argument.wrap(value));
         }
 

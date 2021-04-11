@@ -17,7 +17,8 @@ public class BenchmarkCommands {
     @State(Scope.Benchmark)
     public static class Data {
         public Commands commands = CommandsManager.create(new CommandsCli())
-                .register(ExampleCommand.class);
+                .register(ExampleCommand.class)
+                .register(TrickyCommand.class);
     }
 
     public static void main(String[] args) throws Exception {
