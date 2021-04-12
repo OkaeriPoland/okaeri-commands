@@ -1,9 +1,7 @@
 package eu.okaeri.commands.bukkit.response;
 
 import eu.okaeri.commands.bukkit.response.placeholder.Placeholers;
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.ChatColor;
 
 public class ColorResponse extends RawResponse {
 
@@ -22,22 +20,15 @@ public class ColorResponse extends RawResponse {
         return new ColorResponse(color, value);
     }
 
-    public static ColorResponse of(org.bukkit.ChatColor color, String... value) {
-        return new ColorResponse(ChatColor.valueOf(color.name()), value);
-    }
-
     @Override
-    public BaseComponent[] render() {
+    public String render() {
 
         if (this.color == null) {
             String render = ChatColor.translateAlternateColorCodes('&', super.raw());
             render = Placeholers.replaceAll(render, this.fields());
-            return TextComponent.fromLegacyText(render);
+            return render;
         }
 
-        TextComponent component = new TextComponent();
-        component.setText(Placeholers.replaceAll(this.raw(), this.fields()));
-        component.setColor(this.color);
-        return new TextComponent[]{component};
+        return this.color + Placeholers.replaceAll(this.raw(), this.fields());
     }
 }

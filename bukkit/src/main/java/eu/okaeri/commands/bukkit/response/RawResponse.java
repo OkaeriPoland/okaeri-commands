@@ -3,8 +3,6 @@ package eu.okaeri.commands.bukkit.response;
 import eu.okaeri.commands.bukkit.response.placeholder.Placeholers;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.TextComponent;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -42,9 +40,7 @@ public class RawResponse implements BukkitResponse {
     }
 
     @Override
-    public BaseComponent[] render() {
-        TextComponent component = new TextComponent();
-        component.setText(Placeholers.replaceAll(this.raw(), this.fields()));
-        return new TextComponent[]{component};
+    public String render() {
+        return Placeholers.replaceAll(this.raw(), this.fields());
     }
 }
