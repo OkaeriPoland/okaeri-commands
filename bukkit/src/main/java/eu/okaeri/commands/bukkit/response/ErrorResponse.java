@@ -1,6 +1,6 @@
 package eu.okaeri.commands.bukkit.response;
 
-import net.md_5.bungee.api.ChatColor;
+import org.bukkit.ChatColor;
 
 public class ErrorResponse extends RawResponse {
 

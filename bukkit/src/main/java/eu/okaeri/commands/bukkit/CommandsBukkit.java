@@ -174,7 +174,7 @@ public class CommandsBukkit extends CommandsAdapter {
             return;
         }
 
-        throw new RuntimeException("Unknown return type for errorHandler [allowed: BukkitResponse, String, BaseComponent]", throwable);
+        throw new RuntimeException("Unknown return type for errorHandler [allowed: BukkitResponse, String, null]", throwable);
     }
 
     private void handleExecution(CommandSender sender, Commands core, InvocationContext invocationContext, CommandContext commandContext) {
@@ -186,7 +186,11 @@ public class CommandsBukkit extends CommandsAdapter {
                 return;
             }
 
-            throw new RuntimeException("Unknown return type for excutor [allowed: BukkitResponse, String, BaseComponent]");
+            if (invocationContext.getExecutor().getMethod().getReturnType() == void.class) {
+                return;
+            }
+
+            throw new RuntimeException("Unknown return type for excutor [allowed: BukkitResponse, String, void]");
         }
         catch (InvocationTargetException | IllegalAccessException | CommandException exception) {
 
