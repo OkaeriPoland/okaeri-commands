@@ -18,10 +18,10 @@ import java.util.UUID;
 @SuppressWarnings("FieldNamingConvention")
 public class DefaultErrorHandler implements ErrorHandler {
 
-    private static final String K_COMMANDS_SYSTEM_USAGE = "!commands-system-usage";
-    private static final String K_COMMANDS_SYSTEM_USAGE_DEF = ChatColor.YELLOW + "Correct usage of /{label}:\n{entries}";
+    private static final String K_COMMANDS_SYSTEM_USAGE_TEMPLATE = "!commands-system-usage-template";
+    private static final String K_COMMANDS_SYSTEM_USAGE_TEMPLATE_DEF = ChatColor.YELLOW + "Correct usage of /{label}:\n{entries}";
     private static final String K_COMMANDS_SYSTEM_USAGE_ENTRY = "!commands-system-usage-entry";
-    private static final String K_COMMANDS_SYSTEM_USAGE_ENTRY_DEF = " - /{usage}";
+    private static final String K_COMMANDS_SYSTEM_USAGE_ENTRY_DEF = ChatColor.RESET + " - /{usage}";
     private static final String K_COMMANDS_SYSTEM_USAGE_ENTRY_DESCRIPTION = "!commands-system-usage-entry-description";
     private static final String K_COMMANDS_SYSTEM_USAGE_ENTRY_DESCRIPTION_DEF = ChatColor.GRAY + "   {description}";
 
@@ -33,7 +33,7 @@ public class DefaultErrorHandler implements ErrorHandler {
         this.helpBuilder = new HelpBuilder() {
             @Override
             public String getTemplateForHelp(CommandContext commandContext, InvocationContext invocationContext) {
-                return DefaultErrorHandler.this.resolveText(commandContext, invocationContext, K_COMMANDS_SYSTEM_USAGE, K_COMMANDS_SYSTEM_USAGE_DEF);
+                return DefaultErrorHandler.this.resolveText(commandContext, invocationContext, K_COMMANDS_SYSTEM_USAGE_TEMPLATE, K_COMMANDS_SYSTEM_USAGE_TEMPLATE_DEF);
             }
 
             @Override
