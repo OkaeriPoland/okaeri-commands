@@ -7,10 +7,11 @@ import eu.okaeri.commands.bukkit.annotation.Sender;
 import eu.okaeri.commands.bukkit.exception.ExceptionSource;
 import eu.okaeri.commands.bukkit.exception.NoPermissionException;
 import eu.okaeri.commands.bukkit.exception.NoSuchCommandException;
-import eu.okaeri.commands.bukkit.handler.DefaultErrorHandler;
-import eu.okaeri.commands.bukkit.handler.DefaultResultHandler;
-import eu.okaeri.commands.bukkit.handler.ErrorHandler;
-import eu.okaeri.commands.bukkit.handler.ResultHandler;
+import eu.okaeri.commands.bukkit.handler.*;
+import eu.okaeri.commands.handler.DefaultTextHandler;
+import eu.okaeri.commands.handler.ErrorHandler;
+import eu.okaeri.commands.handler.ResultHandler;
+import eu.okaeri.commands.handler.TextHandler;
 import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.meta.ExecutorMeta;
 import eu.okaeri.commands.meta.InvocationMeta;
@@ -38,6 +39,7 @@ public class CommandsBukkit extends CommandsAdapter {
 
     private ErrorHandler errorHandler = new DefaultErrorHandler(this);
     private ResultHandler resultHandler = new DefaultResultHandler();
+    private TextHandler textHandler = new DefaultTextHandler();
 
     public static CommandsBukkit of(JavaPlugin plugin) {
         return new CommandsBukkit(plugin);
@@ -53,6 +55,11 @@ public class CommandsBukkit extends CommandsAdapter {
         return this;
     }
 
+    public CommandsBukkit textHandler(TextHandler textHandler) {
+        this.textHandler = textHandler;
+        return this;
+    }
+
     protected CommandsBukkit(JavaPlugin plugin) {
         this.plugin = plugin;
         try {
@@ -64,6 +71,11 @@ public class CommandsBukkit extends CommandsAdapter {
             exception.printStackTrace();
             throw new RuntimeException("cannot get commandMap", exception);
         }
+    }
+
+    @Override
+    public String resolveText(CommandContext commandContext, InvocationContext invocationContext, String text) {
+        return this.textHandler.resolve(commandContext, invocationContext, text);
     }
 
     @Override
@@ -160,7 +172,7 @@ public class CommandsBukkit extends CommandsAdapter {
 
     private void handleError(CommandContext commandContext, InvocationContext invocationContext, Throwable throwable, ExceptionSource source) {
 
-        Object result = this.errorHandler.onError(commandContext, invocationContext, throwable, source);
+        Object result = this.errorHandler.onError(commandContext, invocationContext, throwable);
         if (result == null) {
             return;
         }
@@ -170,7 +182,7 @@ public class CommandsBukkit extends CommandsAdapter {
             throw new RuntimeException("Cannot dispatch error", throwable);
         }
 
-        if (this.resultHandler.onResult(result, sender)) {
+        if (this.resultHandler.onResult(result, commandContext, invocationContext)) {
             return;
         }
 
@@ -182,7 +194,7 @@ public class CommandsBukkit extends CommandsAdapter {
             InvocationMeta invocationMeta = core.invocationPrepare(invocationContext, commandContext);
             Object result = invocationMeta.call();
 
-            if (this.resultHandler.onResult(result, sender)) {
+            if (this.resultHandler.onResult(result, commandContext, invocationContext)) {
                 return;
             }
 

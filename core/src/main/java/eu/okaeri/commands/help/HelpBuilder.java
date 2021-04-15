@@ -18,6 +18,8 @@ public abstract class HelpBuilder {
 
     public abstract String getTemplateForDescription(CommandContext commandContext, InvocationContext invocationContext);
 
+    public abstract String resolveText(CommandContext commandContext, InvocationContext invocationContext, String text);
+
     public String renderEntry(CommandContext commandContext, InvocationContext invocationContext, CommandMeta meta) {
 
         ExecutorMeta executor = meta.getExecutor();
@@ -32,7 +34,7 @@ public abstract class HelpBuilder {
     public String renderDescription(CommandContext commandContext, InvocationContext invocationContext, CommandMeta meta) {
         String description = meta.getExecutor().getDescription();
         String template = this.getTemplateForDescription(commandContext, invocationContext);
-        return description.isEmpty() ? "" : template.replace("{description}", description);
+        return description.isEmpty() ? "" : template.replace("{description}", this.resolveText(commandContext, invocationContext, description));
     }
 
     public String render(CommandContext commandContext, InvocationContext invocationContext, CommandsAdapter adapter) {
