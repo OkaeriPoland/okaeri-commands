@@ -1,11 +1,11 @@
 package eu.okaeri.commands.bukkit.handler;
 
 import eu.okaeri.commands.adapter.CommandsAdapter;
-import eu.okaeri.commands.bukkit.exception.ExceptionSource;
 import eu.okaeri.commands.bukkit.exception.NoPermissionException;
 import eu.okaeri.commands.bukkit.exception.NoSuchCommandException;
 import eu.okaeri.commands.bukkit.response.ErrorResponse;
 import eu.okaeri.commands.bukkit.response.RawResponse;
+import eu.okaeri.commands.handler.ErrorHandler;
 import eu.okaeri.commands.help.HelpBuilder;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandException;
@@ -45,11 +45,16 @@ public class DefaultErrorHandler implements ErrorHandler {
             public String getTemplateForDescription(CommandContext commandContext, InvocationContext invocationContext) {
                 return DefaultErrorHandler.this.resolveText(commandContext, invocationContext, K_COMMANDS_SYSTEM_USAGE_ENTRY_DESCRIPTION, K_COMMANDS_SYSTEM_USAGE_ENTRY_DESCRIPTION_DEF);
             }
+
+            @Override
+            public String resolveText(CommandContext commandContext, InvocationContext invocationContext, String text) {
+                return adapter.resolveText(commandContext, invocationContext, text);
+            }
         };
     }
 
     @Override
-    public Object onError(CommandContext commandContext, InvocationContext invocationContext, Throwable throwable, ExceptionSource source) {
+    public Object onError(CommandContext commandContext, InvocationContext invocationContext, Throwable throwable) {
 
         if (throwable instanceof NoPermissionException) {
             return ErrorResponse.of("No permission " + throwable.getMessage() + "!");
