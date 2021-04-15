@@ -17,7 +17,7 @@
         <dependency>
             <groupId>eu.okaeri</groupId>
             <artifactId>okaeri-commands-cli</artifactId>
-            <version>0.3.4</version>
+            <version>0.4.0</version>
         </dependency>
 
         <dependency>

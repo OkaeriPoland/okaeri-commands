@@ -23,7 +23,7 @@ public abstract class HelpBuilder {
     public String renderEntry(CommandContext commandContext, InvocationContext invocationContext, CommandMeta meta) {
 
         ExecutorMeta executor = meta.getExecutor();
-        String usage = executor.getUsage()
+        String usage = this.resolveText(commandContext, invocationContext, executor.getUsage())
                 .replace("{label}", invocationContext.getLabel())
                 .replace("{pattern}", executor.getPattern().getRaw());
 
