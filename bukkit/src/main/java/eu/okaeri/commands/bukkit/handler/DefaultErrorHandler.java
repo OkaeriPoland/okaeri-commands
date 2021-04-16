@@ -45,7 +45,7 @@ public class DefaultErrorHandler implements ErrorHandler {
 
             @Override
             public String resolveText(CommandContext commandContext, InvocationContext invocationContext, String text) {
-                return adapter.resolveText(commandContext, invocationContext, text);
+                return ChatColor.stripColor(adapter.resolveText(commandContext, invocationContext, text)); // usage, description
             }
         };
     }
