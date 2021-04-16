@@ -8,7 +8,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Executor {
-    boolean fallback() default false;
     boolean async() default false;
     String[] pattern() default {};
     String description() default "";
