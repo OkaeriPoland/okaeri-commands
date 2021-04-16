@@ -3,8 +3,6 @@ package eu.okaeri.commands.bukkit.handler;
 import eu.okaeri.commands.adapter.CommandsAdapter;
 import eu.okaeri.commands.bukkit.exception.NoPermissionException;
 import eu.okaeri.commands.bukkit.exception.NoSuchCommandException;
-import eu.okaeri.commands.bukkit.response.ErrorResponse;
-import eu.okaeri.commands.bukkit.response.RawResponse;
 import eu.okaeri.commands.handler.ErrorHandler;
 import eu.okaeri.commands.help.HelpBuilder;
 import eu.okaeri.commands.service.CommandContext;
@@ -18,13 +16,6 @@ import java.util.UUID;
 @SuppressWarnings("FieldNamingConvention")
 public class DefaultErrorHandler implements ErrorHandler {
 
-    private static final String K_COMMANDS_SYSTEM_USAGE_TEMPLATE = "!commands-system-usage-template";
-    private static final String K_COMMANDS_SYSTEM_USAGE_TEMPLATE_DEF = ChatColor.YELLOW + "Correct usage of /{label}:\n{entries}";
-    private static final String K_COMMANDS_SYSTEM_USAGE_ENTRY = "!commands-system-usage-entry";
-    private static final String K_COMMANDS_SYSTEM_USAGE_ENTRY_DEF = ChatColor.RESET + " - /{usage}";
-    private static final String K_COMMANDS_SYSTEM_USAGE_ENTRY_DESCRIPTION = "!commands-system-usage-entry-description";
-    private static final String K_COMMANDS_SYSTEM_USAGE_ENTRY_DESCRIPTION_DEF = ChatColor.GRAY + "   {description}";
-
     private final CommandsAdapter adapter;
     private final HelpBuilder helpBuilder;
 
@@ -33,17 +24,23 @@ public class DefaultErrorHandler implements ErrorHandler {
         this.helpBuilder = new HelpBuilder() {
             @Override
             public String getTemplateForHelp(CommandContext commandContext, InvocationContext invocationContext) {
-                return DefaultErrorHandler.this.resolveText(commandContext, invocationContext, K_COMMANDS_SYSTEM_USAGE_TEMPLATE, K_COMMANDS_SYSTEM_USAGE_TEMPLATE_DEF);
+                return DefaultErrorHandler.this.resolveText(commandContext, invocationContext,
+                        "!commands-system-usage-template",
+                        ChatColor.YELLOW + "Correct usage of /{label}:\n{entries}");
             }
 
             @Override
             public String getTemplateForEntry(CommandContext commandContext, InvocationContext invocationContext) {
-                return DefaultErrorHandler.this.resolveText(commandContext, invocationContext, K_COMMANDS_SYSTEM_USAGE_ENTRY, K_COMMANDS_SYSTEM_USAGE_ENTRY_DEF);
+                return DefaultErrorHandler.this.resolveText(commandContext, invocationContext,
+                        "!commands-system-usage-entry",
+                        ChatColor.RESET + " - /{usage}");
             }
 
             @Override
             public String getTemplateForDescription(CommandContext commandContext, InvocationContext invocationContext) {
-                return DefaultErrorHandler.this.resolveText(commandContext, invocationContext, K_COMMANDS_SYSTEM_USAGE_ENTRY_DESCRIPTION, K_COMMANDS_SYSTEM_USAGE_ENTRY_DESCRIPTION_DEF);
+                return DefaultErrorHandler.this.resolveText(commandContext, invocationContext,
+                        "!commands-system-usage-entry-description",
+                        ChatColor.GRAY + "   {description}");
             }
 
             @Override
@@ -57,22 +54,28 @@ public class DefaultErrorHandler implements ErrorHandler {
     public Object onError(CommandContext commandContext, InvocationContext invocationContext, Throwable throwable) {
 
         if (throwable instanceof NoPermissionException) {
-            return ErrorResponse.of("No permission " + throwable.getMessage() + "!");
+            return this.resolveText(commandContext, invocationContext,
+                    "!comamnds-system-permissions-error", ChatColor.RED + "No permission {permission}!")
+                    .replace("{permission}", throwable.getMessage());
         }
 
         if (throwable instanceof NoSuchCommandException) {
-            return RawResponse.of(this.helpBuilder.render(commandContext, invocationContext, this.adapter));
+            return this.helpBuilder.render(commandContext, invocationContext, this.adapter);
         }
 
         if (throwable instanceof CommandException) {
-            return ErrorResponse.of("Error: " + throwable.getMessage());
+            return this.resolveText(commandContext, invocationContext,
+                    "!comamnds-system-command-error", ChatColor.RED + "Error: {message}")
+                    .replace("{message}", throwable.getMessage());
         }
 
         String exceptionID = String.valueOf(UUID.randomUUID()).split("-")[4];
         Bukkit.getLogger().severe("Unexpected exception in the command system [id=" + exceptionID + "]:");
         throwable.printStackTrace();
 
-        return ErrorResponse.of("Unknown error! Reference ID: " + exceptionID);
+        return this.resolveText(commandContext, invocationContext,
+                "!comamnds-system-unknown-error", ChatColor.RED + "Unknown error! Reference ID: {id}")
+                .replace("{id}", exceptionID);
     }
 
     private String resolveText(CommandContext commandContext, InvocationContext invocationContext, String key, String def) {
