@@ -81,7 +81,7 @@ public class DefaultErrorHandler implements ErrorHandler {
         }
 
         return this.resolveText(commandContext, invocationContext,
-                "!comamnds-system-unknown-error", ChatColor.RED + "Unknown error! Reference ID: {id}")
+                "!commands-system-unknown-error", ChatColor.RED + "Unknown error! Reference ID: {id}")
                 .replace("{id}", exceptionID);
     }
 
