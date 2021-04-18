@@ -139,14 +139,14 @@ public class CommandsBukkit extends CommandsAdapter {
         String fullCommand = (label + " " + String.join(" ", args)).trim();
 
         if ((servicePermission != null) && !sender.hasPermission(servicePermission)) {
-            InvocationContext dummyInvocationContext = InvocationContext.of(commandMeta, null, label, String.join(" ", args));
+            InvocationContext dummyInvocationContext = InvocationContext.of(commandMeta, label, String.join(" ", args));
             this.handleError(commandContext, dummyInvocationContext, new NoPermissionException(servicePermission), ExceptionSource.SYSTEM);
             return true;
         }
 
         Optional<InvocationContext> invocationOptional = core.invocationMatch(fullCommand);
         if (!invocationOptional.isPresent()) {
-            InvocationContext dummyInvocationContext = InvocationContext.of(commandMeta, null, label, String.join(" ", args));
+            InvocationContext dummyInvocationContext = InvocationContext.of(commandMeta, label, String.join(" ", args));
             this.handleError(commandContext, dummyInvocationContext, new NoSuchCommandException(fullCommand), ExceptionSource.SYSTEM);
             return true;
         }
@@ -160,7 +160,7 @@ public class CommandsBukkit extends CommandsAdapter {
             return true;
         }
 
-        if (invocationContext.getExecutor().isAsync()) {
+        if (invocationContext.isAsync()) {
             Runnable prepareAndExecuteAsync = () -> this.handleExecution(sender, core, invocationContext, commandContext);
             plugin.getServer().getScheduler().runTaskAsynchronously(plugin, prepareAndExecuteAsync);
             return true;

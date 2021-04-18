@@ -12,6 +12,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 
 import java.util.UUID;
+import java.util.logging.Level;
 
 @SuppressWarnings("FieldNamingConvention")
 public class DefaultErrorHandler implements ErrorHandler {
@@ -70,8 +71,14 @@ public class DefaultErrorHandler implements ErrorHandler {
         }
 
         String exceptionID = String.valueOf(UUID.randomUUID()).split("-")[4];
-        Bukkit.getLogger().severe("Unexpected exception in the command system [id=" + exceptionID + "]:");
-        throwable.printStackTrace();
+        Bukkit.getLogger().log(Level.SEVERE, "Unexpected exception in the command system [id=" + exceptionID + "]", throwable);
+
+        CommandsUnknownErrorEvent event = new CommandsUnknownErrorEvent(!Bukkit.isPrimaryThread(), commandContext, invocationContext, throwable, exceptionID, true);
+        Bukkit.getPluginManager().callEvent(event);
+
+        if (!event.isSendMessage()) {
+            return null;
+        }
 
         return this.resolveText(commandContext, invocationContext,
                 "!comamnds-system-unknown-error", ChatColor.RED + "Unknown error! Reference ID: {id}")

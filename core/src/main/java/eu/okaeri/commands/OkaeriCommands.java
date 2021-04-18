@@ -69,7 +69,7 @@ public class OkaeriCommands implements Commands {
         }
 
         CommandMeta commandMeta = commandMetas.get();
-        return Optional.of(InvocationContext.of(commandMeta, commandMeta.getExecutor(), label, args));
+        return Optional.of(InvocationContext.of(commandMeta, label, args));
     }
 
     @Override
@@ -77,7 +77,7 @@ public class OkaeriCommands implements Commands {
 
         String args = invocationContext.getArgs();
         CommandMeta commandMeta = invocationContext.getCommand();
-        ExecutorMeta executor = invocationContext.getExecutor();
+        ExecutorMeta executor = commandMeta.getExecutor();
         PatternMeta pattern = executor.getPattern();
         List<ArgumentMeta> arguments = executor.getArguments();
 
