@@ -13,7 +13,7 @@ import java.util.List;
 @ServiceDescriptor(label = "cmd", description = "Example command service")
 public class ExampleCommand implements CommandService {
 
-    @Executor(fallback = true)
+    @Executor // fallback = true
     private String defaultExecutor(@RawArgs List<String> args) {
         return "called default method: " + args;
     }

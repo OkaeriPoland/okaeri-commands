@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.SneakyThrows;
 
 import java.lang.reflect.Parameter;
+import java.lang.reflect.Type;
 import java.util.Optional;
 
 @Data
@@ -28,6 +29,7 @@ public class ArgumentMeta {
         meta.name = arg.value().isEmpty() ? parameter.getName() : arg.value();
         meta.index = index;
         meta.type = parameter.getType();
+        meta.parameterizedType = parameter.getParameterizedType();
         meta.optional = Option.class.isAssignableFrom(meta.type) || Optional.class.isAssignableFrom(meta.type);
 
         return meta;
@@ -37,6 +39,7 @@ public class ArgumentMeta {
     private String name;
     private int index;
     private Class<?> type;
+    private Type parameterizedType;
 
     public Object wrap(Object value) {
 

@@ -43,11 +43,6 @@ BenchmarkCommands.command_simple   thrpt    5  1253307.288 ± 31533.820  ops/s
 @ServiceDescriptor(label = "cmd", description = "Example command service")
 public class ExampleCommand implements CommandService {
 
-    @Executor(fallback = true)
-    private void defaultExecutor(@RawArgs List<String> args) {
-        System.out.println("called default method: " + args);
-    }
-
     // cmd woah
     // simple commands with no additional effort
     @Executor(description = "Prints woah message")
