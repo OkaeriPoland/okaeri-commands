@@ -218,13 +218,19 @@ public class CommandsBukkit extends CommandsAdapter {
                 return;
             }
 
+            // exception originating from the core system (type resolver?)
+            if (exception instanceof CommandException) {
+                this.handleError(commandContext, invocationContext, exception, ExceptionSource.COMMAND);
+                return;
+            }
+
             // exception originating from the core system
             if (exception.getCause() instanceof CommandException) {
                 this.handleError(commandContext, invocationContext, exception.getCause(), ExceptionSource.COMMAND);
                 return;
             }
 
-            throw new RuntimeException("ThatShouldNotBePossibleException", exception);
+            throw new RuntimeException("ThatShouldNotBePossibleButSomethingHasGoneTerriblyWrongException", exception);
         }
     }
 

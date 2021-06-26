@@ -10,8 +10,12 @@ import eu.okaeri.commands.meta.InvocationMeta;
 import eu.okaeri.commands.meta.pattern.PatternMeta;
 import eu.okaeri.commands.registry.CommandsRegistry;
 import eu.okaeri.commands.service.CommandContext;
+import eu.okaeri.commands.service.CommandException;
 import eu.okaeri.commands.service.CommandService;
 import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.type.CommandsTypes;
+import eu.okaeri.commands.type.CommandsTypesPack;
+import eu.okaeri.commands.type.resolver.TypeResolver;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
@@ -27,11 +31,7 @@ public class OkaeriCommands implements Commands {
 
     private final CommandsAdapter adapter;
     private final CommandsRegistry registry;
-
-    @Override
-    public CommandsRegistry getRegistry() {
-        return this.registry;
-    }
+    private final CommandsTypes types;
 
     @Override
     public Commands register(Class<? extends CommandService> clazz) {
@@ -42,6 +42,18 @@ public class OkaeriCommands implements Commands {
     @Override
     public Commands register(CommandService service) {
         this.registry.register(service);
+        return this;
+    }
+
+    @Override
+    public Commands register(TypeResolver typeResolver) {
+        this.types.register(typeResolver);
+        return this;
+    }
+
+    @Override
+    public Commands register(CommandsTypesPack typesPack) {
+        this.types.register(typesPack);
         return this;
     }
 
@@ -85,8 +97,22 @@ public class OkaeriCommands implements Commands {
         String[] argsArr = args.split(" ");
 
         for (ArgumentMeta argument : arguments) {
+
             String value = pattern.getValueByArgument(argument, argsArr);
-            callArguments.put(argument.getIndex(), argument.wrap(value));
+            Optional<TypeResolver> typeResolverOptional = this.getTypes().findByType(argument.getParameterizedType());
+
+            if (!typeResolverOptional.isPresent()) {
+                throw new IllegalArgumentException("method argument of type " + argument.getType() + " cannot be resolved");
+            }
+
+            Object resolvedValue;
+            try {
+                resolvedValue = typeResolverOptional.get().resolve(invocationContext, commandContext, argument, value);
+            } catch (Exception exception) {
+                throw new CommandException(argument.getName() + " - " + exception.getMessage());
+            }
+
+            callArguments.put(argument.getIndex(), argument.wrap(resolvedValue));
         }
 
         if (arguments.size() != callArguments.size()) {
@@ -136,7 +162,7 @@ public class OkaeriCommands implements Commands {
             }
 
             // pass to adapter for missing elements
-            call[i] = this.adapter.resolveMissingArgument(commandContext, invocationContext, commandMeta, param, i);
+            call[i] = this.getAdapter().resolveMissingArgument(commandContext, invocationContext, commandMeta, param, i);
         }
 
         return InvocationMeta.of(executorMethod, call, commandMeta.getService(), executor);
