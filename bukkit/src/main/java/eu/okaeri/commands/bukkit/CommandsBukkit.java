@@ -7,7 +7,8 @@ import eu.okaeri.commands.bukkit.annotation.Sender;
 import eu.okaeri.commands.bukkit.exception.ExceptionSource;
 import eu.okaeri.commands.bukkit.exception.NoPermissionException;
 import eu.okaeri.commands.bukkit.exception.NoSuchCommandException;
-import eu.okaeri.commands.bukkit.handler.*;
+import eu.okaeri.commands.bukkit.handler.DefaultErrorHandler;
+import eu.okaeri.commands.bukkit.handler.DefaultResultHandler;
 import eu.okaeri.commands.handler.DefaultTextHandler;
 import eu.okaeri.commands.handler.ErrorHandler;
 import eu.okaeri.commands.handler.ResultHandler;
@@ -19,6 +20,7 @@ import eu.okaeri.commands.meta.ServiceMeta;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandException;
 import eu.okaeri.commands.service.InvocationContext;
+import lombok.NonNull;
 import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
@@ -41,26 +43,26 @@ public class CommandsBukkit extends CommandsAdapter {
     private ResultHandler resultHandler = new DefaultResultHandler();
     private TextHandler textHandler = new DefaultTextHandler();
 
-    public static CommandsBukkit of(JavaPlugin plugin) {
+    public static CommandsBukkit of(@NonNull JavaPlugin plugin) {
         return new CommandsBukkit(plugin);
     }
 
-    public CommandsBukkit errorHandler(ErrorHandler errorHandler) {
+    public CommandsBukkit errorHandler(@NonNull ErrorHandler errorHandler) {
         this.errorHandler = errorHandler;
         return this;
     }
 
-    public CommandsBukkit resultHandler(ResultHandler resultHandler) {
+    public CommandsBukkit resultHandler(@NonNull ResultHandler resultHandler) {
         this.resultHandler = resultHandler;
         return this;
     }
 
-    public CommandsBukkit textHandler(TextHandler textHandler) {
+    public CommandsBukkit textHandler(@NonNull TextHandler textHandler) {
         this.textHandler = textHandler;
         return this;
     }
 
-    protected CommandsBukkit(JavaPlugin plugin) {
+    protected CommandsBukkit(@NonNull JavaPlugin plugin) {
         this.plugin = plugin;
         try {
             Server server = plugin.getServer();
@@ -74,12 +76,12 @@ public class CommandsBukkit extends CommandsAdapter {
     }
 
     @Override
-    public String resolveText(CommandContext commandContext, InvocationContext invocationContext, String text) {
+    public String resolveText(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull String text) {
         return this.textHandler.resolve(commandContext, invocationContext, text);
     }
 
     @Override
-    public Object resolveMissingArgument(CommandContext commandContext, InvocationContext invocationContext, CommandMeta command, Parameter param, int i) {
+    public Object resolveMissingArgument(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull CommandMeta command, @NonNull Parameter param, int i) {
 
         Class<?> paramType = param.getType();
 
@@ -102,7 +104,7 @@ public class CommandsBukkit extends CommandsAdapter {
     }
 
     @Override
-    public void onRegister(CommandMeta command) {
+    public void onRegister(@NonNull CommandMeta command) {
 
         ServiceMeta service = command.getService();
         String serviceLabel = service.getLabel();
@@ -133,7 +135,7 @@ public class CommandsBukkit extends CommandsAdapter {
         super.onRegister(command);
     }
 
-    private boolean executeCommand(CommandMeta commandMeta, CommandContext commandContext, CommandSender sender, String label, String[] args, String servicePermission) {
+    private boolean executeCommand(@NonNull CommandMeta commandMeta, @NonNull CommandContext commandContext, @NonNull CommandSender sender, @NonNull String label, @NonNull String[] args, String servicePermission) {
 
         Commands core = CommandsBukkit.super.getCore();
         String fullCommand = (label + " " + String.join(" ", args)).trim();
@@ -170,7 +172,7 @@ public class CommandsBukkit extends CommandsAdapter {
         return true;
     }
 
-    private void handleError(CommandContext commandContext, InvocationContext invocationContext, Throwable throwable, ExceptionSource source) {
+    private void handleError(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull Throwable throwable, @NonNull ExceptionSource source) {
 
         Object result = this.errorHandler.onError(commandContext, invocationContext, throwable);
         if (result == null) {
@@ -189,7 +191,7 @@ public class CommandsBukkit extends CommandsAdapter {
         throw new RuntimeException("Unknown return type for errorHandler [allowed: BukkitResponse, String, null]", throwable);
     }
 
-    private void handleExecution(CommandSender sender, Commands core, InvocationContext invocationContext, CommandContext commandContext) {
+    private void handleExecution(@NonNull CommandSender sender, @NonNull Commands core, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
         try {
             InvocationMeta invocationMeta = core.invocationPrepare(invocationContext, commandContext);
             Object result = invocationMeta.call();
@@ -234,12 +236,12 @@ public class CommandsBukkit extends CommandsAdapter {
         }
     }
 
-    private String getPermission(ServiceMeta service) {
+    private String getPermission(@NonNull ServiceMeta service) {
         Permission permission = service.getImplementor().getClass().getAnnotation(Permission.class);
         return (permission == null) ? null : permission.value();
     }
 
-    private String getPermission(ExecutorMeta executor) {
+    private String getPermission(@NonNull ExecutorMeta executor) {
         Permission permission = executor.getMethod().getAnnotation(Permission.class);
         return (permission == null) ? null : permission.value();
     }

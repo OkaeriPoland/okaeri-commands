@@ -8,6 +8,7 @@ import eu.okaeri.commands.help.HelpBuilder;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandException;
 import eu.okaeri.commands.service.InvocationContext;
+import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 
@@ -20,7 +21,7 @@ public class DefaultErrorHandler implements ErrorHandler {
     private final CommandsAdapter adapter;
     private final HelpBuilder helpBuilder;
 
-    public DefaultErrorHandler(CommandsAdapter adapter) {
+    public DefaultErrorHandler(@NonNull CommandsAdapter adapter) {
         this.adapter = adapter;
         this.helpBuilder = new HelpBuilder() {
             @Override
@@ -52,7 +53,7 @@ public class DefaultErrorHandler implements ErrorHandler {
     }
 
     @Override
-    public Object onError(CommandContext commandContext, InvocationContext invocationContext, Throwable throwable) {
+    public Object onError(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull Throwable throwable) {
 
         if (throwable instanceof NoPermissionException) {
             return this.resolveText(commandContext, invocationContext,

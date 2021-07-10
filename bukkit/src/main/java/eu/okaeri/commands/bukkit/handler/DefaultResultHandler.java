@@ -5,12 +5,13 @@ import eu.okaeri.commands.bukkit.response.RawResponse;
 import eu.okaeri.commands.handler.ResultHandler;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.InvocationContext;
+import lombok.NonNull;
 import org.bukkit.command.CommandSender;
 
 public class DefaultResultHandler implements ResultHandler {
 
     @Override
-    public boolean onResult(Object result, CommandContext commandContext, InvocationContext invocationContext) {
+    public boolean onResult(Object result, @NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext) {
 
         CommandSender sender = commandContext.get("sender", CommandSender.class);
         if (sender == null) {

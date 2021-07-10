@@ -3,6 +3,7 @@ package eu.okaeri.commands.meta;
 import eu.okaeri.commands.annotation.ServiceDescriptor;
 import eu.okaeri.commands.service.CommandService;
 import lombok.Data;
+import lombok.NonNull;
 
 import java.util.Arrays;
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.List;
 @Data
 public class ServiceMeta {
 
-    public static ServiceMeta of(CommandService service) {
+    public static ServiceMeta of(@NonNull CommandService service) {
 
         Class<? extends CommandService> serviceClazz = service.getClass();
         ServiceDescriptor descriptor = serviceClazz.getAnnotation(ServiceDescriptor.class);

@@ -2,6 +2,7 @@ package eu.okaeri.commands.bukkit.response;
 
 import eu.okaeri.commands.bukkit.response.placeholder.Placeholers;
 import lombok.EqualsAndHashCode;
+import lombok.NonNull;
 import lombok.ToString;
 
 import java.util.LinkedHashMap;
@@ -14,11 +15,11 @@ public class RawResponse implements BukkitResponse {
     private String value;
     private Map<String, String> fields = new LinkedHashMap<>();
 
-    protected RawResponse(String... value) {
+    protected RawResponse(@NonNull String... value) {
         this.value = String.join("\n", value);
     }
 
-    public static RawResponse of(String... value) {
+    public static RawResponse of(@NonNull String... value) {
         return new RawResponse(value);
     }
 
@@ -32,9 +33,7 @@ public class RawResponse implements BukkitResponse {
     }
 
     @Override
-    public BukkitResponse withField(String field, String value) {
-        if (field == null) throw new IllegalArgumentException("field cannot be null");
-        if (value == null) throw new IllegalArgumentException("value cannot be null");
+    public BukkitResponse withField(@NonNull String field, @NonNull String value) {
         this.fields.put(field, value);
         return this;
     }

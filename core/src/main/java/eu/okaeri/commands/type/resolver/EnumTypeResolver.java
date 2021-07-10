@@ -3,6 +3,7 @@ package eu.okaeri.commands.type.resolver;
 import eu.okaeri.commands.meta.ArgumentMeta;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.InvocationContext;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 
 import java.lang.reflect.InvocationTargetException;
@@ -19,7 +20,7 @@ public class EnumTypeResolver extends BasicTypeResolver<Enum> {
 
     @Override
     @SneakyThrows
-    public Enum resolve(InvocationContext invocationContext, CommandContext commandContext, ArgumentMeta argumentMeta, String text) {
+    public Enum resolve(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull ArgumentMeta argumentMeta, @NonNull String text) {
 
         // 1:1 match ONE=ONE
         try {

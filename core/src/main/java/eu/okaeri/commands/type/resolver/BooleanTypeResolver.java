@@ -4,6 +4,7 @@ import eu.okaeri.commands.meta.ArgumentMeta;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.InvocationContext;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -17,12 +18,12 @@ public class BooleanTypeResolver extends BasicTypeResolver<Boolean> {
     private final Set<String> falseValues = new HashSet<>(Arrays.asList("false", "n", "no", "off", "0"));
 
     @Override
-    public boolean supports(Class<?> type) {
+    public boolean supports(@NonNull Class<?> type) {
         return Boolean.class.isAssignableFrom(type) || (type == boolean.class);
     }
 
     @Override
-    public Boolean resolve(InvocationContext invocationContext, CommandContext commandContext, ArgumentMeta argumentMeta, String text) {
+    public Boolean resolve(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull ArgumentMeta argumentMeta, @NonNull String text) {
 
         String lowerCaseText = text.toLowerCase(Locale.ROOT);
 

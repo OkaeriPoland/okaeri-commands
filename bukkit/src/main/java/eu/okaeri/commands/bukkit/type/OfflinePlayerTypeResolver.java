@@ -4,6 +4,7 @@ import eu.okaeri.commands.meta.ArgumentMeta;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.InvocationContext;
 import eu.okaeri.commands.type.resolver.BasicTypeResolver;
+import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 
@@ -12,12 +13,12 @@ import java.util.UUID;
 public class OfflinePlayerTypeResolver extends BasicTypeResolver<OfflinePlayer> {
 
     @Override
-    public boolean supports(Class<?> type) {
+    public boolean supports(@NonNull Class<?> type) {
         return OfflinePlayer.class.isAssignableFrom(type);
     }
 
     @Override
-    public OfflinePlayer resolve(InvocationContext invocationContext, CommandContext commandContext, ArgumentMeta argumentMeta, String text) {
+    public OfflinePlayer resolve(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull ArgumentMeta argumentMeta, @NonNull String text) {
         try {
             UUID uniqueId = UUID.fromString(text);
             return Bukkit.getOfflinePlayer(uniqueId);

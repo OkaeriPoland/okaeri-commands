@@ -1,6 +1,7 @@
 package eu.okaeri.commands.type;
 
 import eu.okaeri.commands.type.resolver.TypeResolver;
+import lombok.NonNull;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -19,26 +20,26 @@ public class OkaeriCommandsTypes implements CommandsTypes {
     }
 
     @Override
-    public void register(CommandsTypesPack typesPack) {
+    public void register(@NonNull CommandsTypesPack typesPack) {
         typesPack.register(this);
         this.resolverCache.clear();
     }
 
     @Override
-    public void register(TypeResolver typeResolver) {
+    public void register(@NonNull TypeResolver typeResolver) {
         this.typeResolvers.add(0, typeResolver);
         this.resolverCache.clear();
     }
 
     @Override
-    public void registerExclusive(Type removeAnyForType, TypeResolver typeResolver) {
+    public void registerExclusive(@NonNull Type removeAnyForType, @NonNull TypeResolver typeResolver) {
         this.typeResolvers.removeIf(resolver -> resolver.supports(removeAnyForType));
         this.typeResolvers.add(0, typeResolver);
         this.resolverCache.clear();
     }
 
     @Override
-    public Optional<TypeResolver> findByType(Type type) {
+    public Optional<TypeResolver> findByType(@NonNull Type type) {
 
         if (this.resolverCache.containsKey(type)) {
             return Optional.of(this.resolverCache.get(type));
