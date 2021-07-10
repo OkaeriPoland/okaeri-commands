@@ -3,6 +3,7 @@ package eu.okaeri.commands.meta;
 import eu.okaeri.commands.annotation.Arg;
 import eu.okaeri.commands.service.Option;
 import lombok.Data;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 
 import java.lang.reflect.Parameter;
@@ -17,7 +18,7 @@ public class ArgumentMeta {
     }
 
     @SneakyThrows
-    public static ArgumentMeta of(Parameter parameter, int index) {
+    public static ArgumentMeta of(@NonNull Parameter parameter, int index) {
 
         Arg arg = parameter.getAnnotation(Arg.class);
 

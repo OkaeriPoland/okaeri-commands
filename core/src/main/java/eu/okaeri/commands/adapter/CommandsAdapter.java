@@ -6,6 +6,7 @@ import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandService;
 import eu.okaeri.commands.service.InvocationContext;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.Setter;
 import lombok.SneakyThrows;
 
@@ -17,11 +18,11 @@ public abstract class CommandsAdapter {
 
     private Commands core;
 
-    public String resolveText(CommandContext commandContext, InvocationContext invocationContext, String text) {
+    public String resolveText(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull String text) {
         return text;
     }
 
-    public Object resolveMissingArgument(CommandContext commandContext, InvocationContext invocationContext, CommandMeta command, Parameter param, int i) {
+    public Object resolveMissingArgument(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull CommandMeta command, @NonNull Parameter param, int i) {
 
         Class<?> paramType = param.getType();
         if (CommandContext.class.isAssignableFrom(paramType)) {
@@ -32,7 +33,7 @@ public abstract class CommandsAdapter {
     }
 
     @SneakyThrows
-    public <T extends CommandService> T createInstance(Class<T> clazz) {
+    public <T extends CommandService> T createInstance(@NonNull Class<T> clazz) {
         return clazz.newInstance();
     }
 

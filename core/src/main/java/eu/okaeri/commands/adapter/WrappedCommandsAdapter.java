@@ -6,6 +6,7 @@ import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandService;
 import eu.okaeri.commands.service.InvocationContext;
 import lombok.Getter;
+import lombok.NonNull;
 
 import java.lang.reflect.Parameter;
 
@@ -14,7 +15,7 @@ public class WrappedCommandsAdapter extends CommandsAdapter {
 
     private final CommandsAdapter adapter;
 
-    public WrappedCommandsAdapter(CommandsAdapter adapter) {
+    public WrappedCommandsAdapter(@NonNull CommandsAdapter adapter) {
         this.adapter = adapter;
     }
 
@@ -24,27 +25,27 @@ public class WrappedCommandsAdapter extends CommandsAdapter {
     }
 
     @Override
-    public void setCore(Commands core) {
+    public void setCore(@NonNull Commands core) {
         this.adapter.setCore(core);
     }
 
     @Override
-    public String resolveText(CommandContext commandContext, InvocationContext invocationContext, String text) {
+    public String resolveText(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, String text) {
         return this.adapter.resolveText(commandContext, invocationContext, text);
     }
 
     @Override
-    public Object resolveMissingArgument(CommandContext commandContext, InvocationContext invocationContext, CommandMeta command, Parameter param, int i) {
+    public Object resolveMissingArgument(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull CommandMeta command, @NonNull Parameter param, int i) {
         return this.adapter.resolveMissingArgument(commandContext, invocationContext, command, param, i);
     }
 
     @Override
-    public <T extends CommandService> T createInstance(Class<T> clazz) {
+    public <T extends CommandService> T createInstance(@NonNull Class<T> clazz) {
         return this.adapter.createInstance(clazz);
     }
 
     @Override
-    public void onRegister(CommandMeta command) {
+    public void onRegister(@NonNull CommandMeta command) {
         this.adapter.onRegister(command);
     }
 }

@@ -1,5 +1,7 @@
 package eu.okaeri.commands.type.resolver;
 
+import lombok.NonNull;
+
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
@@ -7,7 +9,7 @@ public abstract class BasicTypeResolver<T> implements TypeResolver<T> {
 
     @Override
     @SuppressWarnings("unchecked")
-    public boolean supports(Type type) {
+    public boolean supports(@NonNull Type type) {
 
         if (type instanceof Class<?>) {
             return this.supports((Class<?>) type);

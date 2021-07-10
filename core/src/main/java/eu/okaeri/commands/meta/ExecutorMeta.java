@@ -5,6 +5,7 @@ import eu.okaeri.commands.meta.pattern.PatternMeta;
 import eu.okaeri.commands.meta.pattern.element.PatternElement;
 import eu.okaeri.commands.meta.pattern.element.StaticElement;
 import lombok.Data;
+import lombok.NonNull;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -18,7 +19,7 @@ import java.util.stream.Collectors;
 @Data
 public class ExecutorMeta {
 
-    public static List<ExecutorMeta> of(Method method) {
+    public static List<ExecutorMeta> of(@NonNull Method method) {
 
         Executor executor = method.getAnnotation(Executor.class);
         if (executor == null) {

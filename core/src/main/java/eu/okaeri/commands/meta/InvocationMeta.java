@@ -1,6 +1,7 @@
 package eu.okaeri.commands.meta;
 
 import lombok.Data;
+import lombok.NonNull;
 import lombok.SneakyThrows;
 
 import java.lang.reflect.InvocationTargetException;
@@ -9,7 +10,7 @@ import java.lang.reflect.Method;
 @Data
 public class InvocationMeta {
 
-    public static InvocationMeta of(Method method, Object[] call, ServiceMeta service, ExecutorMeta executor) {
+    public static InvocationMeta of(@NonNull Method method, Object[] call, @NonNull ServiceMeta service, @NonNull ExecutorMeta executor) {
         InvocationMeta meta = new InvocationMeta();
         meta.method = method;
         meta.call = call;

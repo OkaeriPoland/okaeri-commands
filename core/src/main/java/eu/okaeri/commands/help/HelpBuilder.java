@@ -6,6 +6,7 @@ import eu.okaeri.commands.meta.ExecutorMeta;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.InvocationContext;
 import lombok.Data;
+import lombok.NonNull;
 
 import java.util.stream.Collectors;
 
@@ -20,7 +21,7 @@ public abstract class HelpBuilder {
 
     public abstract String resolveText(CommandContext commandContext, InvocationContext invocationContext, String text);
 
-    public String renderEntry(CommandContext commandContext, InvocationContext invocationContext, CommandMeta meta) {
+    public String renderEntry(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull CommandMeta meta) {
 
         ExecutorMeta executor = meta.getExecutor();
         String usage = this.resolveText(commandContext, invocationContext, executor.getUsage())
@@ -31,13 +32,13 @@ public abstract class HelpBuilder {
                 .replace("{usage}", usage);
     }
 
-    public String renderDescription(CommandContext commandContext, InvocationContext invocationContext, CommandMeta meta) {
+    public String renderDescription(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull CommandMeta meta) {
         String description = meta.getExecutor().getDescription();
         String template = this.getTemplateForDescription(commandContext, invocationContext);
         return description.isEmpty() ? "" : template.replace("{description}", this.resolveText(commandContext, invocationContext, description));
     }
 
-    public String render(CommandContext commandContext, InvocationContext invocationContext, CommandsAdapter adapter) {
+    public String render(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull CommandsAdapter adapter) {
 
         String entries = adapter.getCore().getRegistry()
                 .findByLabel(invocationContext.getLabel())

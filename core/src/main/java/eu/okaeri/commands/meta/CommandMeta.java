@@ -2,6 +2,7 @@ package eu.okaeri.commands.meta;
 
 import eu.okaeri.commands.service.CommandService;
 import lombok.Data;
+import lombok.NonNull;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -10,7 +11,7 @@ import java.util.stream.Collectors;
 @Data
 public class CommandMeta {
 
-    public static List<CommandMeta> of(CommandService service, Method method) {
+    public static List<CommandMeta> of(@NonNull CommandService service, @NonNull Method method) {
         return ExecutorMeta.of(method).stream()
                 .map(meta -> {
                     CommandMeta command = new CommandMeta();
@@ -23,7 +24,7 @@ public class CommandMeta {
     private ServiceMeta service;
     private ExecutorMeta executor;
 
-    public boolean isLabelApplicable(String label) {
+    public boolean isLabelApplicable(@NonNull String label) {
         return label.equals(this.service.getLabel()) || this.service.getAliases().contains(label);
     }
 }

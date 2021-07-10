@@ -18,6 +18,7 @@ import eu.okaeri.commands.type.CommandsTypesPack;
 import eu.okaeri.commands.type.resolver.TypeResolver;
 import lombok.AccessLevel;
 import lombok.Data;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 import java.lang.reflect.InvocationTargetException;
@@ -34,32 +35,32 @@ public class OkaeriCommands implements Commands {
     private final CommandsTypes types;
 
     @Override
-    public Commands register(Class<? extends CommandService> clazz) {
+    public Commands register(@NonNull Class<? extends CommandService> clazz) {
         this.registry.register(clazz);
         return this;
     }
 
     @Override
-    public Commands register(CommandService service) {
+    public Commands register(@NonNull CommandService service) {
         this.registry.register(service);
         return this;
     }
 
     @Override
-    public Commands register(TypeResolver typeResolver) {
+    public Commands register(@NonNull TypeResolver typeResolver) {
         this.types.register(typeResolver);
         return this;
     }
 
     @Override
-    public Commands register(CommandsTypesPack typesPack) {
+    public Commands register(@NonNull CommandsTypesPack typesPack) {
         this.types.register(typesPack);
         return this;
     }
 
     @Override
     @Deprecated
-    public Object call(String command) throws InvocationTargetException, IllegalAccessException {
+    public Object call(@NonNull String command) throws InvocationTargetException, IllegalAccessException {
         Optional<InvocationContext> context = this.invocationMatch(command);
         if (!context.isPresent()) {
             throw new IllegalArgumentException("cannot call '" + command + "', no executor available");
@@ -69,7 +70,7 @@ public class OkaeriCommands implements Commands {
     }
 
     @Override
-    public Optional<InvocationContext> invocationMatch(String command) {
+    public Optional<InvocationContext> invocationMatch(@NonNull String command) {
 
         String[] parts = command.split(" ", 2);
         String label = parts[0];
@@ -85,7 +86,7 @@ public class OkaeriCommands implements Commands {
     }
 
     @Override
-    public InvocationMeta invocationPrepare(InvocationContext invocationContext, CommandContext commandContext) {
+    public InvocationMeta invocationPrepare(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
 
         String args = invocationContext.getArgs();
         CommandMeta commandMeta = invocationContext.getCommand();
@@ -107,7 +108,13 @@ public class OkaeriCommands implements Commands {
 
             Object resolvedValue;
             try {
-                resolvedValue = typeResolverOptional.get().resolve(invocationContext, commandContext, argument, value);
+                if (!argument.isOptional() && (value == null)) {
+                    throw new IllegalArgumentException("non-optional argument was null");
+                } else if (argument.isOptional() && (value == null)) {
+                    resolvedValue = null;
+                } else {
+                    resolvedValue = typeResolverOptional.get().resolve(invocationContext, commandContext, argument, value);
+                }
             } catch (Exception exception) {
                 throw new CommandException(argument.getName() + " - " + exception.getMessage());
             }

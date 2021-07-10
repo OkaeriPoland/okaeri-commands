@@ -6,6 +6,7 @@ import eu.okaeri.commands.meta.pattern.element.PatternElement;
 import eu.okaeri.commands.meta.pattern.element.RequiredElement;
 import eu.okaeri.commands.meta.pattern.element.StaticElement;
 import lombok.Data;
+import lombok.NonNull;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -14,11 +15,11 @@ import java.util.stream.Collectors;
 @Data
 public class PatternMeta {
 
-    public static PatternMeta of(String pattern) {
+    public static PatternMeta of(@NonNull String pattern) {
         return of(pattern, Collections.emptyList());
     }
 
-    public static PatternMeta of(String pattern, List<ArgumentMeta> arguments) {
+    public static PatternMeta of(@NonNull String pattern, @NonNull List<ArgumentMeta> arguments) {
 
         // create meta
         AtomicInteger position = new AtomicInteger();
@@ -79,7 +80,7 @@ public class PatternMeta {
     private boolean staticOnly;
     private String raw;
 
-    public boolean applicable(String pattern) {
+    public boolean applicable(@NonNull String pattern) {
 
         String[] parts = pattern.split(" ");
         if (parts.length != this.getElements().size()) {
@@ -118,7 +119,7 @@ public class PatternMeta {
         return true;
     }
 
-    public boolean matches(String args) {
+    public boolean matches(@NonNull String args) {
 
         String[] argsArr = args.split(" ");
         if (argsArr.length < this.getStaticElements()) {
@@ -148,14 +149,13 @@ public class PatternMeta {
         return true;
     }
 
-    public Optional<PatternElement> getElementByName(String name) {
-        if (name == null) throw new IllegalArgumentException("name cannot be null");
+    public Optional<PatternElement> getElementByName(@NonNull String name) {
         return this.getElements().stream()
                 .filter(element -> name.equals(element.getName()))
                 .findAny();
     }
 
-    public String getValueByArgument(ArgumentMeta argument, String[] parts) {
+    public String getValueByArgument(@NonNull ArgumentMeta argument, @NonNull String[] parts) {
 
         String name = argument.getName();
         PatternElement element = this.getNameToElement().get(name);
