@@ -122,7 +122,8 @@ public class CommandsBukkit extends CommandsAdapter {
                     return CommandsBukkit.this.executeCommand(command, commandContext, sender, label, args, servicePermission);
                 }
                 catch (Exception exception) {
-                    CommandsBukkit.this.handleError(commandContext, null, exception, ExceptionSource.UNKNOWN);
+                    InvocationContext dummyInvocationContext = command.newInvocationContext(label, args);
+                    CommandsBukkit.this.handleError(commandContext, dummyInvocationContext, exception, ExceptionSource.UNKNOWN);
                     return true;
                 }
             }
@@ -141,15 +142,17 @@ public class CommandsBukkit extends CommandsAdapter {
         String fullCommand = (label + " " + String.join(" ", args)).trim();
 
         if ((servicePermission != null) && !sender.hasPermission(servicePermission)) {
-            InvocationContext dummyInvocationContext = InvocationContext.of(commandMeta, label, String.join(" ", args));
-            this.handleError(commandContext, dummyInvocationContext, new NoPermissionException(servicePermission), ExceptionSource.SYSTEM);
+            InvocationContext dummyInvocationContext = commandMeta.newInvocationContext(label, args);
+            NoPermissionException noPermissionException = new NoPermissionException(servicePermission);
+            this.handleError(commandContext, dummyInvocationContext, noPermissionException, ExceptionSource.SYSTEM);
             return true;
         }
 
         Optional<InvocationContext> invocationOptional = core.invocationMatch(fullCommand);
         if (!invocationOptional.isPresent()) {
-            InvocationContext dummyInvocationContext = InvocationContext.of(commandMeta, label, String.join(" ", args));
-            this.handleError(commandContext, dummyInvocationContext, new NoSuchCommandException(fullCommand), ExceptionSource.SYSTEM);
+            InvocationContext dummyInvocationContext = commandMeta.newInvocationContext(label, args);
+            NoSuchCommandException noSuchCommandException = new NoSuchCommandException(fullCommand);
+            this.handleError(commandContext, dummyInvocationContext, noSuchCommandException, ExceptionSource.SYSTEM);
             return true;
         }
 
@@ -158,7 +161,8 @@ public class CommandsBukkit extends CommandsAdapter {
 
         String executorPermission = CommandsBukkit.this.getPermission(invocationContext.getExecutor());
         if ((executorPermission != null) && !sender.hasPermission(executorPermission)) {
-            this.handleError(commandContext, invocationContext, new NoPermissionException(executorPermission), ExceptionSource.SYSTEM);
+            NoPermissionException noPermissionException = new NoPermissionException(executorPermission);
+            this.handleError(commandContext, invocationContext, noPermissionException, ExceptionSource.SYSTEM);
             return true;
         }
 
