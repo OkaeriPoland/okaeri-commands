@@ -3,6 +3,7 @@ package eu.okaeri.commands.bukkit.handler;
 import eu.okaeri.commands.adapter.CommandsAdapter;
 import eu.okaeri.commands.bukkit.exception.NoPermissionException;
 import eu.okaeri.commands.bukkit.exception.NoSuchCommandException;
+import eu.okaeri.commands.bukkit.response.ColorResponse;
 import eu.okaeri.commands.handler.ErrorHandler;
 import eu.okaeri.commands.help.HelpBuilder;
 import eu.okaeri.commands.service.CommandContext;
@@ -57,7 +58,7 @@ public class DefaultErrorHandler implements ErrorHandler {
 
         if (throwable instanceof NoPermissionException) {
             return this.resolveText(commandContext, invocationContext,
-                    "!comamnds-system-permissions-error", ChatColor.RED + "No permission {permission}!")
+                    "!commands-system-permissions-error", ChatColor.RED + "No permission {permission}!")
                     .replace("{permission}", throwable.getMessage());
         }
 
@@ -67,7 +68,7 @@ public class DefaultErrorHandler implements ErrorHandler {
 
         if (throwable instanceof CommandException) {
             return this.resolveText(commandContext, invocationContext,
-                    "!comamnds-system-command-error", ChatColor.RED + "Error: {message}")
+                    "!commands-system-command-error", ChatColor.RED + "Error: {message}")
                     .replace("{message}", throwable.getMessage());
         }
 
@@ -88,6 +89,6 @@ public class DefaultErrorHandler implements ErrorHandler {
 
     private String resolveText(CommandContext commandContext, InvocationContext invocationContext, String key, String def) {
         String text = this.adapter.resolveText(commandContext, invocationContext, key);
-        return key.equals(text) ? def : text;
+        return key.equals(text) ? def : ColorResponse.of(text).render();
     }
 }
