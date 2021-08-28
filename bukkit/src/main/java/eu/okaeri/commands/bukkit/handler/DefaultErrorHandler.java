@@ -57,7 +57,7 @@ public class DefaultErrorHandler implements ErrorHandler {
 
         if (throwable instanceof NoPermissionException) {
             return this.resolveText(commandContext, invocationContext,
-                    "!comamnds-system-permissions-error", ChatColor.RED + "No permission {permission}!")
+                    "!commands-system-permissions-error", ChatColor.RED + "No permission {permission}!")
                     .replace("{permission}", throwable.getMessage());
         }
 
@@ -67,7 +67,7 @@ public class DefaultErrorHandler implements ErrorHandler {
 
         if (throwable instanceof CommandException) {
             return this.resolveText(commandContext, invocationContext,
-                    "!comamnds-system-command-error", ChatColor.RED + "Error: {message}")
+                    "!commands-system-command-error", ChatColor.RED + "Error: {message}")
                     .replace("{message}", throwable.getMessage());
         }
 
