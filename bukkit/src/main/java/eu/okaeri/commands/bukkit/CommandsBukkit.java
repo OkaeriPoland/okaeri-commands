@@ -86,17 +86,17 @@ public class CommandsBukkit extends CommandsAdapter {
         Class<?> paramType = param.getType();
 
         // TODO: player only command
-        if (Player.class.isAssignableFrom(paramType) && (param.getAnnotation(Sender.class) != null)) {
+        if (Player.class.equals(paramType) && (param.getAnnotation(Sender.class) != null)) {
             return commandContext.get("sender", Player.class);
         }
 
         // TODO: console only command
-        if (ConsoleCommandSender.class.isAssignableFrom(paramType)) {
+        if (ConsoleCommandSender.class.equals(paramType)) {
             return commandContext.get("sender", ConsoleCommandSender.class);
         }
 
         // other sender
-        if (CommandSender.class.isAssignableFrom(paramType) && commandContext.has("sender", CommandSender.class)) {
+        if (CommandSender.class.equals(paramType) && commandContext.has("sender", CommandSender.class)) {
             return commandContext.get("sender");
         }
 
