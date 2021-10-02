@@ -114,6 +114,9 @@ public class OkaeriCommands implements Commands {
                     resolvedValue = null;
                 } else {
                     resolvedValue = typeResolverOptional.get().resolve(invocationContext, commandContext, argument, value);
+                    if (!argument.isOptional() && (resolvedValue == null)) {
+                        throw new IllegalArgumentException("cannot resolve argument");
+                    }
                 }
             } catch (Exception exception) {
                 throw new CommandException(argument.getName() + " - " + exception.getMessage());
