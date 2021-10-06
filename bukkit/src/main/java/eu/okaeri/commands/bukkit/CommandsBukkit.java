@@ -21,6 +21,8 @@ import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandException;
 import eu.okaeri.commands.service.InvocationContext;
 import lombok.NonNull;
+import lombok.SneakyThrows;
+import org.bukkit.Bukkit;
 import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
@@ -35,6 +37,14 @@ import java.lang.reflect.Parameter;
 import java.util.Optional;
 
 public class CommandsBukkit extends CommandsAdapter {
+
+    @SneakyThrows
+    public static CommandMap getCommandMap() {
+        Server server = Bukkit.getServer();
+        Field commandMapField = server.getClass().getDeclaredField("commandMap");
+        commandMapField.setAccessible(true);
+        return  (CommandMap) commandMapField.get(server);
+    }
 
     private final CommandMap commandMap;
     private final JavaPlugin plugin;
@@ -64,15 +74,7 @@ public class CommandsBukkit extends CommandsAdapter {
 
     protected CommandsBukkit(@NonNull JavaPlugin plugin) {
         this.plugin = plugin;
-        try {
-            Server server = plugin.getServer();
-            Field commandMapField = server.getClass().getDeclaredField("commandMap");
-            commandMapField.setAccessible(true);
-            this.commandMap = (CommandMap) commandMapField.get(server);
-        } catch (IllegalAccessException | NoSuchFieldException exception) {
-            exception.printStackTrace();
-            throw new RuntimeException("cannot get commandMap", exception);
-        }
+        this.commandMap = getCommandMap();
     }
 
     @Override
