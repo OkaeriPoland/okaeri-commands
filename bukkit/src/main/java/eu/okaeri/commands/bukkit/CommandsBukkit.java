@@ -21,9 +21,6 @@ import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandException;
 import eu.okaeri.commands.service.InvocationContext;
 import lombok.NonNull;
-import lombok.SneakyThrows;
-import org.bukkit.Bukkit;
-import org.bukkit.Server;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
@@ -31,20 +28,11 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Parameter;
 import java.util.Optional;
 
 public class CommandsBukkit extends CommandsAdapter {
-
-    @SneakyThrows
-    public static CommandMap getCommandMap() {
-        Server server = Bukkit.getServer();
-        Field commandMapField = server.getClass().getDeclaredField("commandMap");
-        commandMapField.setAccessible(true);
-        return  (CommandMap) commandMapField.get(server);
-    }
 
     private final CommandMap commandMap;
     private final JavaPlugin plugin;
@@ -74,7 +62,7 @@ public class CommandsBukkit extends CommandsAdapter {
 
     protected CommandsBukkit(@NonNull JavaPlugin plugin) {
         this.plugin = plugin;
-        this.commandMap = getCommandMap();
+        this.commandMap = CommandsBukkitUnsafe.getCommandMap();
     }
 
     @Override

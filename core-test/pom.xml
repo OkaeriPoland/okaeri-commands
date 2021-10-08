@@ -12,7 +12,7 @@
         <dependency>
             <groupId>eu.okaeri</groupId>
             <artifactId>okaeri-commands-cli</artifactId>
-            <version>0.5.5</version>
+            <version>0.5.6</version>
         </dependency>
 
         <dependency>
