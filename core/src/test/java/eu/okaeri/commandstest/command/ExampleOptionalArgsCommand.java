@@ -32,4 +32,14 @@ public class ExampleOptionalArgsCommand implements CommandService {
     public Object _static_optional_optional(@Arg Option<String> name1, @Arg Option<String> name2) {
         return Arrays.asList(name1, name2);
     }
+
+    @Executor(pattern = "single-w2-argument ?:2")
+    public Object _static_w2optional(@Arg Option<String> nameAndSurname) {
+        return nameAndSurname;
+    }
+
+    @Executor(pattern = "two-w2-argument ?:2 ?:2")
+    public Object _static_w2optional_w2optional(@Arg Option<String> nameAndSurname1, @Arg Option<String> nameAndSurname2) {
+        return Arrays.asList(nameAndSurname1, nameAndSurname2);
+    }
 }

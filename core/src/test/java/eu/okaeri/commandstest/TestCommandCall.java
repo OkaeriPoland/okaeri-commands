@@ -134,6 +134,57 @@ public final class TestCommandCall {
 
     @Test
     @SneakyThrows
+    public void test_static_w2required() {
+        assertEquals("John Doe", this.commands.call("example-ra single-w2-argument John Doe"));
+        assertEquals("Jan Kowalski", this.commands.call("example-ra single-w2-argument Jan Kowalski"));
+    }
+
+    @Test
+    public void test_static_w2required_too_long() {
+        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-w2-argument John Doe ???"));
+        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-w2-argument John Doe ? ? ?"));
+        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-w2-argument John Doe funny but it does not work that way"));
+    }
+
+    @Test
+    @SneakyThrows
+    public void test_static_w2required_partial() {
+        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-w2-argument John"));
+        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-w2-argument John "));
+        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-w2-argument John  "));
+    }
+
+    @Test
+    public void test_static_w2required_missing() {
+        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-w2-argument"));
+        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-w2-argument "));
+        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-w2-argument  "));
+    }
+
+    @Test
+    @SneakyThrows
+    public void test_static_w2required_w2required() {
+        assertEquals("John Doe Jan Kowalski", this.commands.call("example-ra two-w2-argument John Doe Jan Kowalski"));
+        assertEquals("Jan Kowalski John Doe", this.commands.call("example-ra two-w2-argument Jan Kowalski John Doe"));
+    }
+
+    @Test
+    public void test_static_w2required_w2required_too_long() {
+        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra two-w2-argument John Doe Jan Kowalski ???"));
+        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra two-w2-argument John Doe Jan Kowalski ? ? ?"));
+        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra two-w2-argument John Doe Jan Kowalski funny but it does not work that way"));
+    }
+
+    @Test
+    @SneakyThrows
+    public void test_static_w2required_w2required_partial() {
+        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra two-w2-argument John Doe Jan"));
+        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra two-w2-argument John Doe Jan "));
+        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra two-w2-argument John Doe Jan  "));
+    }
+
+    @Test
+    @SneakyThrows
     public void test_static_required_required() {
         assertEquals("Player1 Player2", this.commands.call("example-ra two-argument Player1 Player2"));
         assertEquals("unknown1 unknown2", this.commands.call("example-ra two-argument unknown1 unknown2"));
@@ -182,6 +233,58 @@ public final class TestCommandCall {
         assertEquals(Option.of(null), this.commands.call("example-oa single-argument"));
         assertEquals(Option.of(null), this.commands.call("example-oa single-argument "));
         assertEquals(Option.of(null), this.commands.call("example-oa single-argument  "));
+    }
+
+    @Test
+    @SneakyThrows
+    public void test_static_w2optional() {
+        assertEquals(Option.of("John Doe"), this.commands.call("example-oa single-w2-argument John Doe"));
+        assertEquals(Option.of("Jan Kowalski"), this.commands.call("example-oa single-w2-argument Jan Kowalski"));
+    }
+
+    @Test
+    public void test_static_w2optional_too_long() {
+        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-oa single-w2-argument John Doe ???"));
+        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-oa single-w2-argument John Doe ? ? ?"));
+        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-oa single-w2-argument John Doe funny but it does not work that way"));
+    }
+
+    @Test
+    @SneakyThrows
+    public void test_static_w2optional_partial() {
+        assertEquals(Option.of(null), this.commands.call("example-oa single-w2-argument John"));
+        assertEquals(Option.of(null), this.commands.call("example-oa single-w2-argument John "));
+        assertEquals(Option.of(null), this.commands.call("example-oa single-w2-argument John  "));
+    }
+
+    @Test
+    @SneakyThrows
+    public void test_static_w2optional_missing() {
+        assertEquals(Option.of(null), this.commands.call("example-oa single-w2-argument"));
+        assertEquals(Option.of(null), this.commands.call("example-oa single-w2-argument "));
+        assertEquals(Option.of(null), this.commands.call("example-oa single-w2-argument  "));
+    }
+
+    @Test
+    @SneakyThrows
+    public void test_static_w2optional_w2optional() {
+        assertIterableEquals(Arrays.asList(Option.of("John Doe"), Option.of("Jan Kowalski")), this.commands.call("example-oa two-w2-argument John Doe Jan Kowalski"));
+        assertIterableEquals(Arrays.asList(Option.of("Jan Kowalski"), Option.of("John Doe")), this.commands.call("example-oa two-w2-argument Jan Kowalski John Doe"));
+    }
+
+    @Test
+    public void test_static_w2optional_w2optional_too_long() {
+        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-oa two-w2-argument John Doe Jan Kowalski ???"));
+        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-oa two-w2-argument John Doe Jan Kowalski ? ? ?"));
+        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-oa two-w2-argument John Doe Jan Kowalski funny but it does not work that way"));
+    }
+
+    @Test
+    @SneakyThrows
+    public void test_static_w2optional_w2optional_partial() {
+        assertIterableEquals(Arrays.asList(Option.of("John Doe"), Option.of(null)), this.commands.call("example-oa two-w2-argument John Doe Jan"));
+        assertIterableEquals(Arrays.asList(Option.of("John Doe"), Option.of(null)), this.commands.call("example-oa two-w2-argument John Doe Jan "));
+        assertIterableEquals(Arrays.asList(Option.of("John Doe"), Option.of(null)), this.commands.call("example-oa two-w2-argument John Doe Jan  "));
     }
 
     @Test
