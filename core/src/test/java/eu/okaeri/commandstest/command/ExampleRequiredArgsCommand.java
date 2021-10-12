@@ -6,6 +6,7 @@ import eu.okaeri.commands.annotation.Executor;
 import eu.okaeri.commands.annotation.RawArgs;
 import eu.okaeri.commands.service.CommandService;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Command(label = "example-ra")
@@ -39,5 +40,15 @@ public class ExampleRequiredArgsCommand implements CommandService {
     @Executor(pattern = "two-w2-argument *:2 *:2")
     public String _static_w2required_w2required(@Arg String nameAndSurname1, @Arg String nameAndSurname2) {
         return nameAndSurname1 + " " + nameAndSurname2;
+    }
+
+    @Executor(pattern = "consuming-argument *...")
+    public String _static_consuming(@Arg String longName) {
+        return longName;
+    }
+
+    @Executor(pattern = "w2-and-consuming-argument *:2 *...")
+    public Object _static_w2required_consuming(@Arg String nameAndUsername, @Arg String longName) {
+        return Arrays.asList(nameAndUsername, longName);
     }
 }

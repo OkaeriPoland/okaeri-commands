@@ -134,6 +134,24 @@ public final class TestCommandCall {
 
     @Test
     @SneakyThrows
+    public void test_static_consumingrequired() {
+        assertEquals("John", this.commands.call("example-ra consuming-argument John"));
+        assertEquals("John Doe", this.commands.call("example-ra consuming-argument John Doe"));
+        assertEquals("John Doe Jan", this.commands.call("example-ra consuming-argument John Doe Jan"));
+        assertEquals("John Doe Jan Kowalski", this.commands.call("example-ra consuming-argument John Doe Jan Kowalski"));
+    }
+
+    @Test
+    @SneakyThrows
+    public void test_static_w2required_consumingrequired() {
+        assertIterableEquals(Arrays.asList("Takashi Yamada", "John"), this.commands.call("example-ra w2-and-consuming-argument Takashi Yamada John"));
+        assertIterableEquals(Arrays.asList("Takashi Yamada", "John Doe"), this.commands.call("example-ra w2-and-consuming-argument Takashi Yamada John Doe"));
+        assertIterableEquals(Arrays.asList("Takashi Yamada", "John Doe Jan"), this.commands.call("example-ra w2-and-consuming-argument Takashi Yamada John Doe Jan"));
+        assertIterableEquals(Arrays.asList("Takashi Yamada", "John Doe Jan Kowalski"), this.commands.call("example-ra w2-and-consuming-argument Takashi Yamada John Doe Jan Kowalski"));
+    }
+
+    @Test
+    @SneakyThrows
     public void test_static_w2required() {
         assertEquals("John Doe", this.commands.call("example-ra single-w2-argument John Doe"));
         assertEquals("Jan Kowalski", this.commands.call("example-ra single-w2-argument Jan Kowalski"));
@@ -233,6 +251,32 @@ public final class TestCommandCall {
         assertEquals(Option.of(null), this.commands.call("example-oa single-argument"));
         assertEquals(Option.of(null), this.commands.call("example-oa single-argument "));
         assertEquals(Option.of(null), this.commands.call("example-oa single-argument  "));
+    }
+
+    @Test
+    @SneakyThrows
+    public void test_static_consumingoptional() {
+        assertEquals(Option.of("John"), this.commands.call("example-oa consuming-argument John"));
+        assertEquals(Option.of("John Doe"), this.commands.call("example-oa consuming-argument John Doe"));
+        assertEquals(Option.of("John Doe Jan"), this.commands.call("example-oa consuming-argument John Doe Jan"));
+        assertEquals(Option.of("John Doe Jan Kowalski"), this.commands.call("example-oa consuming-argument John Doe Jan Kowalski"));
+    }
+
+    @Test
+    @SneakyThrows
+    public void test_static_w2optional_consumingoptional() {
+        assertIterableEquals(Arrays.asList(Option.of("Takashi Yamada"), Option.of("John")), this.commands.call("example-oa w2-and-consuming-argument Takashi Yamada John"));
+        assertIterableEquals(Arrays.asList(Option.of("Takashi Yamada"), Option.of("John Doe")), this.commands.call("example-oa w2-and-consuming-argument Takashi Yamada John Doe"));
+        assertIterableEquals(Arrays.asList(Option.of("Takashi Yamada"), Option.of("John Doe Jan")), this.commands.call("example-oa w2-and-consuming-argument Takashi Yamada John Doe Jan"));
+        assertIterableEquals(Arrays.asList(Option.of("Takashi Yamada"), Option.of("John Doe Jan Kowalski")), this.commands.call("example-oa w2-and-consuming-argument Takashi Yamada John Doe Jan Kowalski"));
+    }
+
+    @Test
+    @SneakyThrows
+    public void test_static_w2optional_consumingoptional_only_first() {
+        assertIterableEquals(Arrays.asList(Option.of("Takashi Yamada"), Option.of(null)), this.commands.call("example-oa w2-and-consuming-argument Takashi Yamada"));
+        assertIterableEquals(Arrays.asList(Option.of("Takashi Yamada"), Option.of(null)), this.commands.call("example-oa w2-and-consuming-argument Takashi Yamada "));
+        assertIterableEquals(Arrays.asList(Option.of("Takashi Yamada"), Option.of(null)), this.commands.call("example-oa w2-and-consuming-argument Takashi Yamada  "));
     }
 
     @Test

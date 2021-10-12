@@ -181,7 +181,7 @@ public class PatternMeta {
                 int remaining = (argsArr.length - argIndex);
 
                 // last element is not consuming the command fully
-                if (element.getWidth() < remaining) {
+                if ((element.getWidth() != -1) && (element.getWidth() < remaining)) {
                     return false;
                 }
 
@@ -215,6 +215,9 @@ public class PatternMeta {
 
         if (element != null) {
             if (element.getWidth() == -1) {
+                if (parts.length <= element.getIndex()) {
+                    return null;
+                }
                 return String.join(" ", Arrays.copyOfRange(parts, element.getIndex(), parts.length));
             }
             if (element.getWidth() > 1) {
