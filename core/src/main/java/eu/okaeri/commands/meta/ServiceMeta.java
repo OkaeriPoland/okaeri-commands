@@ -1,6 +1,6 @@
 package eu.okaeri.commands.meta;
 
-import eu.okaeri.commands.annotation.ServiceDescriptor;
+import eu.okaeri.commands.annotation.Command;
 import eu.okaeri.commands.service.CommandService;
 import lombok.Data;
 import lombok.NonNull;
@@ -14,7 +14,7 @@ public class ServiceMeta {
     public static ServiceMeta of(@NonNull CommandService service) {
 
         Class<? extends CommandService> serviceClazz = service.getClass();
-        ServiceDescriptor descriptor = serviceClazz.getAnnotation(ServiceDescriptor.class);
+        Command descriptor = serviceClazz.getAnnotation(Command.class);
         if (descriptor == null) {
             throw new IllegalArgumentException("cannot create ServiceMeta from CommandService without @ServiceDescriptor annotation");
         }

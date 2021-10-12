@@ -1,12 +1,12 @@
-package eu.okaeri.commandstest;
+package eu.okaeri.commandstest.command;
 
 import eu.okaeri.commands.annotation.Arg;
 import eu.okaeri.commands.annotation.Executor;
-import eu.okaeri.commands.annotation.ServiceDescriptor;
+import eu.okaeri.commands.annotation.Command;
 import eu.okaeri.commands.service.CommandService;
 
-@ServiceDescriptor(label = "tricky", aliases = "triccy")
-public class TrickyCommand implements CommandService {
+@Command(label = "tricky", aliases = "triccy")
+public class SimpleTrickyCommand implements CommandService {
 
     @Executor(pattern = {"list", "lists"})
     public String lists() {
@@ -15,6 +15,6 @@ public class TrickyCommand implements CommandService {
 
     @Executor(pattern = "*")
     public String vote(@Arg("list") String list) {
-        return "list: " + list;
+        return list;
     }
 }

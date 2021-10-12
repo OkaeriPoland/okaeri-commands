@@ -26,8 +26,6 @@ Object result = commands.call("cmd woah");
 
 ## Performance
 
-Benchmark sources available in the [BenchmarkCommands](https://github.com/OkaeriPoland/okaeri-commands/blob/master/core-test/src/main/java/eu/okaeri/commandstest/BenchmarkCommands.java).
-
 ```console
 # single thread performance on ryzen 3600, about 1,000,000 invocations per second
 Benchmark                           Mode  Cnt        Score       Error  Units
@@ -40,7 +38,7 @@ BenchmarkCommands.command_simple   thrpt    5  1253307.288 ± 31533.820  ops/s
 
 ```java
 
-@ServiceDescriptor(label = "cmd", description = "Example command service")
+@Command(label = "cmd", description = "Example command service")
 public class ExampleCommand implements CommandService {
 
     // cmd woah
@@ -91,6 +89,61 @@ public class ExampleCommand implements CommandService {
     @Executor(pattern = "player * set2 * * ?", description = "Complex command test")
     public String testPermExample3(@Arg String name, int huh, @Arg String perm, @RawArgs String[] args, @Arg String value, String randomElement, @Arg Option<String> flag) {
         return (">> " + name + " " + perm + " " + value + " " + flag + "\n" + Arrays.toString(args));
+    }
+}
+```
+
+## Recommendations
+It is highly recommended to use `-parameters` compiler flag for better overall feature support.
+
+### Maven (Java)
+```xml
+<build>
+  <plugins>
+    <plugin>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-compiler-plugin</artifactId>
+      <version>3.8.1</version>
+      <configuration>
+        <compilerArgs>
+          <arg>-parameters</arg>
+        </compilerArgs>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+```
+### Maven (Kotlin)
+```xml
+ <build>
+  <plugins>
+    <plugin>
+      <groupId>org.jetbrains.kotlin</groupId>
+      <artifactId>kotlin-maven-plugin</artifactId>
+      <version>${kotlin.version}</version>
+      <!-- ... -->
+      <configuration>
+        <!-- ... -->
+        <args>
+          <arg>-java-parameters</arg>
+        </args>
+      </configuration>
+    </plugin>
+  </plugins>
+</build>
+```
+
+### Gradle (Java)
+```groovy
+compileJava {
+    options.compilerArgs << '-parameters' 
+}
+```
+### Gradle (Kotlin)
+```groovy
+compileKotlin {
+    kotlinOptions {
+        javaParameters = true
     }
 }
 ```

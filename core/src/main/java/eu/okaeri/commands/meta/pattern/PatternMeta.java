@@ -29,9 +29,17 @@ public class PatternMeta {
                 .map(part -> {
                     int positionValue = position.getAndIncrement();
                     int argumentValue = argumentIndex.getAndIncrement();
-
                     PatternElement element = PatternElement.of(part, positionValue);
+
                     if (!(element instanceof StaticElement)) {
+
+                        if ((element instanceof OptionalElement) && (argumentValue < arguments.size())) {
+                            ArgumentMeta argumentMeta = arguments.get(argumentValue);
+                            if (!argumentMeta.isOptional()) {
+                                throw new IllegalArgumentException("Pattern describes optional element but argument is " +
+                                        "not java.lang.Optional nor eu.okaeri.commands.service.Option\nPattern: " + pattern + "\nArguments: " + arguments);
+                            }
+                        }
 
                         if (element.getName() == null) {
                             String metaName = (argumentValue < arguments.size())
@@ -53,7 +61,7 @@ public class PatternMeta {
         meta.setStaticOnly(meta.getElements().size() == meta.getStaticElements());
         meta.setNameToElement(meta.getElements().stream().filter(e -> !(e instanceof StaticElement)).collect(Collectors.toMap(PatternElement::getName, e -> e)));
 
-        // validate meta
+        // validate meta (only optional after optional)
         boolean foundOptional = false;
         for (PatternElement element : meta.getElements()) {
             if (!(element instanceof OptionalElement)) {
@@ -63,6 +71,18 @@ public class PatternMeta {
                 continue;
             }
             foundOptional = true;
+        }
+
+        // validate meta (only last consuming)
+        boolean foundConsuming = false;
+        for (PatternElement element : meta.getElements()) {
+            if (foundConsuming) {
+                throw new IllegalArgumentException("consuming argument (width: -1) should be the last argument: " + pattern);
+            }
+            if (element.getWidth() != -1) {
+                continue;
+            }
+            foundConsuming = true;
         }
 
         // validate rendering
@@ -97,13 +117,18 @@ public class PatternMeta {
             PatternElement currentElement = this.getElements().get(i);
             PatternElement testElement = PatternElement.of(part, i);
 
-            String currentName = currentElement.getName();
-            String testName = testElement.getName();
+            // check width
+            if (currentElement.getWidth() != testElement.getWidth()) {
+                return false;
+            }
 
             // check type equality
             if (!currentElement.getClass().isAssignableFrom(testElement.getClass())) {
                 return false;
             }
+
+            String currentName = currentElement.getName();
+            String testName = testElement.getName();
 
             // unnamed parameter
             if ((testName == null) && (currentName != null)) {
@@ -126,24 +151,43 @@ public class PatternMeta {
             return false;
         }
 
-        for (int i = 0; i < this.getElements().size(); i++) {
+        int argIndex = 0;
+        int patternIndex = 0;
 
-            PatternElement element = this.getElements().get(i);
+        List<PatternElement> elements = this.getElements();
+        int elementsSize = elements.size();
+
+        for (PatternElement element : elements) {
 
             // no such index in arguments and not optional (missing element)
-            if ((argsArr.length <= i) && !(element instanceof OptionalElement)) {
+            if ((argsArr.length <= patternIndex) && !(element instanceof OptionalElement)) {
                 return false;
             }
 
             // static element does not match
-            if ((element instanceof StaticElement) && !argsArr[i].equals(element.getName())) {
+            if ((element instanceof StaticElement) && !argsArr[argIndex].equals(element.getName())) {
                 return false;
             }
 
             // empty element
-            if ((element instanceof RequiredElement) && argsArr[i].isEmpty()) {
+            if ((element instanceof RequiredElement) && argsArr[argIndex].isEmpty()) {
                 return false;
             }
+
+            // last element
+            if (patternIndex == (elementsSize - 1)) {
+
+                // calculate remaining width needed to consume the command
+                int remaining = (argsArr.length - argIndex);
+
+                // still got remaining in the pattern and last element is not consuming
+                if ((remaining > 0) && (element.getWidth() < remaining)) {
+                    return false;
+                }
+            }
+
+            argIndex += element.getWidth();
+            patternIndex += 1;
         }
 
         return true;
@@ -161,7 +205,7 @@ public class PatternMeta {
         PatternElement element = this.getNameToElement().get(name);
 
         if (element instanceof OptionalElement) {
-            return  (parts.length <= element.getIndex()) ? null : parts[element.getIndex()];
+            return (parts.length <= element.getIndex()) ? null : parts[element.getIndex()];
         }
 
         if (element != null) {
@@ -169,5 +213,11 @@ public class PatternMeta {
         }
 
         throw new IllegalArgumentException("no such element for named parameter '" + name + " in " + Arrays.toString(parts));
+    }
+
+    public String render() {
+        return this.getElements().stream()
+                .map(PatternElement::render)
+                .collect(Collectors.joining(" "));
     }
 }
