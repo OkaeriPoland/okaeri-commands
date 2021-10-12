@@ -21,11 +21,15 @@ public class InvocationMeta {
 
     @SneakyThrows
     public Object callSneaky() {
-        return this.executor.getMethod().invoke(this.service.getImplementor(), this.call);
+        return this.call();
     }
 
     public Object call() throws InvocationTargetException, IllegalAccessException {
-        return this.executor.getMethod().invoke(this.service.getImplementor(), this.call);
+
+        Method method = this.executor.getMethod();
+        method.setAccessible(true);
+
+        return method.invoke(this.service.getImplementor(), this.call);
     }
 
     private Method method;

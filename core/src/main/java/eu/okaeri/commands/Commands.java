@@ -26,8 +26,7 @@ public interface Commands {
 
     Commands register(CommandsTypesPack typesPack);
 
-    @Deprecated
-    Object call(String command) throws InvocationTargetException, IllegalAccessException;
+    <T> T call(String command) throws InvocationTargetException, IllegalAccessException;
 
     Optional<InvocationContext> invocationMatch(String command);
 

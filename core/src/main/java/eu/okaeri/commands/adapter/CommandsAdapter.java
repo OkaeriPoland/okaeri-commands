@@ -14,7 +14,7 @@ import java.lang.reflect.Parameter;
 
 @Getter
 @Setter
-public abstract class CommandsAdapter {
+public class CommandsAdapter {
 
     private Commands core;
 

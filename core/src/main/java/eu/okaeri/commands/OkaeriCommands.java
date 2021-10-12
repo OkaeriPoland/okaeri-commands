@@ -59,14 +59,14 @@ public class OkaeriCommands implements Commands {
     }
 
     @Override
-    @Deprecated
-    public Object call(@NonNull String command) throws InvocationTargetException, IllegalAccessException {
+    @SuppressWarnings("unchecked")
+    public <T> T call(@NonNull String command) throws InvocationTargetException, IllegalAccessException {
         Optional<InvocationContext> context = this.invocationMatch(command);
         if (!context.isPresent()) {
             throw new IllegalArgumentException("cannot call '" + command + "', no executor available");
         }
         InvocationContext invocationContext = context.get();
-        return this.invocationPrepare(invocationContext, new CommandContext()).call();
+        return (T) this.invocationPrepare(invocationContext, new CommandContext()).call();
     }
 
     @Override
@@ -96,6 +96,10 @@ public class OkaeriCommands implements Commands {
 
         Map<Integer, Object> callArguments = new LinkedHashMap<>();
         String[] argsArr = args.split(" ");
+
+        if ((argsArr.length == 1) && argsArr[0].isEmpty()) {
+            argsArr = new String[0];
+        }
 
         for (ArgumentMeta argument : arguments) {
 
@@ -152,11 +156,11 @@ public class OkaeriCommands implements Commands {
                     continue;
                 }
                 if (List.class.isAssignableFrom(paramType)) {
-                    call[i] = Arrays.asList(argsArr);
+                    call[i] = args.isEmpty() ? Collections.emptyList() : Arrays.asList(argsArr);
                     continue;
                 }
                 if (paramType.isArray() && CharSequence.class.isAssignableFrom(paramType.getComponentType())) {
-                    call[i] = argsArr;
+                    call[i] = args.isEmpty() ? new String[0] : argsArr;
                     continue;
                 }
                 throw new IllegalArgumentException("@RawArgs type cannot be " + paramType + " [allowed: String, List<String>, String[]]");

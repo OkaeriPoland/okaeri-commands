@@ -7,8 +7,9 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface ServiceDescriptor {
+public @interface Command {
     String label();
     String[] aliases() default {};
     String description() default "";
+    NestedCommand[] nested() default {};
 }
