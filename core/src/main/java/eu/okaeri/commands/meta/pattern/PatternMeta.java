@@ -27,7 +27,7 @@ public class PatternMeta {
         PatternMeta meta = new PatternMeta();
         List<PatternElement> patternElements = Arrays.stream(pattern.split(" "))
                 .map(part -> {
-                    int positionValue = position.getAndIncrement();
+                    int positionValue = position.getAndAdd(PatternElement.getWidthFromPatternElement(part));
                     int argumentValue = argumentIndex.getAndIncrement();
                     PatternElement element = PatternElement.of(part, positionValue);
 
@@ -180,8 +180,13 @@ public class PatternMeta {
                 // calculate remaining width needed to consume the command
                 int remaining = (argsArr.length - argIndex);
 
-                // still got remaining in the pattern and last element is not consuming
-                if ((remaining > 0) && (element.getWidth() < remaining)) {
+                // last element is not consuming the command fully
+                if (element.getWidth() < remaining) {
+                    return false;
+                }
+
+                // last element is over-consuming the command
+                if (!(element instanceof OptionalElement) && (element.getWidth() > remaining)) {
                     return false;
                 }
             }
@@ -204,11 +209,17 @@ public class PatternMeta {
         String name = argument.getName();
         PatternElement element = this.getNameToElement().get(name);
 
-        if (element instanceof OptionalElement) {
-            return (parts.length <= element.getIndex()) ? null : parts[element.getIndex()];
+        if ((element instanceof OptionalElement) && (parts.length < (element.getIndex() + element.getWidth()))) {
+            return null;
         }
 
         if (element != null) {
+            if (element.getWidth() == -1) {
+                return String.join(" ", Arrays.copyOfRange(parts, element.getIndex(), parts.length));
+            }
+            if (element.getWidth() > 1) {
+                return String.join(" ", Arrays.copyOfRange(parts, element.getIndex(), element.getIndex() + element.getWidth()));
+            }
             return parts[element.getIndex()];
         }
 
