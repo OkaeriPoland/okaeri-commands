@@ -43,13 +43,13 @@ public class ExampleOptionalArgsCommand implements CommandService {
         return Arrays.asList(nameAndSurname1, nameAndSurname2);
     }
 
-    @Executor(pattern = "consuming-argument ?...")
+    @Executor(pattern = "consuming-argument <longName...>")
     public Object _static_consuming(@Arg Option<String> longName) {
         return longName;
     }
 
-    @Executor(pattern = "w2-and-consuming-argument ?:2 ?...")
-    public Object _static_w2required_consuming(@Arg Option<String> nameAndUsername, @Arg Option<String> longName) {
+    @Executor(pattern = "w2-and-consuming-argument [nameAndUsername:2] ?...")
+    public Object _static_w2optional_consuming(@Arg Option<String> nameAndUsername, @Arg Option<String> longName) {
         return Arrays.asList(nameAndUsername, longName);
     }
 }

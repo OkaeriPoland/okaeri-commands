@@ -30,16 +30,14 @@ public abstract class PatternElement {
         }
 
         if (part.startsWith("<") && (part.charAt(part.length() - 1) == '>')) {
-            String element = part.substring(1, part.length() - 1);
-            int width = getWidthFromPatternElement(element);
-            String name = getNameFromPatternElement(element);
+            int width = getWidthFromPatternElement(part);
+            String name = getNameFromPatternElement(part);
             return new RequiredElement(name, index, width);
         }
 
         if (part.startsWith("[") && (part.charAt(part.length() - 1) == ']')) {
-            String element = part.substring(1, part.length() - 1);
-            int width = getWidthFromPatternElement(element);
-            String name = getNameFromPatternElement(element);
+            int width = getWidthFromPatternElement(part);
+            String name = getNameFromPatternElement(part);
             return new OptionalElement(name, index, width);
         }
 
@@ -48,12 +46,16 @@ public abstract class PatternElement {
 
     public static int getWidthFromPatternElement(@NonNull String element) {
 
-        if (!element.contains(":")) {
-            return 1;
+        if (element.startsWith("<") || element.startsWith("[")) {
+            element = element.substring(1, element.length() - 1);
         }
 
         if (element.endsWith("...")) {
             return -1;
+        }
+
+        if (!element.contains(":")) {
+            return 1;
         }
 
         String[] parts = element.split(":", 2);
@@ -68,12 +70,16 @@ public abstract class PatternElement {
 
     public static String getNameFromPatternElement(@NonNull String element) {
 
-        if (!element.contains(":")) {
-            return element.split(":", 2)[0];
+        if (element.startsWith("<") || element.startsWith("[")) {
+            element = element.substring(1, element.length() - 1);
         }
 
         if (element.endsWith("...")) {
             return element.substring(0, element.length() - 3);
+        }
+
+        if (element.contains(":")) {
+            return element.split(":", 2)[0];
         }
 
         return element;
