@@ -16,16 +16,26 @@ import java.util.stream.Collectors;
 public class PatternMeta {
 
     public static PatternMeta of(@NonNull String pattern) {
-        return of(pattern, Collections.emptyList());
+        return of("", pattern, Collections.emptyList());
     }
 
-    public static PatternMeta of(@NonNull String pattern, @NonNull List<ArgumentMeta> arguments) {
+    public static PatternMeta of(@NonNull String patternPrefix, @NonNull String pattern, @NonNull List<ArgumentMeta> arguments) {
+
+        // prefix
+        if (!patternPrefix.isEmpty()) {
+            if (pattern.isEmpty()) {
+                pattern = patternPrefix;
+            } else {
+                pattern = patternPrefix + " " + pattern;
+            }
+        }
+        String finalPattern = pattern;
 
         // create meta
         AtomicInteger position = new AtomicInteger();
         AtomicInteger argumentIndex = new AtomicInteger();
         PatternMeta meta = new PatternMeta();
-        List<PatternElement> patternElements = Arrays.stream(pattern.split(" "))
+        List<PatternElement> patternElements = Arrays.stream(finalPattern.split(" "))
                 .map(part -> {
                     int positionValue = position.getAndAdd(PatternElement.getWidthFromPatternElement(part));
                     int argumentValue = argumentIndex.getAndIncrement();
@@ -37,7 +47,7 @@ public class PatternMeta {
                             ArgumentMeta argumentMeta = arguments.get(argumentValue);
                             if (!argumentMeta.isOptional()) {
                                 throw new IllegalArgumentException("Pattern describes optional element but argument is " +
-                                        "not java.lang.Optional nor eu.okaeri.commands.service.Option\nPattern: " + pattern + "\nArguments: " + arguments);
+                                        "not java.lang.Optional nor eu.okaeri.commands.service.Option\nPattern: " + finalPattern + "\nArguments: " + arguments);
                             }
                         }
 

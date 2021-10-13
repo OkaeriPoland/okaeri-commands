@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @Data
 public class ExecutorMeta {
 
-    public static List<ExecutorMeta> of(@NonNull Method method) {
+    public static List<ExecutorMeta> of(@NonNull ServiceMeta serviceMeta, @NonNull Method method) {
 
         Executor executor = method.getAnnotation(Executor.class);
         if (executor == null) {
@@ -27,6 +27,8 @@ public class ExecutorMeta {
         }
 
         AtomicInteger indexCounter = new AtomicInteger();
+        String patternPrefix = serviceMeta.getPatternPrefix();
+
         List<String> patterns = (executor.pattern().length == 0)
                 ? Collections.singletonList(method.getName())
                 : Arrays.asList(executor.pattern());
@@ -48,7 +50,7 @@ public class ExecutorMeta {
             cmdExecutor.arguments = Collections.unmodifiableList(arguments);
 
             cmdExecutor.async = executor.async();
-            cmdExecutor.pattern = PatternMeta.of(pattern, cmdExecutor.arguments);
+            cmdExecutor.pattern = PatternMeta.of(patternPrefix, pattern, cmdExecutor.arguments);
             cmdExecutor.description = executor.description();
             cmdExecutor.usage = executor.usage();
             cmdExecutor.index = indexCounter.getAndIncrement();

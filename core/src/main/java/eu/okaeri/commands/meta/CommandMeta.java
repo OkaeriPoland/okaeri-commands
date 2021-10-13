@@ -12,11 +12,11 @@ import java.util.stream.Collectors;
 @Data
 public class CommandMeta {
 
-    public static List<CommandMeta> of(@NonNull CommandService service, @NonNull Method method) {
-        return ExecutorMeta.of(method).stream()
+    public static List<CommandMeta> of(@NonNull CommandService service, @NonNull ServiceMeta serviceMeta, @NonNull Method method) {
+        return ExecutorMeta.of(serviceMeta, method).stream()
                 .map(meta -> {
                     CommandMeta command = new CommandMeta();
-                    command.service = ServiceMeta.of(service);
+                    command.service = serviceMeta;
                     command.executor = meta;
                     return command;
                 }).collect(Collectors.toList());
