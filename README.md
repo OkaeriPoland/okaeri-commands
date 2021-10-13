@@ -40,6 +40,16 @@ BenchmarkCommands.command_simple   thrpt    5  1253307.288 ± 31533.820  ops/s
 @Command(label = "cmd", description = "Example command service")
 public class ExampleCommand implements CommandService {
 
+    // cmd
+    //
+    // empty pattern represents command without 
+    // arguments (similar to @Default in other frameworks)
+    //
+    @Executor(pattern = "")
+    public String def() {
+        return "called default";
+    }
+
     // cmd woah
     //
     // simple commands with no additional effort
