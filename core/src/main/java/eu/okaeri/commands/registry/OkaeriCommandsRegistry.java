@@ -3,9 +3,11 @@ package eu.okaeri.commands.registry;
 import eu.okaeri.commands.adapter.CommandsAdapter;
 import eu.okaeri.commands.annotation.Executor;
 import eu.okaeri.commands.meta.CommandMeta;
+import eu.okaeri.commands.meta.ServiceMeta;
 import eu.okaeri.commands.meta.pattern.element.PatternElement;
 import eu.okaeri.commands.meta.pattern.element.StaticElement;
 import eu.okaeri.commands.service.CommandService;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
 import java.lang.reflect.Method;
@@ -33,12 +35,16 @@ public class OkaeriCommandsRegistry implements CommandsRegistry {
     }
 
     @Override
-    public CommandsRegistry register(Class<? extends CommandService> clazz) {
+    public CommandsRegistry register(@NonNull Class<? extends CommandService> clazz) {
         return this.register(this.adapter.createInstance(clazz));
     }
 
     @Override
-    public CommandsRegistry register(CommandService service) {
+    public CommandsRegistry register(@NonNull CommandService service) {
+        return this.register(null, service);
+    }
+
+    public CommandsRegistry register(ServiceMeta parent, @NonNull CommandService service) {
 
         Class<? extends CommandService> clazz = service.getClass();
         for (Method method : clazz.getDeclaredMethods()) {
@@ -48,10 +54,16 @@ public class OkaeriCommandsRegistry implements CommandsRegistry {
                 continue;
             }
 
-            List<CommandMeta> commands = CommandMeta.of(service, method);
+            ServiceMeta serviceMeta = ServiceMeta.of(parent, service);
+            List<CommandMeta> commands = CommandMeta.of(service, serviceMeta, method);
+
             for (CommandMeta command : commands) {
                 this.registeredCommands.add(command);
                 this.adapter.onRegister(command);
+            }
+
+            for (Class<? extends CommandService> nestedServiceType : serviceMeta.getNested()) {
+                this.register(serviceMeta, this.adapter.createInstance(nestedServiceType));
             }
         }
 
@@ -60,14 +72,14 @@ public class OkaeriCommandsRegistry implements CommandsRegistry {
     }
 
     @Override
-    public List<CommandMeta> findByLabel(String label) {
+    public List<CommandMeta> findByLabel(@NonNull String label) {
         return this.registeredCommands.stream()
                 .filter(candidate -> candidate.isLabelApplicable(label))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public Optional<CommandMeta> findByLabelAndArgs(String label, String args) {
+    public Optional<CommandMeta> findByLabelAndArgs(@NonNull String label, @NonNull String args) {
         return this.registeredCommands.stream()
                 .filter(candidate -> candidate.isLabelApplicable(label))
                 .filter(candidate -> candidate.getExecutor().getPattern().matches(args))
