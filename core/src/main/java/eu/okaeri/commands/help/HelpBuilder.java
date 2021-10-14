@@ -1,6 +1,6 @@
 package eu.okaeri.commands.help;
 
-import eu.okaeri.commands.adapter.CommandsAdapter;
+import eu.okaeri.commands.Commands;
 import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.meta.ExecutorMeta;
 import eu.okaeri.commands.service.CommandContext;
@@ -38,9 +38,9 @@ public abstract class HelpBuilder {
         return description.isEmpty() ? "" : template.replace("{description}", this.resolveText(commandContext, invocationContext, description));
     }
 
-    public String render(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull CommandsAdapter adapter) {
+    public String render(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull Commands commands) {
 
-        String entries = adapter.getCore().getRegistry()
+        String entries = commands
                 .findByLabel(invocationContext.getLabel())
                 .stream()
                 .filter(meta -> meta.getExecutor().getIndex() == 0)

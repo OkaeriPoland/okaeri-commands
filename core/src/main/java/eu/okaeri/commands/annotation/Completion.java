@@ -1,6 +1,6 @@
 package eu.okaeri.commands.annotation;
 
-import eu.okaeri.commands.completion.CompletionProvider;
+import eu.okaeri.commands.provider.CompletionProvider;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

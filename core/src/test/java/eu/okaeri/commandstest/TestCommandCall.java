@@ -1,8 +1,8 @@
 package eu.okaeri.commandstest;
 
 import eu.okaeri.commands.Commands;
-import eu.okaeri.commands.CommandsManager;
-import eu.okaeri.commands.adapter.CommandsAdapter;
+import eu.okaeri.commands.OkaeriCommands;
+import eu.okaeri.commands.exception.NoSuchCommandException;
 import eu.okaeri.commands.service.Option;
 import eu.okaeri.commandstest.command.*;
 import lombok.SneakyThrows;
@@ -22,14 +22,14 @@ public final class TestCommandCall {
 
     @BeforeAll
     public void prepare() {
-        this.commands = CommandsManager.create(new CommandsAdapter());
-        this.commands.getRegistry()
-                .register(ExampleOptionalArgsCommand.class)
-                .register(ExampleRequiredArgsCommand.class)
-                .register(ExampleStaticArgsCommand.class)
-                .register(SimpleOptionalArgsCommand.class)
-                .register(SimpleRequiredArgsCommand.class)
-                .register(SimpleTrickyCommand.class);
+        this.commands = new OkaeriCommands();
+        this.commands
+                .registerCommand(ExampleOptionalArgsCommand.class)
+                .registerCommand(ExampleRequiredArgsCommand.class)
+                .registerCommand(ExampleStaticArgsCommand.class)
+                .registerCommand(SimpleOptionalArgsCommand.class)
+                .registerCommand(SimpleRequiredArgsCommand.class)
+                .registerCommand(SimpleTrickyCommand.class);
     }
 
     @Test
@@ -40,18 +40,18 @@ public final class TestCommandCall {
 
     @Test
     public void test_unknown_command() {
-        assertTrue(this.commands.getRegistry().findByLabel("some-unknown-command").isEmpty());
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("some-unknown-command"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("some-unknown-command a b c"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("some-unknown-command 1 2 3"));
+        assertTrue(this.commands.findByLabel("some-unknown-command").isEmpty());
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("some-unknown-command"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("some-unknown-command a b c"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("some-unknown-command 1 2 3"));
     }
 
     @Test
     public void test_unknown_command_pattern() {
-        assertFalse(this.commands.getRegistry().findByLabel("example-sa").isEmpty());
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-sa unknown-pattern"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-sa unknown-pattern a b c"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-sa unknown-pattern 1 2 3"));
+        assertFalse(this.commands.findByLabel("example-sa").isEmpty());
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-sa unknown-pattern"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-sa unknown-pattern a b c"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-sa unknown-pattern 1 2 3"));
     }
 
     @Test
@@ -75,7 +75,7 @@ public final class TestCommandCall {
 
     @Test
     public void test_required_missing() {
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("simple-ra"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("simple-ra"));
     }
 
     @Test
@@ -87,8 +87,8 @@ public final class TestCommandCall {
 
     @Test
     public void test_required_required_too_long() {
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("simple-ra Heh1 Heh2 ???"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("simple-ra ItWorks!1 ItWorks!2 ??? ???"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("simple-ra Heh1 Heh2 ???"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("simple-ra ItWorks!1 ItWorks!2 ??? ???"));
     }
 
     @Test
@@ -100,8 +100,8 @@ public final class TestCommandCall {
 
     @Test
     public void test_optional_too_long() {
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("simple-oa Heh abc"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("simple-oa ItWorks! abc"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("simple-oa Heh abc"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("simple-oa ItWorks! abc"));
     }
 
     @Test
@@ -120,16 +120,16 @@ public final class TestCommandCall {
 
     @Test
     public void test_static_required_too_long() {
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-argument Player ???"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-argument unknown ? ? ?"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-argument null funny but it does not work that way"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra single-argument Player ???"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra single-argument unknown ? ? ?"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra single-argument null funny but it does not work that way"));
     }
 
     @Test
     public void test_static_required_missing() {
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-argument"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-argument "));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-argument  "));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra single-argument"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra single-argument "));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra single-argument  "));
     }
 
     @Test
@@ -159,24 +159,24 @@ public final class TestCommandCall {
 
     @Test
     public void test_static_w2required_too_long() {
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-w2-argument John Doe ???"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-w2-argument John Doe ? ? ?"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-w2-argument John Doe funny but it does not work that way"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra single-w2-argument John Doe ???"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra single-w2-argument John Doe ? ? ?"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra single-w2-argument John Doe funny but it does not work that way"));
     }
 
     @Test
     @SneakyThrows
     public void test_static_w2required_partial() {
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-w2-argument John"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-w2-argument John "));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-w2-argument John  "));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra single-w2-argument John"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra single-w2-argument John "));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra single-w2-argument John  "));
     }
 
     @Test
     public void test_static_w2required_missing() {
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-w2-argument"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-w2-argument "));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra single-w2-argument  "));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra single-w2-argument"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra single-w2-argument "));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra single-w2-argument  "));
     }
 
     @Test
@@ -188,17 +188,17 @@ public final class TestCommandCall {
 
     @Test
     public void test_static_w2required_w2required_too_long() {
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra two-w2-argument John Doe Jan Kowalski ???"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra two-w2-argument John Doe Jan Kowalski ? ? ?"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra two-w2-argument John Doe Jan Kowalski funny but it does not work that way"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra two-w2-argument John Doe Jan Kowalski ???"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra two-w2-argument John Doe Jan Kowalski ? ? ?"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra two-w2-argument John Doe Jan Kowalski funny but it does not work that way"));
     }
 
     @Test
     @SneakyThrows
     public void test_static_w2required_w2required_partial() {
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra two-w2-argument John Doe Jan"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra two-w2-argument John Doe Jan "));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra two-w2-argument John Doe Jan  "));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra two-w2-argument John Doe Jan"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra two-w2-argument John Doe Jan "));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra two-w2-argument John Doe Jan  "));
     }
 
     @Test
@@ -211,23 +211,23 @@ public final class TestCommandCall {
 
     @Test
     public void test_static_required_required_too_long() {
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra two-argument Player1 Player2 ???"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra two-argument unknown1 unknown2 ? ? ?"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra two-argument null null funny but it does not work that way"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra two-argument Player1 Player2 ???"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra two-argument unknown1 unknown2 ? ? ?"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra two-argument null null funny but it does not work that way"));
     }
 
     @Test
     public void test_static_required_required_missing_single() {
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra two-argument Player1"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra two-argument Player1 "));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra two-argument Player1  "));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra two-argument Player1"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra two-argument Player1 "));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra two-argument Player1  "));
     }
 
     @Test
     public void test_static_required_required_missing_all() {
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra two-argument"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra two-argument "));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-ra two-argument  "));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra two-argument"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra two-argument "));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-ra two-argument  "));
     }
 
     @Test
@@ -240,9 +240,9 @@ public final class TestCommandCall {
 
     @Test
     public void test_static_optional_too_long() {
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-oa single-argument Player ???"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-oa single-argument unknown ? ? ?"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-oa single-argument null funny but it does not work that way"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-oa single-argument Player ???"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-oa single-argument unknown ? ? ?"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-oa single-argument null funny but it does not work that way"));
     }
 
     @Test
@@ -288,9 +288,9 @@ public final class TestCommandCall {
 
     @Test
     public void test_static_w2optional_too_long() {
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-oa single-w2-argument John Doe ???"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-oa single-w2-argument John Doe ? ? ?"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-oa single-w2-argument John Doe funny but it does not work that way"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-oa single-w2-argument John Doe ???"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-oa single-w2-argument John Doe ? ? ?"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-oa single-w2-argument John Doe funny but it does not work that way"));
     }
 
     @Test
@@ -318,9 +318,9 @@ public final class TestCommandCall {
 
     @Test
     public void test_static_w2optional_w2optional_too_long() {
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-oa two-w2-argument John Doe Jan Kowalski ???"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-oa two-w2-argument John Doe Jan Kowalski ? ? ?"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-oa two-w2-argument John Doe Jan Kowalski funny but it does not work that way"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-oa two-w2-argument John Doe Jan Kowalski ???"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-oa two-w2-argument John Doe Jan Kowalski ? ? ?"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-oa two-w2-argument John Doe Jan Kowalski funny but it does not work that way"));
     }
 
     @Test
@@ -341,9 +341,9 @@ public final class TestCommandCall {
 
     @Test
     public void test_static_optional_optional_too_long() {
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-oa two-argument Player1 Player2 ???"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-oa two-argument unknown1 unknown2 ? ? ?"));
-        assertThrows(IllegalArgumentException.class, () -> this.commands.call("example-oa two-argument null null funny but it does not work that way"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-oa two-argument Player1 Player2 ???"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-oa two-argument unknown1 unknown2 ? ? ?"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-oa two-argument null null funny but it does not work that way"));
     }
 
     @Test

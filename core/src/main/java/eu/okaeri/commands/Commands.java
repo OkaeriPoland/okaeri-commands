@@ -1,32 +1,64 @@
 package eu.okaeri.commands;
 
+import eu.okaeri.commands.handler.access.AccessHandler;
+import eu.okaeri.commands.handler.argument.MissingArgumentHandler;
+import eu.okaeri.commands.handler.completion.CompletionHandler;
+import eu.okaeri.commands.handler.error.ErrorHandler;
+import eu.okaeri.commands.handler.result.ResultHandler;
+import eu.okaeri.commands.handler.text.TextHandler;
+import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.meta.InvocationMeta;
-import eu.okaeri.commands.registry.CommandsRegistry;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandService;
 import eu.okaeri.commands.service.InvocationContext;
-import eu.okaeri.commands.type.CommandsTypes;
-import eu.okaeri.commands.type.CommandsTypesPack;
 import eu.okaeri.commands.type.resolver.TypeResolver;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Parameter;
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Optional;
 
 public interface Commands {
 
-    CommandsRegistry getRegistry();
+    OkaeriCommands errorHandler(@NonNull ErrorHandler errorHandler);
 
-    CommandsTypes getTypes();
+    OkaeriCommands resultHandler(@NonNull ResultHandler resultHandler);
 
-    Commands register(@NonNull Class<? extends CommandService> clazz);
+    OkaeriCommands textHandler(@NonNull TextHandler textHandler);
 
-    Commands register(@NonNull CommandService service);
+    OkaeriCommands missingArgumentHandler(@NonNull MissingArgumentHandler argumentHandler);
 
-    Commands register(@NonNull TypeResolver typeResolver);
+    OkaeriCommands accessHandler(@NonNull AccessHandler accessHandler);
 
-    Commands register(@NonNull CommandsTypesPack typesPack);
+    OkaeriCommands completionHandler(@NonNull CompletionHandler completionHandler);
+
+    Commands registerCommand(@NonNull Class<? extends CommandService> clazz);
+
+    Commands registerCommand(@NonNull CommandService service);
+
+    Commands registerType(@NonNull TypeResolver typeResolver);
+
+    Commands registerTypeExclusive(@NonNull Type removeAnyForType, @NonNull TypeResolver typeResolver);
+
+    Commands registerType(@NonNull CommandsExtension typesPack);
+
+    Commands registerExtension(@NonNull CommandsExtension extension);
+
+    String resolveText(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull String text);
+
+    Object resolveMissingArgument(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull CommandMeta command, @NonNull Parameter param, int i);
+
+    @SneakyThrows
+    <T extends CommandService> T createInstance(@NonNull Class<T> clazz);
+
+    List<CommandMeta> findByLabel(@NonNull String label);
+
+    Optional<CommandMeta> findByLabelAndArgs(@NonNull String label, @NonNull String args);
+
+    Optional<TypeResolver> findTypeResolver(@NonNull Type type);
 
     <T> T call(@NonNull String command) throws InvocationTargetException, IllegalAccessException;
 
@@ -34,5 +66,9 @@ public interface Commands {
 
     InvocationMeta invocationPrepare(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext);
 
+    List<String> complete(@NonNull List<CommandMeta> metas, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext);
+
     List<String> complete(@NonNull String command);
+
+    void onRegister(@NonNull CommandMeta command);
 }

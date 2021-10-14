@@ -1,20 +1,14 @@
 package eu.okaeri.commands.bukkit;
 
-import eu.okaeri.commands.Commands;
-import eu.okaeri.commands.adapter.CommandsAdapter;
-import eu.okaeri.commands.bukkit.annotation.Permission;
+import eu.okaeri.commands.OkaeriCommands;
 import eu.okaeri.commands.bukkit.annotation.Sender;
-import eu.okaeri.commands.bukkit.exception.ExceptionSource;
-import eu.okaeri.commands.bukkit.exception.NoPermissionException;
-import eu.okaeri.commands.bukkit.exception.NoSuchCommandException;
-import eu.okaeri.commands.bukkit.handler.DefaultErrorHandler;
-import eu.okaeri.commands.bukkit.handler.DefaultResultHandler;
-import eu.okaeri.commands.handler.DefaultTextHandler;
-import eu.okaeri.commands.handler.ErrorHandler;
-import eu.okaeri.commands.handler.ResultHandler;
-import eu.okaeri.commands.handler.TextHandler;
+import eu.okaeri.commands.bukkit.handler.BukkitAccessHandler;
+import eu.okaeri.commands.bukkit.handler.BukkitCompletionHandler;
+import eu.okaeri.commands.bukkit.handler.BukkitErrorHandler;
+import eu.okaeri.commands.bukkit.handler.BukkitResultHandler;
+import eu.okaeri.commands.bukkit.type.CommandsBukkitTypes;
+import eu.okaeri.commands.exception.NoSuchCommandException;
 import eu.okaeri.commands.meta.CommandMeta;
-import eu.okaeri.commands.meta.ExecutorMeta;
 import eu.okaeri.commands.meta.InvocationMeta;
 import eu.okaeri.commands.meta.ServiceMeta;
 import eu.okaeri.commands.service.CommandContext;
@@ -28,42 +22,30 @@ import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Parameter;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class CommandsBukkit extends CommandsAdapter {
+public class CommandsBukkit extends OkaeriCommands {
+
+    private final Map<String, List<CommandMeta>> registeredCommands = new ConcurrentHashMap<>();
+    private final Map<String, ServiceMeta> registeredServices = new ConcurrentHashMap<>();
 
     private final CommandMap commandMap;
     private final JavaPlugin plugin;
-
-    private ErrorHandler errorHandler = new DefaultErrorHandler(this);
-    private ResultHandler resultHandler = new DefaultResultHandler();
-    private TextHandler textHandler = new DefaultTextHandler();
 
     public static CommandsBukkit of(@NonNull JavaPlugin plugin) {
         return new CommandsBukkit(plugin);
     }
 
-    public CommandsBukkit errorHandler(@NonNull ErrorHandler errorHandler) {
-        this.errorHandler = errorHandler;
-        return this;
-    }
-
-    public CommandsBukkit resultHandler(@NonNull ResultHandler resultHandler) {
-        this.resultHandler = resultHandler;
-        return this;
-    }
-
-    public CommandsBukkit textHandler(@NonNull TextHandler textHandler) {
-        this.textHandler = textHandler;
-        return this;
-    }
-
     protected CommandsBukkit(@NonNull JavaPlugin plugin) {
         this.plugin = plugin;
         this.commandMap = CommandsBukkitUnsafe.getCommandMap();
+        this.registerType(new CommandsBukkitTypes());
+        this.errorHandler(new BukkitErrorHandler(this));
+        this.resultHandler(new BukkitResultHandler());
+        this.accessHandler(new BukkitAccessHandler());
+        this.completionHandler(new BukkitCompletionHandler());
     }
 
     @Override
@@ -72,7 +54,7 @@ public class CommandsBukkit extends CommandsAdapter {
     }
 
     @Override
-    public Object resolveMissingArgument(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull CommandMeta command, @NonNull Parameter param, int i) {
+    public Object resolveMissingArgument(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
 
         Class<?> paramType = param.getType();
 
@@ -91,7 +73,7 @@ public class CommandsBukkit extends CommandsAdapter {
             return commandContext.get("sender");
         }
 
-        return super.resolveMissingArgument(commandContext, invocationContext, command, param, i);
+        return super.resolveMissingArgument(commandContext, invocationContext, command, param, index);
     }
 
     @Override
@@ -99,7 +81,26 @@ public class CommandsBukkit extends CommandsAdapter {
 
         ServiceMeta service = command.getService();
         String serviceLabel = service.getLabel();
-        Set<String> servicePermissions = CommandsBukkit.this.getPermissions(service);
+
+        if (this.registeredServices.containsKey(serviceLabel)) {
+            ServiceMeta currentService = this.registeredServices.get(serviceLabel);
+            if (!service.equals(currentService)) {
+                String currentName = currentService.getImplementor().getClass().getName();
+                String newName = service.getImplementor().getClass().getName();
+                throw new RuntimeException("Cannot override command '" + serviceLabel + "' [current: " + currentName + ", new: " + newName + "]");
+            }
+        }
+
+        if (this.registeredCommands.containsKey(serviceLabel)) {
+            this.registeredCommands.get(serviceLabel).add(command);
+            return;
+        }
+
+        this.registeredServices.put(serviceLabel, service);
+        this.registeredCommands.put(serviceLabel, new ArrayList<>());
+
+        List<CommandMeta> metas = this.registeredCommands.get(serviceLabel);
+        metas.add(command);
 
         Command bukkitCommand = new Command(serviceLabel) {
 
@@ -110,11 +111,9 @@ public class CommandsBukkit extends CommandsAdapter {
                 commandContext.add("sender", sender);
 
                 try {
-                    return CommandsBukkit.this.executeCommand(command, commandContext, sender, label, args, servicePermissions);
-                }
-                catch (Exception exception) {
-                    InvocationContext dummyInvocationContext = command.newInvocationContext(label, args);
-                    CommandsBukkit.this.handleError(commandContext, dummyInvocationContext, exception, ExceptionSource.UNKNOWN);
+                    return CommandsBukkit.this.executeCommand(service, commandContext, sender, label, args);
+                } catch (CommandException exception) {
+                    CommandsBukkit.this.handleError(commandContext, InvocationContext.of(service, label, args), exception);
                     return true;
                 }
             }
@@ -122,65 +121,47 @@ public class CommandsBukkit extends CommandsAdapter {
             @Override
             public List<String> tabComplete(CommandSender sender, String alias, String[] args) throws IllegalArgumentException {
 
-                String cmd = alias + " " + Arrays.stream(args)
-                        .filter(s -> !s.isEmpty())
-                        .collect(Collectors.joining(" "));
+                CommandContext commandContext = new CommandContext();
+                commandContext.add("sender", sender);
 
-                List<String> completions = CommandsBukkit.this.getCore().complete(cmd);
-                return completions.isEmpty() ? super.tabComplete(sender, alias, args) : completions;
+                return CommandsBukkit.this.complete(metas,
+                        InvocationContext.of(service, alias, args),
+                        commandContext
+                );
             }
         };
 
         bukkitCommand.setAliases(service.getAliases());
         bukkitCommand.setDescription(service.getDescription());
         this.commandMap.register(serviceLabel, bukkitCommand);
-
-        super.onRegister(command);
     }
 
-    private boolean executeCommand(@NonNull CommandMeta commandMeta, @NonNull CommandContext commandContext, @NonNull CommandSender sender, @NonNull String label, @NonNull String[] args, @NonNull Set<String> servicePermissions) {
+    private boolean executeCommand(@NonNull ServiceMeta service, @NonNull CommandContext commandContext, @NonNull CommandSender sender, @NonNull String label, @NonNull String[] args) {
 
-        Commands core = CommandsBukkit.super.getCore();
         String fullCommand = (label + " " + String.join(" ", args)).trim();
+        this.accessHandler.checkAccess(service, InvocationContext.of(service, label, args), commandContext);
 
-        if (this.isMissingPermissions(sender, servicePermissions)) {
-            InvocationContext dummyInvocationContext = commandMeta.newInvocationContext(label, args);
-            NoPermissionException noPermissionException = new NoPermissionException(servicePermissions.toArray(new String[0])[0]);
-            this.handleError(commandContext, dummyInvocationContext, noPermissionException, ExceptionSource.SYSTEM);
-            return true;
-        }
-
-        Optional<InvocationContext> invocationOptional = core.invocationMatch(fullCommand);
+        Optional<InvocationContext> invocationOptional = this.invocationMatch(fullCommand);
         if (!invocationOptional.isPresent()) {
-            InvocationContext dummyInvocationContext = commandMeta.newInvocationContext(label, args);
-            NoSuchCommandException noSuchCommandException = new NoSuchCommandException(fullCommand);
-            this.handleError(commandContext, dummyInvocationContext, noSuchCommandException, ExceptionSource.SYSTEM);
-            return true;
+            throw new NoSuchCommandException(fullCommand);
         }
 
         InvocationContext invocationContext = invocationOptional.get();
-        JavaPlugin plugin = CommandsBukkit.this.plugin;
-
-        Set<String> executorPermissions = CommandsBukkit.this.getPermissions(invocationContext.getExecutor());
-        if (this.isMissingPermissions(sender, executorPermissions)) {
-            NoPermissionException noPermissionException = new NoPermissionException(executorPermissions.toArray(new String[0])[0]);
-            this.handleError(commandContext, invocationContext, noPermissionException, ExceptionSource.SYSTEM);
-            return true;
-        }
+        this.accessHandler.checkAccess(invocationContext.getExecutor(), invocationContext, commandContext);
 
         if (invocationContext.isAsync()) {
-            Runnable prepareAndExecuteAsync = () -> this.handleExecution(sender, core, invocationContext, commandContext);
-            plugin.getServer().getScheduler().runTaskAsynchronously(plugin, prepareAndExecuteAsync);
+            Runnable prepareAndExecuteAsync = () -> this.handleExecution(sender, invocationContext, commandContext);
+            this.plugin.getServer().getScheduler().runTaskAsynchronously(this.plugin, prepareAndExecuteAsync);
             return true;
         }
 
-        this.handleExecution(sender, core, invocationContext, commandContext);
+        this.handleExecution(sender, invocationContext, commandContext);
         return true;
     }
 
-    private void handleError(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull Throwable throwable, @NonNull ExceptionSource source) {
+    private void handleError(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull Throwable throwable) {
 
-        Object result = this.errorHandler.onError(commandContext, invocationContext, throwable);
+        Object result = this.errorHandler.handle(commandContext, invocationContext, throwable);
         if (result == null) {
             return;
         }
@@ -190,19 +171,19 @@ public class CommandsBukkit extends CommandsAdapter {
             throw new RuntimeException("Cannot dispatch error", throwable);
         }
 
-        if (this.resultHandler.onResult(result, commandContext, invocationContext)) {
+        if (this.resultHandler.handle(result, commandContext, invocationContext)) {
             return;
         }
 
         throw new RuntimeException("Unknown return type for errorHandler [allowed: BukkitResponse, String, null]", throwable);
     }
 
-    private void handleExecution(@NonNull CommandSender sender, @NonNull Commands core, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
+    private void handleExecution(@NonNull CommandSender sender, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
         try {
-            InvocationMeta invocationMeta = core.invocationPrepare(invocationContext, commandContext);
+            InvocationMeta invocationMeta = this.invocationPrepare(invocationContext, commandContext);
             Object result = invocationMeta.call();
 
-            if (this.resultHandler.onResult(result, commandContext, invocationContext)) {
+            if (this.resultHandler.handle(result, commandContext, invocationContext)) {
                 return;
             }
 
@@ -211,59 +192,17 @@ public class CommandsBukkit extends CommandsAdapter {
             }
 
             throw new RuntimeException("Unknown return type for excutor [allowed: BukkitResponse, String, void]");
-        }
-        catch (InvocationTargetException | IllegalAccessException | CommandException exception) {
-
-            // exception originating from the called method
-            if (exception instanceof InvocationTargetException) {
-
-                if (exception.getCause() instanceof CommandException) {
-                    this.handleError(commandContext, invocationContext, exception.getCause(), ExceptionSource.COMMAND);
+        } catch (CommandException exception) {
+            // unpack exception
+            Throwable cause = exception.getCause();
+            while (!(cause instanceof CommandException)) {
+                if (cause == null) {
+                    this.handleError(commandContext, invocationContext, exception);
                     return;
                 }
-
-                this.handleError(commandContext, invocationContext, exception, ExceptionSource.COMMAND);
-                return;
+                cause = exception.getCause();
             }
-
-            // exception originating from the core system (type resolver?)
-            if (exception instanceof CommandException) {
-                this.handleError(commandContext, invocationContext, exception, ExceptionSource.COMMAND);
-                return;
-            }
-
-            // exception originating from the core system
-            if (exception.getCause() instanceof CommandException) {
-                this.handleError(commandContext, invocationContext, exception.getCause(), ExceptionSource.COMMAND);
-                return;
-            }
-
-            throw new RuntimeException("ThatShouldNotBePossibleButSomethingHasGoneTerriblyWrongException", exception);
+            this.handleError(commandContext, invocationContext, cause);
         }
-    }
-
-    private Set<String> getPermissions(@NonNull ServiceMeta service) {
-        Permission permission = service.getImplementor().getClass().getAnnotation(Permission.class);
-        return (permission == null) ? Collections.emptySet() : new HashSet<>(Arrays.asList(permission.value()));
-    }
-
-    private Set<String> getPermissions(@NonNull ExecutorMeta executor) {
-        Permission permission = executor.getMethod().getAnnotation(Permission.class);
-        return (permission == null) ? Collections.emptySet() : new HashSet<>(Arrays.asList(permission.value()));
-    }
-
-    private boolean isMissingPermissions(@NonNull CommandSender sender, @NonNull Set<String> permissions) {
-
-        if (permissions.isEmpty()) {
-            return false;
-        }
-
-        for (String servicePermission : permissions) {
-            if (sender.hasPermission(servicePermission)) {
-                return false;
-            }
-        }
-
-        return true;
     }
 }
