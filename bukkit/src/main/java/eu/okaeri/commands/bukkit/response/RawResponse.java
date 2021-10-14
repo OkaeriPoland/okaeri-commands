@@ -1,6 +1,5 @@
 package eu.okaeri.commands.bukkit.response;
 
-import eu.okaeri.commands.bukkit.response.placeholder.Placeholers;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
 import lombok.ToString;
@@ -40,6 +39,6 @@ public class RawResponse implements BukkitResponse {
 
     @Override
     public String render() {
-        return Placeholers.replaceAll(this.raw(), this.fields());
+        return ResponseUtils.replaceAll(this.raw(), this.fields());
     }
 }

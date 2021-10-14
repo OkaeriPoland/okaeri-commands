@@ -8,6 +8,8 @@ import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.meta.ExecutorMeta;
 import eu.okaeri.commands.meta.InvocationMeta;
 import eu.okaeri.commands.meta.pattern.PatternMeta;
+import eu.okaeri.commands.meta.pattern.element.PatternElement;
+import eu.okaeri.commands.meta.pattern.element.StaticElement;
 import eu.okaeri.commands.registry.CommandsRegistry;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandException;
@@ -180,5 +182,37 @@ public class OkaeriCommands implements Commands {
         }
 
         return InvocationMeta.of(executorMethod, call, commandMeta.getService(), executor);
+    }
+
+    @Override
+    public List<String> complete(@NonNull String command) {
+
+        String[] parts = command.split(" ", 2);
+        String label = parts[0];
+        String args = (parts.length > 1) ? parts[1] : "";
+
+        List<CommandMeta> metas = this.getRegistry().findByLabel(label);
+        Set<String> completions = new TreeSet<>();
+
+        for (CommandMeta meta : metas) {
+
+            PatternMeta pattern = meta.getExecutor().getPattern();
+            Optional<PatternElement> elementOptional = pattern.getCurrentElement(args);
+
+            if (!elementOptional.isPresent()) {
+                continue;
+            }
+
+            PatternElement element = elementOptional.get();
+            if (element instanceof StaticElement) {
+                completions.add(element.getName());
+            }
+            // TODO: completions resolvers
+            else {
+                completions.add(element.render());
+            }
+        }
+
+        return new ArrayList<>(completions);
     }
 }

@@ -1,6 +1,5 @@
 package eu.okaeri.commands.bukkit.response;
 
-import eu.okaeri.commands.bukkit.response.placeholder.Placeholers;
 import lombok.NonNull;
 import org.bukkit.ChatColor;
 
@@ -26,10 +25,10 @@ public class ColorResponse extends RawResponse {
 
         if (this.color == null) {
             String render = ChatColor.translateAlternateColorCodes('&', super.raw());
-            render = Placeholers.replaceAll(render, this.fields());
+            render = ResponseUtils.replaceAll(render, this.fields());
             return render;
         }
 
-        return this.color + Placeholers.replaceAll(this.raw(), this.fields());
+        return this.color + ResponseUtils.replaceAll(this.raw(), this.fields());
     }
 }

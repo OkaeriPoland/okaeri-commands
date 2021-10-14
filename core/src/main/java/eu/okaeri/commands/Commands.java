@@ -8,8 +8,10 @@ import eu.okaeri.commands.service.InvocationContext;
 import eu.okaeri.commands.type.CommandsTypes;
 import eu.okaeri.commands.type.CommandsTypesPack;
 import eu.okaeri.commands.type.resolver.TypeResolver;
+import lombok.NonNull;
 
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 import java.util.Optional;
 
 public interface Commands {
@@ -18,17 +20,19 @@ public interface Commands {
 
     CommandsTypes getTypes();
 
-    Commands register(Class<? extends CommandService> clazz);
+    Commands register(@NonNull Class<? extends CommandService> clazz);
 
-    Commands register(CommandService service);
+    Commands register(@NonNull CommandService service);
 
-    Commands register(TypeResolver typeResolver);
+    Commands register(@NonNull TypeResolver typeResolver);
 
-    Commands register(CommandsTypesPack typesPack);
+    Commands register(@NonNull CommandsTypesPack typesPack);
 
-    <T> T call(String command) throws InvocationTargetException, IllegalAccessException;
+    <T> T call(@NonNull String command) throws InvocationTargetException, IllegalAccessException;
 
-    Optional<InvocationContext> invocationMatch(String command);
+    Optional<InvocationContext> invocationMatch(@NonNull String command);
 
-    InvocationMeta invocationPrepare(InvocationContext invocationContext, CommandContext commandContext);
+    InvocationMeta invocationPrepare(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext);
+
+    List<String> complete(@NonNull String command);
 }
