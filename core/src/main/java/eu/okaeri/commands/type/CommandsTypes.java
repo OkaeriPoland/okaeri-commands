@@ -2,17 +2,18 @@ package eu.okaeri.commands.type;
 
 
 import eu.okaeri.commands.type.resolver.TypeResolver;
+import lombok.NonNull;
 
 import java.lang.reflect.Type;
 import java.util.Optional;
 
 public interface CommandsTypes {
 
-    void register(CommandsTypesPack typesPack);
+    void register(@NonNull CommandsTypesPack typesPack);
 
-    void register(TypeResolver typeResolver);
+    void register(@NonNull TypeResolver typeResolver);
 
-    void registerExclusive(Type removeAnyForType, TypeResolver typeResolver);
+    void registerExclusive(@NonNull Type removeAnyForType, @NonNull TypeResolver typeResolver);
 
-    Optional<TypeResolver> findByType(Type type);
+    Optional<TypeResolver> findByType(@NonNull Type type);
 }

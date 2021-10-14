@@ -1,10 +1,10 @@
-package eu.okaeri.commands.bukkit.response.placeholder;
+package eu.okaeri.commands.bukkit.response;
 
 import lombok.NonNull;
 
 import java.util.Map;
 
-public final class Placeholers {
+final class ResponseUtils {
 
     public static String replaceAll(@NonNull String in, @NonNull Map<String, String> map) {
 

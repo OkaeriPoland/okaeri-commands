@@ -30,7 +30,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Parameter;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class CommandsBukkit extends CommandsAdapter {
 
@@ -98,7 +99,7 @@ public class CommandsBukkit extends CommandsAdapter {
 
         ServiceMeta service = command.getService();
         String serviceLabel = service.getLabel();
-        String servicePermission = CommandsBukkit.this.getPermission(service);
+        Set<String> servicePermissions = CommandsBukkit.this.getPermissions(service);
 
         Command bukkitCommand = new Command(serviceLabel) {
 
@@ -109,13 +110,24 @@ public class CommandsBukkit extends CommandsAdapter {
                 commandContext.add("sender", sender);
 
                 try {
-                    return CommandsBukkit.this.executeCommand(command, commandContext, sender, label, args, servicePermission);
+                    return CommandsBukkit.this.executeCommand(command, commandContext, sender, label, args, servicePermissions);
                 }
                 catch (Exception exception) {
                     InvocationContext dummyInvocationContext = command.newInvocationContext(label, args);
                     CommandsBukkit.this.handleError(commandContext, dummyInvocationContext, exception, ExceptionSource.UNKNOWN);
                     return true;
                 }
+            }
+
+            @Override
+            public List<String> tabComplete(CommandSender sender, String alias, String[] args) throws IllegalArgumentException {
+
+                String cmd = alias + " " + Arrays.stream(args)
+                        .filter(s -> !s.isEmpty())
+                        .collect(Collectors.joining(" "));
+
+                List<String> completions = CommandsBukkit.this.getCore().complete(cmd);
+                return completions.isEmpty() ? super.tabComplete(sender, alias, args) : completions;
             }
         };
 
@@ -126,14 +138,14 @@ public class CommandsBukkit extends CommandsAdapter {
         super.onRegister(command);
     }
 
-    private boolean executeCommand(@NonNull CommandMeta commandMeta, @NonNull CommandContext commandContext, @NonNull CommandSender sender, @NonNull String label, @NonNull String[] args, String servicePermission) {
+    private boolean executeCommand(@NonNull CommandMeta commandMeta, @NonNull CommandContext commandContext, @NonNull CommandSender sender, @NonNull String label, @NonNull String[] args, @NonNull Set<String> servicePermissions) {
 
         Commands core = CommandsBukkit.super.getCore();
         String fullCommand = (label + " " + String.join(" ", args)).trim();
 
-        if ((servicePermission != null) && !sender.hasPermission(servicePermission)) {
+        if (this.isMissingPermissions(sender, servicePermissions)) {
             InvocationContext dummyInvocationContext = commandMeta.newInvocationContext(label, args);
-            NoPermissionException noPermissionException = new NoPermissionException(servicePermission);
+            NoPermissionException noPermissionException = new NoPermissionException(servicePermissions.toArray(new String[0])[0]);
             this.handleError(commandContext, dummyInvocationContext, noPermissionException, ExceptionSource.SYSTEM);
             return true;
         }
@@ -149,9 +161,9 @@ public class CommandsBukkit extends CommandsAdapter {
         InvocationContext invocationContext = invocationOptional.get();
         JavaPlugin plugin = CommandsBukkit.this.plugin;
 
-        String executorPermission = CommandsBukkit.this.getPermission(invocationContext.getExecutor());
-        if ((executorPermission != null) && !sender.hasPermission(executorPermission)) {
-            NoPermissionException noPermissionException = new NoPermissionException(executorPermission);
+        Set<String> executorPermissions = CommandsBukkit.this.getPermissions(invocationContext.getExecutor());
+        if (this.isMissingPermissions(sender, executorPermissions)) {
+            NoPermissionException noPermissionException = new NoPermissionException(executorPermissions.toArray(new String[0])[0]);
             this.handleError(commandContext, invocationContext, noPermissionException, ExceptionSource.SYSTEM);
             return true;
         }
@@ -230,13 +242,28 @@ public class CommandsBukkit extends CommandsAdapter {
         }
     }
 
-    private String getPermission(@NonNull ServiceMeta service) {
+    private Set<String> getPermissions(@NonNull ServiceMeta service) {
         Permission permission = service.getImplementor().getClass().getAnnotation(Permission.class);
-        return (permission == null) ? null : permission.value();
+        return (permission == null) ? Collections.emptySet() : new HashSet<>(Arrays.asList(permission.value()));
     }
 
-    private String getPermission(@NonNull ExecutorMeta executor) {
+    private Set<String> getPermissions(@NonNull ExecutorMeta executor) {
         Permission permission = executor.getMethod().getAnnotation(Permission.class);
-        return (permission == null) ? null : permission.value();
+        return (permission == null) ? Collections.emptySet() : new HashSet<>(Arrays.asList(permission.value()));
+    }
+
+    private boolean isMissingPermissions(@NonNull CommandSender sender, @NonNull Set<String> permissions) {
+
+        if (permissions.isEmpty()) {
+            return false;
+        }
+
+        for (String servicePermission : permissions) {
+            if (sender.hasPermission(servicePermission)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

@@ -35,7 +35,8 @@ public class PatternMeta {
         AtomicInteger position = new AtomicInteger();
         AtomicInteger argumentIndex = new AtomicInteger();
         PatternMeta meta = new PatternMeta();
-        List<PatternElement> patternElements = Arrays.stream(finalPattern.split(" "))
+
+        meta.setElements(Collections.unmodifiableList(Arrays.stream(finalPattern.split(" "))
                 .map(part -> {
                     int positionValue = position.getAndAdd(PatternElement.getWidthFromPatternElement(part));
                     int argumentValue = argumentIndex.getAndIncrement();
@@ -64,12 +65,15 @@ public class PatternMeta {
                     argumentIndex.decrementAndGet();
                     return element;
                 })
-                .collect(Collectors.toList());
-        meta.setElements(Collections.unmodifiableList(patternElements));
+                .collect(Collectors.toList())));
+        meta.setNameToElement(meta.getElements().stream().filter(e -> !(e instanceof StaticElement)).collect(Collectors.toMap(PatternElement::getName, e -> e)));
         meta.setRaw(meta.getElements().stream().map(PatternElement::render).collect(Collectors.joining(" ")));
+
         meta.setStaticElements(Math.toIntExact(meta.getElements().stream().filter(element -> element instanceof StaticElement).count()));
         meta.setStaticOnly(meta.getElements().size() == meta.getStaticElements());
-        meta.setNameToElement(meta.getElements().stream().filter(e -> !(e instanceof StaticElement)).collect(Collectors.toMap(PatternElement::getName, e -> e)));
+
+        meta.setConsuming(meta.getElements().stream().mapToInt(PatternElement::getWidth).anyMatch(i -> i == -1));
+        meta.setElementsWidth(meta.isConsuming() ? -1 : meta.getElements().stream().mapToInt(PatternElement::getWidth).sum());
 
         // validate meta (only optional after optional)
         boolean foundOptional = false;
@@ -105,10 +109,12 @@ public class PatternMeta {
 
     private List<PatternElement> elements;
     private Map<String, PatternElement> nameToElement;
+    private String raw;
 
     private int staticElements;
     private boolean staticOnly;
-    private String raw;
+    private boolean consuming;
+    private int elementsWidth;
 
     public boolean applicable(@NonNull String pattern) {
 
@@ -152,6 +158,66 @@ public class PatternMeta {
         }
 
         return true;
+    }
+
+    public Optional<PatternElement> getCurrentElement(@NonNull String args) {
+
+        boolean opensNext = args.endsWith(" ");
+        String[] argsArr = args.split(" ");
+
+        // not consuming and args length exceeds command width
+        if (!this.isConsuming() && (argsArr.length > this.getElementsWidth())) {
+            return Optional.empty();
+        }
+
+        int argAtIndex = ((argsArr.length + (opensNext ? 1 : 0)) - 1);
+        List<PatternElement> elements = this.getElements();
+
+        int argIndex = 0;
+        int patternIndex = 0;
+
+        for (PatternElement element : elements) {
+
+            // determine end of command args
+            if (argIndex >= argsArr.length) {
+                // command opens next argument, return if available
+                if (opensNext && (elements.size() > patternIndex)) {
+                    return Optional.of(elements.get(patternIndex));
+                }
+                // no match through whole elements
+                return Optional.empty();
+            }
+
+            // filter out mismatched
+            if (element instanceof StaticElement) {
+                if (!element.getName().startsWith(argsArr[argIndex])) {
+                    return Optional.empty();
+                }
+            }
+
+            // return element if got this far
+            // and is at searched arg index
+            if (argIndex == argAtIndex) {
+                return Optional.of(element);
+            }
+
+            // increment counters
+            argIndex += element.getWidth();
+            patternIndex += 1;
+        }
+
+        return Optional.empty();
+    }
+
+    public Optional<PatternElement> getElementAtWidth(int width) {
+        int currentWidth = 0;
+        for (PatternElement element : this.getElements()) {
+            if ((width >= currentWidth) && (width < (currentWidth + element.getWidth()))) {
+                return Optional.of(element);
+            }
+            currentWidth += element.getWidth();
+        }
+        return Optional.empty();
     }
 
     public boolean matches(@NonNull String args) {
