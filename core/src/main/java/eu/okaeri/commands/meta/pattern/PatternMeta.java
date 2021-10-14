@@ -35,6 +35,7 @@ public class PatternMeta {
         AtomicInteger position = new AtomicInteger();
         AtomicInteger argumentIndex = new AtomicInteger();
         PatternMeta meta = new PatternMeta();
+        Map<String, ArgumentMeta> nameToArgument = new LinkedHashMap<>();
 
         meta.setElements(Collections.unmodifiableList(Arrays.stream(finalPattern.split(" "))
                 .map(part -> {
@@ -44,19 +45,24 @@ public class PatternMeta {
 
                     if (!(element instanceof StaticElement)) {
 
-                        if ((element instanceof OptionalElement) && (argumentValue < arguments.size())) {
-                            ArgumentMeta argumentMeta = arguments.get(argumentValue);
-                            if (!argumentMeta.isOptional()) {
-                                throw new IllegalArgumentException("Pattern describes optional element but argument is " +
-                                        "not java.lang.Optional nor eu.okaeri.commands.service.Option\nPattern: " + finalPattern + "\nArguments: " + arguments);
-                            }
-                        }
-
                         if (element.getName() == null) {
                             String metaName = (argumentValue < arguments.size())
                                     ? arguments.get(argumentValue).getName()
                                     : null;
                             element.setName(metaName);
+                        }
+
+                        if (argumentValue < arguments.size()) {
+
+                            ArgumentMeta argumentMeta = arguments.get(argumentValue);
+                            nameToArgument.put(element.getName(), argumentMeta);
+
+                            if ((element instanceof OptionalElement)) {
+                                if (!argumentMeta.isOptional()) {
+                                    throw new IllegalArgumentException("Pattern describes optional element but argument is " +
+                                            "not java.lang.Optional nor eu.okaeri.commands.service.Option\nPattern: " + finalPattern + "\nArguments: " + arguments);
+                                }
+                            }
                         }
 
                         return element;
@@ -66,14 +72,30 @@ public class PatternMeta {
                     return element;
                 })
                 .collect(Collectors.toList())));
-        meta.setNameToElement(meta.getElements().stream().filter(e -> !(e instanceof StaticElement)).collect(Collectors.toMap(PatternElement::getName, e -> e)));
-        meta.setRaw(meta.getElements().stream().map(PatternElement::render).collect(Collectors.joining(" ")));
 
-        meta.setStaticElements(Math.toIntExact(meta.getElements().stream().filter(element -> element instanceof StaticElement).count()));
+        meta.setNameToElement(meta.getElements().stream()
+                .filter(e -> !(e instanceof StaticElement))
+                .collect(Collectors.toMap(PatternElement::getName, e -> e)));
+
+        meta.setNameToArgument(nameToArgument);
+
+        meta.setRaw(meta.getElements().stream()
+                .map(PatternElement::render)
+                .collect(Collectors.joining(" ")));
+
+        meta.setStaticElements(Math.toIntExact(meta.getElements().stream()
+                .filter(element -> element instanceof StaticElement)
+                .count()));
+
         meta.setStaticOnly(meta.getElements().size() == meta.getStaticElements());
 
-        meta.setConsuming(meta.getElements().stream().mapToInt(PatternElement::getWidth).anyMatch(i -> i == -1));
-        meta.setElementsWidth(meta.isConsuming() ? -1 : meta.getElements().stream().mapToInt(PatternElement::getWidth).sum());
+        meta.setConsuming(meta.getElements().stream()
+                .mapToInt(PatternElement::getWidth)
+                .anyMatch(i -> i == -1));
+
+        meta.setElementsWidth(meta.isConsuming() ? -1 : meta.getElements()
+                .stream().mapToInt(PatternElement::getWidth)
+                .sum());
 
         // validate meta (only optional after optional)
         boolean foundOptional = false;
@@ -109,6 +131,7 @@ public class PatternMeta {
 
     private List<PatternElement> elements;
     private Map<String, PatternElement> nameToElement;
+    private Map<String, ArgumentMeta> nameToArgument;
     private String raw;
 
     private int staticElements;
@@ -303,6 +326,10 @@ public class PatternMeta {
         }
 
         throw new IllegalArgumentException("no such element for named parameter '" + name + " in " + Arrays.toString(parts));
+    }
+
+    public Optional<ArgumentMeta> getArgumentByName(@NonNull String name) {
+        return Optional.ofNullable(this.nameToArgument.get(name));
     }
 
     public String render() {

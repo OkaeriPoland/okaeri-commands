@@ -1,74 +1,273 @@
 package eu.okaeri.commands;
 
-import eu.okaeri.commands.adapter.CommandsAdapter;
+import eu.okaeri.commands.annotation.Executor;
 import eu.okaeri.commands.annotation.Label;
 import eu.okaeri.commands.annotation.RawArgs;
-import eu.okaeri.commands.meta.ArgumentMeta;
-import eu.okaeri.commands.meta.CommandMeta;
-import eu.okaeri.commands.meta.ExecutorMeta;
-import eu.okaeri.commands.meta.InvocationMeta;
+import eu.okaeri.commands.exception.NoSuchCommandException;
+import eu.okaeri.commands.handler.access.AccessHandler;
+import eu.okaeri.commands.handler.access.DefaultAccessHandler;
+import eu.okaeri.commands.handler.argument.DefaultMissingArgumentHandler;
+import eu.okaeri.commands.handler.argument.MissingArgumentHandler;
+import eu.okaeri.commands.handler.completion.CompletionHandler;
+import eu.okaeri.commands.handler.completion.DefaultCompletionHandler;
+import eu.okaeri.commands.handler.error.DefaultErrorHandler;
+import eu.okaeri.commands.handler.error.ErrorHandler;
+import eu.okaeri.commands.handler.result.DefaultResultHandler;
+import eu.okaeri.commands.handler.result.ResultHandler;
+import eu.okaeri.commands.handler.text.DefaultTextHandler;
+import eu.okaeri.commands.handler.text.TextHandler;
+import eu.okaeri.commands.meta.*;
 import eu.okaeri.commands.meta.pattern.PatternMeta;
 import eu.okaeri.commands.meta.pattern.element.PatternElement;
 import eu.okaeri.commands.meta.pattern.element.StaticElement;
-import eu.okaeri.commands.registry.CommandsRegistry;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandException;
 import eu.okaeri.commands.service.CommandService;
 import eu.okaeri.commands.service.InvocationContext;
-import eu.okaeri.commands.type.CommandsTypes;
-import eu.okaeri.commands.type.CommandsTypesPack;
+import eu.okaeri.commands.type.DefaultCommandsTypes;
 import eu.okaeri.commands.type.resolver.TypeResolver;
-import lombok.AccessLevel;
 import lombok.Data;
 import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.Type;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Data
-@RequiredArgsConstructor(access = AccessLevel.PROTECTED)
 public class OkaeriCommands implements Commands {
 
-    private final CommandsAdapter adapter;
-    private final CommandsRegistry registry;
-    private final CommandsTypes types;
+    protected static final Comparator<CommandMeta> META_COMPARATOR = Comparator
+            .comparing((CommandMeta meta) -> {
+                List<PatternElement> elements = meta.getExecutor().getPattern().getElements();
+                return elements.size();
+            }, Comparator.reverseOrder())
+            .thenComparing((CommandMeta meta) -> {
+                List<PatternElement> elements = meta.getExecutor().getPattern().getElements();
+                return elements.stream().filter(element -> element instanceof StaticElement).count();
+            }, Comparator.reverseOrder());
+
+    protected List<CommandMeta> registeredCommands = new ArrayList<>();
+    protected final List<TypeResolver> typeResolvers = new ArrayList<>();
+    protected final Map<Type, TypeResolver> resolverCache = new ConcurrentHashMap<>();
+
+    protected ErrorHandler errorHandler = new DefaultErrorHandler();
+    protected ResultHandler resultHandler = new DefaultResultHandler();
+    protected TextHandler textHandler = new DefaultTextHandler();
+    protected MissingArgumentHandler missingArgumentHandler = new DefaultMissingArgumentHandler();
+    protected AccessHandler accessHandler = new DefaultAccessHandler();
+    protected CompletionHandler completionHandler = new DefaultCompletionHandler();
+
+    public OkaeriCommands() {
+        this.registerType(new DefaultCommandsTypes());
+    }
 
     @Override
-    public Commands register(@NonNull Class<? extends CommandService> clazz) {
-        this.registry.register(clazz);
+    public OkaeriCommands errorHandler(@NonNull ErrorHandler errorHandler) {
+        this.errorHandler = errorHandler;
         return this;
     }
 
     @Override
-    public Commands register(@NonNull CommandService service) {
-        this.registry.register(service);
+    public OkaeriCommands resultHandler(@NonNull ResultHandler resultHandler) {
+        this.resultHandler = resultHandler;
         return this;
     }
 
     @Override
-    public Commands register(@NonNull TypeResolver typeResolver) {
-        this.types.register(typeResolver);
+    public OkaeriCommands textHandler(@NonNull TextHandler textHandler) {
+        this.textHandler = textHandler;
         return this;
     }
 
     @Override
-    public Commands register(@NonNull CommandsTypesPack typesPack) {
-        this.types.register(typesPack);
+    public OkaeriCommands missingArgumentHandler(@NonNull MissingArgumentHandler argumentHandler) {
+        this.missingArgumentHandler = argumentHandler;
         return this;
+    }
+
+    @Override
+    public OkaeriCommands accessHandler(@NonNull AccessHandler accessHandler) {
+        this.accessHandler = accessHandler;
+        return this;
+    }
+
+    @Override
+    public OkaeriCommands completionHandler(@NonNull CompletionHandler completionHandler) {
+        this.completionHandler = completionHandler;
+        return this;
+    }
+
+    @Override
+    public Commands registerCommand(@NonNull Class<? extends CommandService> clazz) {
+        return this.registerCommand(this.createInstance(clazz));
+    }
+
+    @Override
+    public Commands registerCommand(@NonNull CommandService service) {
+        return this.registerCommand(null, service);
+    }
+
+    protected Commands registerCommand(ServiceMeta parent, @NonNull CommandService service) {
+
+        Class<? extends CommandService> clazz = service.getClass();
+        for (Method method : clazz.getDeclaredMethods()) {
+
+            Executor executor = method.getAnnotation(Executor.class);
+            if (executor == null) {
+                continue;
+            }
+
+            ServiceMeta serviceMeta = ServiceMeta.of(parent, service);
+            List<CommandMeta> commands = CommandMeta.of(service, serviceMeta, method);
+
+            for (CommandMeta command : commands) {
+                this.registeredCommands.add(command);
+                this.onRegister(command);
+            }
+
+            for (Class<? extends CommandService> nestedServiceType : serviceMeta.getNested()) {
+                this.registerCommand(serviceMeta, this.createInstance(nestedServiceType));
+            }
+        }
+
+        this.registeredCommands.sort(META_COMPARATOR);
+        return this;
+    }
+
+    @Override
+    public Commands registerType(@NonNull TypeResolver typeResolver) {
+        this.typeResolvers.add(0, typeResolver);
+        this.resolverCache.clear();
+        return this;
+    }
+
+    @Override
+    public Commands registerTypeExclusive(@NonNull Type removeAnyForType, @NonNull TypeResolver typeResolver) {
+        this.typeResolvers.removeIf(resolver -> resolver.supports(removeAnyForType));
+        this.typeResolvers.add(0, typeResolver);
+        this.resolverCache.clear();
+        return this;
+    }
+
+    @Override
+    public Commands registerType(@NonNull CommandsExtension typesPack) {
+        typesPack.register(this);
+        this.resolverCache.clear();
+        return this;
+    }
+
+    @Override
+    public Commands registerExtension(@NonNull CommandsExtension extension) {
+        extension.register(this);
+        return this;
+    }
+
+    @Override
+    public String resolveText(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull String text) {
+        return text;
+    }
+
+    @Override
+    public Object resolveMissingArgument(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
+        return this.missingArgumentHandler.resolve(commandContext, invocationContext, command, param, index);
+    }
+
+    @Override
+    @SneakyThrows
+    public <T extends CommandService> T createInstance(@NonNull Class<T> clazz) {
+        return clazz.newInstance();
+    }
+
+    @Override
+    public List<CommandMeta> findByLabel(@NonNull String label) {
+        return this.registeredCommands.stream()
+                .filter(candidate -> candidate.isLabelApplicable(label))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Optional<CommandMeta> findByLabelAndArgs(@NonNull String label, @NonNull String args) {
+        return this.registeredCommands.stream()
+                .filter(candidate -> candidate.isLabelApplicable(label))
+                .filter(candidate -> candidate.getExecutor().getPattern().matches(args))
+                .findFirst();
+    }
+
+    @Override
+    public Optional<TypeResolver> findTypeResolver(@NonNull Type type) {
+
+        if (this.resolverCache.containsKey(type)) {
+            return Optional.of(this.resolverCache.get(type));
+        }
+
+        return this.typeResolvers.stream()
+                .filter(resolver -> resolver.supports(type))
+                .findFirst()
+                .map(resolver -> {
+                    this.resolverCache.put(type, resolver);
+                    return resolver;
+                });
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T call(@NonNull String command) throws InvocationTargetException, IllegalAccessException {
+    public <T> T call(@NonNull String command) throws CommandException {
         Optional<InvocationContext> context = this.invocationMatch(command);
         if (!context.isPresent()) {
-            throw new IllegalArgumentException("cannot call '" + command + "', no executor available");
+            throw new NoSuchCommandException("cannot call '" + command + "', no executor available");
         }
         InvocationContext invocationContext = context.get();
         return (T) this.invocationPrepare(invocationContext, new CommandContext()).call();
+    }
+
+    @Override
+    public List<String> complete(@NonNull List<CommandMeta> metas, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
+
+        String args = invocationContext.getArgs();
+        List<String> completions = new ArrayList<>();
+
+        for (CommandMeta meta : metas) {
+
+            ExecutorMeta executor = meta.getExecutor();
+            if (!this.accessHandler.allowAccess(executor, invocationContext, commandContext)) {
+                continue;
+            }
+
+            PatternMeta pattern = executor.getPattern();
+            Optional<PatternElement> elementOptional = pattern.getCurrentElement(args);
+
+            if (!elementOptional.isPresent()) {
+                continue;
+            }
+
+            // static element, just add
+            PatternElement element = elementOptional.get();
+            if (element instanceof StaticElement) {
+                completions.add(element.getName());
+            }
+            // process required/optional
+            else {
+                // TODO: completions resolvers
+                // add completions from general completion handler
+                Optional<ArgumentMeta> argumentOptional = pattern.getArgumentByName(element.getName());
+                argumentOptional.ifPresent(argumentMeta -> completions.addAll(this.completionHandler.complete(argumentMeta, invocationContext, commandContext)));
+            }
+        }
+
+        return new ArrayList<>(new LinkedHashSet<>(completions));
+    }
+
+    @Override
+    public List<String> complete(@NonNull String command) {
+        String[] parts = command.split(" ", 2);
+        String label = parts[0];
+        String args = (parts.length > 1) ? parts[1] : "";
+        List<CommandMeta> metas = this.findByLabel(label);
+        return this.complete(metas, InvocationContext.of(label, args), new CommandContext());
     }
 
     @Override
@@ -78,7 +277,7 @@ public class OkaeriCommands implements Commands {
         String label = parts[0];
         String args = (parts.length > 1) ? parts[1] : "";
 
-        Optional<CommandMeta> commandMetas = this.getRegistry().findByLabelAndArgs(label, args);
+        Optional<CommandMeta> commandMetas = this.findByLabelAndArgs(label, args);
         if (!commandMetas.isPresent()) {
             return Optional.empty();
         }
@@ -106,7 +305,7 @@ public class OkaeriCommands implements Commands {
         for (ArgumentMeta argument : arguments) {
 
             String value = pattern.getValueByArgument(argument, argsArr);
-            Optional<TypeResolver> typeResolverOptional = this.getTypes().findByType(argument.getParameterizedType());
+            Optional<TypeResolver> typeResolverOptional = this.findTypeResolver(argument.getParameterizedType());
 
             if (!typeResolverOptional.isPresent()) {
                 throw new IllegalArgumentException("method argument of type " + argument.getType() + " cannot be resolved");
@@ -178,41 +377,13 @@ public class OkaeriCommands implements Commands {
             }
 
             // pass to adapter for missing elements
-            call[i] = this.getAdapter().resolveMissingArgument(commandContext, invocationContext, commandMeta, param, i);
+            call[i] = this.resolveMissingArgument(commandContext, invocationContext, commandMeta, param, i);
         }
 
         return InvocationMeta.of(executorMethod, call, commandMeta.getService(), executor);
     }
 
     @Override
-    public List<String> complete(@NonNull String command) {
-
-        String[] parts = command.split(" ", 2);
-        String label = parts[0];
-        String args = (parts.length > 1) ? parts[1] : "";
-
-        List<CommandMeta> metas = this.getRegistry().findByLabel(label);
-        Set<String> completions = new TreeSet<>();
-
-        for (CommandMeta meta : metas) {
-
-            PatternMeta pattern = meta.getExecutor().getPattern();
-            Optional<PatternElement> elementOptional = pattern.getCurrentElement(args);
-
-            if (!elementOptional.isPresent()) {
-                continue;
-            }
-
-            PatternElement element = elementOptional.get();
-            if (element instanceof StaticElement) {
-                completions.add(element.getName());
-            }
-            // TODO: completions resolvers
-            else {
-                completions.add(element.render());
-            }
-        }
-
-        return new ArrayList<>(completions);
+    public void onRegister(@NonNull CommandMeta command) {
     }
 }

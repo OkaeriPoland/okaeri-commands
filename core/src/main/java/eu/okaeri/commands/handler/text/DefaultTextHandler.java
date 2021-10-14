@@ -1,4 +1,4 @@
-package eu.okaeri.commands.handler;
+package eu.okaeri.commands.handler.text;
 
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.InvocationContext;

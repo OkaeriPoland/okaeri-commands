@@ -1,7 +1,6 @@
 package eu.okaeri.commands.meta;
 
 import eu.okaeri.commands.service.CommandService;
-import eu.okaeri.commands.service.InvocationContext;
 import lombok.Data;
 import lombok.NonNull;
 
@@ -27,13 +26,5 @@ public class CommandMeta {
 
     public boolean isLabelApplicable(@NonNull String label) {
         return label.equals(this.service.getLabel()) || this.service.getAliases().contains(label);
-    }
-
-    public InvocationContext newInvocationContext(String label, String args) {
-       return InvocationContext.of(this, label, args);
-    }
-
-    public InvocationContext newInvocationContext(String label, String[] args) {
-        return InvocationContext.of(this, label, String.join(" ", args));
     }
 }

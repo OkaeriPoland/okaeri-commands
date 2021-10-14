@@ -1,9 +1,8 @@
 package eu.okaeri.commands.bukkit.handler;
 
-import eu.okaeri.commands.adapter.CommandsAdapter;
-import eu.okaeri.commands.bukkit.exception.NoPermissionException;
-import eu.okaeri.commands.bukkit.exception.NoSuchCommandException;
-import eu.okaeri.commands.handler.ErrorHandler;
+import eu.okaeri.commands.Commands;
+import eu.okaeri.commands.exception.NoSuchCommandException;
+import eu.okaeri.commands.handler.error.ErrorHandler;
 import eu.okaeri.commands.help.HelpBuilder;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandException;
@@ -12,48 +11,49 @@ import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 
+import javax.naming.NoPermissionException;
 import java.util.UUID;
 import java.util.logging.Level;
 
 @SuppressWarnings("FieldNamingConvention")
-public class DefaultErrorHandler implements ErrorHandler {
+public class BukkitErrorHandler implements ErrorHandler {
 
-    private final CommandsAdapter adapter;
+    private final Commands commands;
     private final HelpBuilder helpBuilder;
 
-    public DefaultErrorHandler(@NonNull CommandsAdapter adapter) {
-        this.adapter = adapter;
+    public BukkitErrorHandler(@NonNull Commands commands) {
+        this.commands = commands;
         this.helpBuilder = new HelpBuilder() {
             @Override
             public String getTemplateForHelp(CommandContext commandContext, InvocationContext invocationContext) {
-                return DefaultErrorHandler.this.resolveText(commandContext, invocationContext,
+                return BukkitErrorHandler.this.resolveText(commandContext, invocationContext,
                         "!commands-system-usage-template",
                         ChatColor.YELLOW + "Correct usage of /{label}:\n{entries}");
             }
 
             @Override
             public String getTemplateForEntry(CommandContext commandContext, InvocationContext invocationContext) {
-                return DefaultErrorHandler.this.resolveText(commandContext, invocationContext,
+                return BukkitErrorHandler.this.resolveText(commandContext, invocationContext,
                         "!commands-system-usage-entry",
                         ChatColor.RESET + " - /{usage}");
             }
 
             @Override
             public String getTemplateForDescription(CommandContext commandContext, InvocationContext invocationContext) {
-                return DefaultErrorHandler.this.resolveText(commandContext, invocationContext,
+                return BukkitErrorHandler.this.resolveText(commandContext, invocationContext,
                         "!commands-system-usage-entry-description",
                         ChatColor.GRAY + "   {description}");
             }
 
             @Override
             public String resolveText(CommandContext commandContext, InvocationContext invocationContext, String text) {
-                return ChatColor.stripColor(adapter.resolveText(commandContext, invocationContext, text)); // usage, description
+                return ChatColor.stripColor(commands.resolveText(commandContext, invocationContext, text)); // usage, description
             }
         };
     }
 
     @Override
-    public Object onError(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull Throwable throwable) {
+    public Object handle(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull Throwable throwable) {
 
         if (throwable instanceof NoPermissionException) {
             return this.resolveText(commandContext, invocationContext,
@@ -62,7 +62,7 @@ public class DefaultErrorHandler implements ErrorHandler {
         }
 
         if (throwable instanceof NoSuchCommandException) {
-            return this.helpBuilder.render(commandContext, invocationContext, this.adapter);
+            return this.helpBuilder.render(commandContext, invocationContext, this.commands);
         }
 
         if (throwable instanceof CommandException) {
@@ -87,7 +87,7 @@ public class DefaultErrorHandler implements ErrorHandler {
     }
 
     private String resolveText(CommandContext commandContext, InvocationContext invocationContext, String key, String def) {
-        String text = this.adapter.resolveText(commandContext, invocationContext, key);
+        String text = this.commands.resolveText(commandContext, invocationContext, key);
         return key.equals(text) ? def : text;
     }
 }

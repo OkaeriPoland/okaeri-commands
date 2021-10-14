@@ -1,10 +1,8 @@
 package eu.okaeri.commandstest;
 
 import eu.okaeri.commands.Commands;
-import eu.okaeri.commands.CommandsManager;
-import eu.okaeri.commands.adapter.CommandsAdapter;
-import eu.okaeri.commands.annotation.Command;
-import eu.okaeri.commands.annotation.Executor;
+import eu.okaeri.commands.OkaeriCommands;
+import eu.okaeri.commands.annotation.*;
 import eu.okaeri.commands.service.CommandService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -22,9 +20,8 @@ public final class TestCommandComplete {
 
     @BeforeAll
     public void prepare() {
-        this.commands = CommandsManager.create(new CommandsAdapter());
-        this.commands.getRegistry()
-                .register(TabCompleteCommand.class);
+        this.commands = new OkaeriCommands();
+        this.commands.registerCommand(TabCompleteCommand.class);
     }
 
     @Command(label = "tab1")
@@ -34,10 +31,22 @@ public final class TestCommandComplete {
         public boolean _static() {
             return true;
         }
+
+        @Executor(pattern = "load *")
+        @Completions(@Completion(arg = "name", value = "@scripts"))
+        public boolean _load(@Arg String name) {
+            return true;
+        }
+
+        @Executor(pattern = "updateState *")
+        @Completions(@Completion(arg = "value", value = {"allow", "deny"}))
+        public String _state(@Arg String state) {
+            return state;
+        }
     }
 
     @Test
-    public void test_complete_1st_arg_static() {
+    public void test_complete_1static() {
         assertIterableEquals(Arrays.asList("stat", "static", "static2"), this.commands.complete("tab1 s"));
         assertIterableEquals(Arrays.asList("stat", "static", "static2"), this.commands.complete("tab1 st"));
         assertIterableEquals(Arrays.asList("stat", "static", "static2"), this.commands.complete("tab1 sta"));
@@ -48,11 +57,18 @@ public final class TestCommandComplete {
         assertIterableEquals(Collections.singletonList("ic"), this.commands.complete("tab1 stat "));
         assertIterableEquals(Collections.singletonList("ic"), this.commands.complete("tab1 stat i"));
         assertIterableEquals(Collections.singletonList("ic"), this.commands.complete("tab1 stat ic"));
+        assertIterableEquals(Collections.emptyList(), this.commands.complete("tab1 static "));
+        assertIterableEquals(Collections.emptyList(), this.commands.complete("tab1 static  "));
     }
 
     @Test
-    public void test_complete_1st_arg_static_should_not_complete() {
-        assertIterableEquals(Collections.emptyList(), this.commands.complete("tab1 static "));
-        assertIterableEquals(Collections.emptyList(), this.commands.complete("tab1 static  "));
+    public void test_complete_1static_1required() {
+        assertIterableEquals(Collections.singletonList("load"), this.commands.complete("tab1 l"));
+        assertIterableEquals(Collections.singletonList("load"), this.commands.complete("tab1 lo"));
+        assertIterableEquals(Collections.singletonList("load"), this.commands.complete("tab1 loa"));
+        assertIterableEquals(Collections.singletonList("load"), this.commands.complete("tab1 load"));
+//        assertIterableEquals(Arrays.asList("script.py", "script.groovy"), this.commands.complete("tab1 load "));
+//        assertIterableEquals(Arrays.asList("script.py", "script.groovy"), this.commands.complete("tab1 load  "));
+//        assertIterableEquals(Arrays.asList("allow", "deny"), this.commands.complete("tab1 updateState "));
     }
 }

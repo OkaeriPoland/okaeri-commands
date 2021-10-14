@@ -1,9 +1,8 @@
 package eu.okaeri.commandstest;
 
 import eu.okaeri.commands.Commands;
-import eu.okaeri.commands.CommandsManager;
-import eu.okaeri.commands.adapter.CommandsAdapter;
-import eu.okaeri.commandstest.command.*;
+import eu.okaeri.commands.OkaeriCommands;
+import eu.okaeri.commandstest.command.ExampleWithNestedCommand;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -18,9 +17,8 @@ public final class TestCommandNested {
 
     @BeforeAll
     public void prepare() {
-        this.commands = CommandsManager.create(new CommandsAdapter());
-        this.commands.getRegistry()
-                .register(ExampleWithNestedCommand.class);
+        this.commands = new OkaeriCommands();
+        this.commands.registerCommand(ExampleWithNestedCommand.class);
     }
 
     @Test
