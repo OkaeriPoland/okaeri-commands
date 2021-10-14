@@ -9,5 +9,6 @@ public class CommandsBukkitTypes implements CommandsTypesPack {
     public void register(CommandsTypes types) {
         types.register(new OfflinePlayerTypeResolver());
         types.register(new PlayerTypeResolver()); // always after OfflinePlayer, order matters
+        types.register(new WorldTypeResolver());
     }
 }
