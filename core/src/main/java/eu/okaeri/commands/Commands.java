@@ -49,9 +49,11 @@ public interface Commands {
 
     Commands registerExtension(@NonNull CommandsExtension extension);
 
-    String resolveText(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull String text);
+    String resolveText(@NonNull String text);
 
-    Object resolveMissingArgument(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull CommandMeta command, @NonNull Parameter param, int i);
+    String resolveText(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull String text);
+
+    Object resolveMissingArgument(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull CommandMeta command, @NonNull Parameter param, int i);
 
     List<CommandMeta> findByLabel(@NonNull String label);
 

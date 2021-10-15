@@ -1,5 +1,6 @@
 package eu.okaeri.commands.meta;
 
+import eu.okaeri.commands.Commands;
 import eu.okaeri.commands.service.CommandService;
 import lombok.Data;
 import lombok.NonNull;
@@ -11,8 +12,8 @@ import java.util.stream.Collectors;
 @Data
 public class CommandMeta {
 
-    public static List<CommandMeta> of(@NonNull CommandService service, @NonNull ServiceMeta serviceMeta, @NonNull Method method) {
-        return ExecutorMeta.of(serviceMeta, method).stream()
+    public static List<CommandMeta> of(@NonNull Commands commands, @NonNull CommandService service, @NonNull ServiceMeta serviceMeta, @NonNull Method method) {
+        return ExecutorMeta.of(commands, serviceMeta, method).stream()
                 .map(meta -> {
                     CommandMeta command = new CommandMeta();
                     command.service = serviceMeta;

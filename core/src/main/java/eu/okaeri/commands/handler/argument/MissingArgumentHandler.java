@@ -8,5 +8,5 @@ import lombok.NonNull;
 import java.lang.reflect.Parameter;
 
 public interface MissingArgumentHandler {
-    Object resolve(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull CommandMeta command, @NonNull Parameter param, int index);
+    Object resolve(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull CommandMeta command, @NonNull Parameter param, int index);
 }

@@ -129,8 +129,8 @@ public class OkaeriCommands implements Commands {
                 continue;
             }
 
-            ServiceMeta serviceMeta = ServiceMeta.of(parent, service);
-            List<CommandMeta> commands = CommandMeta.of(service, serviceMeta, method);
+            ServiceMeta serviceMeta = ServiceMeta.of(this, parent, service);
+            List<CommandMeta> commands = CommandMeta.of(this, service, serviceMeta, method);
 
             for (CommandMeta command : commands) {
                 this.registeredCommands.add(command);
@@ -175,13 +175,18 @@ public class OkaeriCommands implements Commands {
     }
 
     @Override
-    public String resolveText(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull String text) {
-        return text;
+    public String resolveText(@NonNull String text) {
+        return this.textHandler.resolve(text);
     }
 
     @Override
-    public Object resolveMissingArgument(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
-        return this.missingArgumentHandler.resolve(commandContext, invocationContext, command, param, index);
+    public String resolveText(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull String text) {
+        return this.textHandler.resolve(commandContext, invocationContext, text);
+    }
+
+    @Override
+    public Object resolveMissingArgument(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
+        return this.missingArgumentHandler.resolve(invocationContext, commandContext, command, param, index);
     }
 
     @Override
@@ -379,7 +384,7 @@ public class OkaeriCommands implements Commands {
             }
 
             // pass to adapter for missing elements
-            call[i] = this.resolveMissingArgument(commandContext, invocationContext, commandMeta, param, i);
+            call[i] = this.resolveMissingArgument(invocationContext, commandContext, commandMeta, param, i);
         }
 
         return InvocationMeta.of(executorMethod, call, commandMeta.getService(), executor);

@@ -44,17 +44,12 @@ public class CommandsBukkit extends OkaeriCommands {
         this.registerType(new CommandsBukkitTypes());
         this.errorHandler(new BukkitErrorHandler(this));
         this.resultHandler(new BukkitResultHandler());
-        this.accessHandler(new BukkitAccessHandler());
+        this.accessHandler(new BukkitAccessHandler(this));
         this.completionHandler(new BukkitCompletionHandler());
     }
 
     @Override
-    public String resolveText(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull String text) {
-        return this.textHandler.resolve(commandContext, invocationContext, text);
-    }
-
-    @Override
-    public Object resolveMissingArgument(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
+    public Object resolveMissingArgument(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
 
         Class<?> paramType = param.getType();
 
@@ -73,7 +68,7 @@ public class CommandsBukkit extends OkaeriCommands {
             return commandContext.get("sender");
         }
 
-        return super.resolveMissingArgument(commandContext, invocationContext, command, param, index);
+        return super.resolveMissingArgument(invocationContext, commandContext, command, param, index);
     }
 
     @Override
