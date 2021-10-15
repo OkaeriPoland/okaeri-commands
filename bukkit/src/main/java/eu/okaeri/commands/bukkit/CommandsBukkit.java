@@ -23,10 +23,14 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Parameter;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CommandsBukkit extends OkaeriCommands {
+
+    public static final Duration SYNC_WARN_TIME = Duration.ofMillis(10);
 
     private final Map<String, List<CommandMeta>> registeredCommands = new ConcurrentHashMap<>();
     private final Map<String, ServiceMeta> registeredServices = new ConcurrentHashMap<>();
@@ -150,7 +154,14 @@ public class CommandsBukkit extends OkaeriCommands {
             return true;
         }
 
+        Instant start = Instant.now();
         this.handleExecution(sender, invocationContext, commandContext);
+        Duration duration = Duration.between(Instant.now(), start);
+
+        if (duration.compareTo(SYNC_WARN_TIME) > 0) {
+            this.plugin.getLogger().warning("Command execution took " + duration.toMillis() + " ms! [" + Thread.currentThread().getName() + "]");
+        }
+
         return true;
     }
 
