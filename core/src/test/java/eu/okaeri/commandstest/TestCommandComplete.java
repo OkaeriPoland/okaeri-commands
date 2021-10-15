@@ -22,6 +22,7 @@ public final class TestCommandComplete {
     public void prepare() {
         this.commands = new OkaeriCommands();
         this.commands.registerCommand(TabCompleteCommand.class);
+        this.commands.registerCompletion("scripts", (completion, argument, invocationContext, commandContext) -> Arrays.asList("script.py", "script.groovy"));
     }
 
     @Command(label = "tab1")
@@ -39,7 +40,7 @@ public final class TestCommandComplete {
         }
 
         @Executor(pattern = "updateState *")
-        @Completions(@Completion(arg = "value", value = {"allow", "deny"}))
+        @Completions(@Completion(arg = "state", value = {"allow", "deny"}))
         public String _state(@Arg String state) {
             return state;
         }
@@ -67,8 +68,8 @@ public final class TestCommandComplete {
         assertIterableEquals(Collections.singletonList("load"), this.commands.complete("tab1 lo"));
         assertIterableEquals(Collections.singletonList("load"), this.commands.complete("tab1 loa"));
         assertIterableEquals(Collections.singletonList("load"), this.commands.complete("tab1 load"));
-//        assertIterableEquals(Arrays.asList("script.py", "script.groovy"), this.commands.complete("tab1 load "));
-//        assertIterableEquals(Arrays.asList("script.py", "script.groovy"), this.commands.complete("tab1 load  "));
-//        assertIterableEquals(Arrays.asList("allow", "deny"), this.commands.complete("tab1 updateState "));
+        assertIterableEquals(Arrays.asList("script.py", "script.groovy"), this.commands.complete("tab1 load "));
+        assertIterableEquals(Arrays.asList("script.py", "script.groovy"), this.commands.complete("tab1 load  "));
+        assertIterableEquals(Arrays.asList("allow", "deny"), this.commands.complete("tab1 updateState "));
     }
 }

@@ -1,21 +1,19 @@
 package eu.okaeri.commands.annotation;
 
-import eu.okaeri.commands.provider.CompletionProvider;
+import eu.okaeri.commands.handler.completion.NamedCompletionHandler;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.lang.annotation.*;
 
+@Repeatable(Completions.class)
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Completion {
 
     String[] arg();
     String[] value();
-    Class<? extends CompletionProvider> provider() default DEFAULT.class;
-    CompletionMeta[] meta() default {};
+    Class<? extends NamedCompletionHandler> provider() default DEFAULT.class;
+    CompletionData[] data() default {};
 
-    abstract class DEFAULT implements CompletionProvider {
+    abstract class DEFAULT implements NamedCompletionHandler {
     }
 }

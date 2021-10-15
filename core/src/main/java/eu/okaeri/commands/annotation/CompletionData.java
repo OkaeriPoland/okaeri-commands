@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
-public @interface CompletionMeta {
+public @interface CompletionData {
     String name() default "";
     String value();
 }
