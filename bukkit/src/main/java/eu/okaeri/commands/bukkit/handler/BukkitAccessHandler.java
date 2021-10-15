@@ -29,25 +29,43 @@ public class BukkitAccessHandler implements AccessHandler {
             throw new RuntimeException("Cannot process command without sender in the context!");
         }
 
+        boolean noExecutorAccess = this.commands.findByLabel(service.getLabel()).stream()
+                .noneMatch(command -> this.allowAccess(command.getExecutor(), invocationContext, commandContext));
+
+        if (noExecutorAccess) {
+            return false;
+        }
+
         CommandSender sender = commandContext.get("sender", CommandSender.class);
         return this.hasPermissions(sender, this.getPermissions(service, invocationContext, commandContext), this.getMode(service));
     }
 
     @Override
     public void checkAccess(@NonNull ServiceMeta service, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
-        if (!this.allowAccess(service, invocationContext, commandContext)) {
-            throw new NoAccessException(this.getPermissions(service, invocationContext, commandContext).toArray(new String[0])[0]);
+
+        if (this.allowAccess(service, invocationContext, commandContext)) {
+            return;
+        }
+
+        String[] perms = this.getPermissions(service, invocationContext, commandContext).toArray(new String[0]);
+        Permission.Mode mode = this.getMode(service);
+
+        if (perms.length == 0) {
+            throw new NoAccessException("");
+        }
+
+        switch (mode) {
+            case ANY:
+                throw new NoAccessException(perms[0]);
+            case ALL:
+                throw new NoAccessException(String.join(", ", perms));
+            default:
+                throw new IllegalArgumentException("Unknown mode: " + mode);
         }
     }
 
     @Override
     public boolean allowAccess(@NonNull ExecutorMeta executor, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
-
-        if (invocationContext.getService() != null) {
-            if (!this.allowAccess(invocationContext.getService(), invocationContext, commandContext)) {
-                return false;
-            }
-        }
 
         if (!commandContext.has("sender", CommandSender.class)) {
             throw new RuntimeException("Cannot process command without sender in the context!");
@@ -59,8 +77,25 @@ public class BukkitAccessHandler implements AccessHandler {
 
     @Override
     public void checkAccess(@NonNull ExecutorMeta executor, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
-        if (!this.allowAccess(executor, invocationContext, commandContext)) {
-            throw new NoAccessException(this.getPermissions(executor, invocationContext, commandContext).toArray(new String[0])[0]);
+
+        if (this.allowAccess(executor, invocationContext, commandContext)) {
+            return;
+        }
+
+        String[] perms = this.getPermissions(executor, invocationContext, commandContext).toArray(new String[0]);
+        Permission.Mode mode = this.getMode(executor);
+
+        if (perms.length == 0) {
+            throw new NoAccessException("");
+        }
+
+        switch (mode) {
+            case ANY:
+                throw new NoAccessException(perms[0]);
+            case ALL:
+                throw new NoAccessException(String.join(", ", perms));
+            default:
+                throw new IllegalArgumentException("Unknown mode: " + mode);
         }
     }
 
