@@ -8,8 +8,10 @@ import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.World;
+import org.bukkit.command.CommandSender;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.HumanEntity;
+import org.bukkit.entity.Player;
 import org.bukkit.potion.PotionEffectType;
 
 import java.util.Arrays;
@@ -23,9 +25,13 @@ public class BukkitCompletionHandler extends DefaultCompletionHandler {
 
         Class<?> type = this.resolveType(argument);
         Predicate<String> stringFilter = this.stringFilter(invocationContext);
+        CommandSender sender = commandContext.get("sender", CommandSender.class);
+        Player player = (sender instanceof Player) ? ((Player) sender) : null;
 
         if (OfflinePlayer.class.isAssignableFrom(type)) {
-            return this.filter(stringFilter, Bukkit.getServer().getOnlinePlayers().stream().map(HumanEntity::getName));
+            return this.filter(stringFilter, Bukkit.getServer().getOnlinePlayers().stream()
+                    .filter(onlinePlayer -> (player == null) || player.canSee(onlinePlayer) || sender.hasPermission("okaeri.commands.invisible"))
+                    .map(HumanEntity::getName));
         }
 
         if (Enchantment.class.isAssignableFrom(type)) {
