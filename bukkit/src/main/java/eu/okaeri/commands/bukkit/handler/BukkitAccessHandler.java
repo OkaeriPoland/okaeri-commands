@@ -25,7 +25,7 @@ public class BukkitAccessHandler implements AccessHandler {
         }
 
         CommandSender sender = commandContext.get("sender", CommandSender.class);
-        return this.hasPermissions(sender, this.getPermissions(service));
+        return this.hasPermissions(sender, this.getPermissions(service), this.getMode(service));
     }
 
     @Override
@@ -49,7 +49,7 @@ public class BukkitAccessHandler implements AccessHandler {
         }
 
         CommandSender sender = commandContext.get("sender", CommandSender.class);
-        return this.hasPermissions(sender, this.getPermissions(executor));
+        return this.hasPermissions(sender, this.getPermissions(executor), this.getMode(executor));
     }
 
     @Override
@@ -69,18 +69,37 @@ public class BukkitAccessHandler implements AccessHandler {
         return (permission == null) ? Collections.emptySet() : new HashSet<>(Arrays.asList(permission.value()));
     }
 
-    private boolean hasPermissions(@NonNull CommandSender sender, @NonNull Set<String> permissions) {
+    private Permission.Mode getMode(@NonNull ServiceMeta service) {
+        Permission permission = service.getImplementor().getClass().getAnnotation(Permission.class);
+        return (permission == null) ? Permission.Mode.ALL : permission.mode();
+    }
 
+    private Permission.Mode getMode(@NonNull ExecutorMeta executor) {
+        Permission permission = executor.getMethod().getAnnotation(Permission.class);
+        return (permission == null) ? Permission.Mode.ALL : permission.mode();
+    }
+
+    private boolean hasPermissions(@NonNull CommandSender sender, @NonNull Set<String> permissions, @NonNull Permission.Mode mode) {
         if (permissions.isEmpty()) {
             return true;
         }
-
-        for (String servicePermission : permissions) {
-            if (sender.hasPermission(servicePermission)) {
+        switch (mode) {
+            case ANY:
+                for (String servicePermission : permissions) {
+                    if (sender.hasPermission(servicePermission)) {
+                        return true;
+                    }
+                }
+                return false;
+            case ALL:
+                for (String servicePermission : permissions) {
+                    if (!sender.hasPermission(servicePermission)) {
+                        return false;
+                    }
+                }
                 return true;
-            }
+            default:
+                throw new IllegalArgumentException("Unknown mode: " + mode);
         }
-
-        return false;
     }
 }
