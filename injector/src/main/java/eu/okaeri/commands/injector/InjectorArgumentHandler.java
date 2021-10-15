@@ -14,7 +14,7 @@ import java.lang.reflect.Parameter;
 import java.util.Optional;
 
 @RequiredArgsConstructor
-public class CommandsInjectorArgumentHandler extends DefaultMissingArgumentHandler {
+public class InjectorArgumentHandler extends DefaultMissingArgumentHandler {
 
     @NonNull
     private final Injector injector;
