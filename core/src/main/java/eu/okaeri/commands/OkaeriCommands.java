@@ -247,6 +247,11 @@ public class OkaeriCommands implements Commands {
 
         for (CommandMeta meta : metas) {
 
+            ServiceMeta service = meta.getService();
+            if (!this.accessHandler.allowAccess(service, invocationContext, commandContext)) {
+                continue;
+            }
+
             ExecutorMeta executor = meta.getExecutor();
             if (!this.accessHandler.allowAccess(executor, invocationContext, commandContext)) {
                 continue;

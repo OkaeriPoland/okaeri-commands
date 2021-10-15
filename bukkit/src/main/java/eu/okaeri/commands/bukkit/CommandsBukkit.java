@@ -6,6 +6,7 @@ import eu.okaeri.commands.bukkit.handler.BukkitAccessHandler;
 import eu.okaeri.commands.bukkit.handler.BukkitCompletionHandler;
 import eu.okaeri.commands.bukkit.handler.BukkitErrorHandler;
 import eu.okaeri.commands.bukkit.handler.BukkitResultHandler;
+import eu.okaeri.commands.bukkit.listener.PlayerCommandSendListener;
 import eu.okaeri.commands.bukkit.type.CommandsBukkitTypes;
 import eu.okaeri.commands.exception.NoSuchCommandException;
 import eu.okaeri.commands.meta.CommandMeta;
@@ -14,18 +15,25 @@ import eu.okaeri.commands.meta.ServiceMeta;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandException;
 import eu.okaeri.commands.service.InvocationContext;
+import lombok.Getter;
 import lombok.NonNull;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Parameter;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CommandsBukkit extends OkaeriCommands {
@@ -33,13 +41,15 @@ public class CommandsBukkit extends OkaeriCommands {
     public static final Duration SYNC_WARN_TIME = Duration.ofMillis(10);
 
     private final Map<String, List<CommandMeta>> registeredCommands = new ConcurrentHashMap<>();
-    private final Map<String, ServiceMeta> registeredServices = new ConcurrentHashMap<>();
+    @Getter private final Map<String, ServiceMeta> registeredServices = new ConcurrentHashMap<>();
 
     private final CommandMap commandMap;
     private final JavaPlugin plugin;
 
     public static CommandsBukkit of(@NonNull JavaPlugin plugin) {
-        return new CommandsBukkit(plugin);
+        CommandsBukkit commandsBukkit = new CommandsBukkit(plugin);
+        commandsBukkit.registerListeners();
+        return commandsBukkit;
     }
 
     protected CommandsBukkit(@NonNull JavaPlugin plugin) {
@@ -50,6 +60,18 @@ public class CommandsBukkit extends OkaeriCommands {
         this.resultHandler(new BukkitResultHandler());
         this.accessHandler(new BukkitAccessHandler(this));
         this.completionHandler(new BukkitCompletionHandler());
+    }
+
+    @SuppressWarnings("unchecked")
+    public void registerListeners() {
+        try {
+            Class<? extends Event> PlayerCommandSendEvent = (Class<? extends Event>) Class.forName("org.bukkit.event.player.PlayerCommandSendEvent");
+            PlayerCommandSendListener playerCommandSendListener = new PlayerCommandSendListener(this, PlayerCommandSendEvent);
+            this.plugin.getServer().getPluginManager().registerEvent(PlayerCommandSendEvent, new Listener() {}, EventPriority.HIGHEST, playerCommandSendListener, this.plugin);
+        }
+        catch (Exception exception) {
+            this.plugin.getLogger().warning("Failed to register command framework listeners: " + exception + " (ignore if running on older version of Minecraft)");
+        }
     }
 
     @Override
