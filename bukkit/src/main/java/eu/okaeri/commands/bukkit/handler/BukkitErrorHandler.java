@@ -62,7 +62,7 @@ public class BukkitErrorHandler implements ErrorHandler {
         }
 
         if (throwable instanceof NoSuchCommandException) {
-            return this.helpBuilder.render(commandContext, invocationContext, this.commands);
+            return this.helpBuilder.render(invocationContext, commandContext, this.commands);
         }
 
         if (throwable instanceof CommandException) {

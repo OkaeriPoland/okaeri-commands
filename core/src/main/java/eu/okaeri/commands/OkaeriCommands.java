@@ -113,7 +113,7 @@ public class OkaeriCommands implements Commands {
 
     @Override
     public Commands registerCommand(@NonNull Class<? extends CommandService> clazz) {
-        return this.registerCommand(this.instanceCreatorHandler.createInstance(clazz));
+        return this.registerCommand(this.getInstanceCreatorHandler().createInstance(clazz));
     }
 
     @Override
@@ -140,7 +140,7 @@ public class OkaeriCommands implements Commands {
             }
 
             for (Class<? extends CommandService> nestedServiceType : serviceMeta.getNested()) {
-                this.registerCommand(serviceMeta, this.instanceCreatorHandler.createInstance(nestedServiceType));
+                this.registerCommand(serviceMeta, this.getInstanceCreatorHandler().createInstance(nestedServiceType));
             }
         }
 
@@ -184,17 +184,17 @@ public class OkaeriCommands implements Commands {
 
     @Override
     public String resolveText(@NonNull String text) {
-        return this.textHandler.resolve(text);
+        return this.getTextHandler().resolve(text);
     }
 
     @Override
     public String resolveText(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull String text) {
-        return this.textHandler.resolve(commandContext, invocationContext, text);
+        return this.getTextHandler().resolve(commandContext, invocationContext, text);
     }
 
     @Override
     public Object resolveMissingArgument(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
-        return this.missingArgumentHandler.resolve(invocationContext, commandContext, command, param, index);
+        return this.getMissingArgumentHandler().resolve(invocationContext, commandContext, command, param, index);
     }
 
     @Override
@@ -248,12 +248,12 @@ public class OkaeriCommands implements Commands {
         for (CommandMeta meta : metas) {
 
             ServiceMeta service = meta.getService();
-            if (!this.accessHandler.allowAccess(service, invocationContext, commandContext)) {
+            if (!this.getAccessHandler().allowAccess(service, invocationContext, commandContext)) {
                 continue;
             }
 
             ExecutorMeta executor = meta.getExecutor();
-            if (!this.accessHandler.allowAccess(executor, invocationContext, commandContext)) {
+            if (!this.getAccessHandler().allowAccess(executor, invocationContext, commandContext)) {
                 continue;
             }
 
@@ -281,7 +281,7 @@ public class OkaeriCommands implements Commands {
                     // no completions from executor
                     if (executorCompletions.isEmpty()) {
                         // add completions from general completion handler
-                        completions.addAll(this.completionHandler.complete(argumentMeta, invocationContext, commandContext));
+                        completions.addAll(this.getCompletionHandler().complete(argumentMeta, invocationContext, commandContext));
                     }
                     // process completions if applicable
                     else {
@@ -425,7 +425,7 @@ public class OkaeriCommands implements Commands {
             }
 
             // pass to adapter for missing elements
-            call[i] = this.resolveMissingArgument(invocationContext, commandContext, commandMeta, param, i);
+            call[i] = this.getMissingArgumentHandler().resolve(invocationContext, commandContext, commandMeta, param, i);
         }
 
         return InvocationMeta.of(executorMethod, call, commandMeta.getService(), executor);

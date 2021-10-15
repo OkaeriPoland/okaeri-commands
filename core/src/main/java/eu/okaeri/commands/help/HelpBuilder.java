@@ -7,10 +7,12 @@ import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.InvocationContext;
 import lombok.Data;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 
 import java.util.stream.Collectors;
 
 @Data
+@RequiredArgsConstructor
 public abstract class HelpBuilder {
 
     public abstract String getTemplateForHelp(CommandContext commandContext, InvocationContext invocationContext);
@@ -32,21 +34,22 @@ public abstract class HelpBuilder {
                 .replace("{usage}", usage);
     }
 
-    public String renderDescription(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull CommandMeta meta) {
+    public String renderDescription(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull CommandMeta meta) {
         String description = meta.getExecutor().getDescription();
         String template = this.getTemplateForDescription(commandContext, invocationContext);
         return description.isEmpty() ? "" : template.replace("{description}", this.resolveText(commandContext, invocationContext, description));
     }
 
-    public String render(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull Commands commands) {
+    public String render(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull Commands commands) {
 
         String entries = commands
                 .findByLabel(invocationContext.getLabel())
                 .stream()
                 .filter(meta -> meta.getExecutor().getIndex() == 0)
+                .filter(meta -> commands.getAccessHandler().allowAccess(meta.getExecutor(), invocationContext, commandContext))
                 .map(meta -> {
                     String entry = this.renderEntry(commandContext, invocationContext, meta);
-                    String desc = this.renderDescription(commandContext, invocationContext, meta);
+                    String desc = this.renderDescription(invocationContext, commandContext, meta);
                     return entry + (desc.isEmpty() ? "" : "\n" + desc);
                 })
                 .collect(Collectors.joining("\n"));
