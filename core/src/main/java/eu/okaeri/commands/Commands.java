@@ -38,6 +38,20 @@ public interface Commands {
 
     OkaeriCommands instanceCreatorHandler(@NonNull InstanceCreatorHandler creatorHandler);
 
+    ErrorHandler getErrorHandler();
+
+    ResultHandler getResultHandler();
+
+    TextHandler getTextHandler();
+
+    MissingArgumentHandler getMissingArgumentHandler();
+
+    AccessHandler getAccessHandler();
+
+    CompletionHandler getCompletionHandler();
+
+    InstanceCreatorHandler getInstanceCreatorHandler();
+
     Commands registerCommand(@NonNull Class<? extends CommandService> clazz);
 
     Commands registerCommand(@NonNull CommandService service);

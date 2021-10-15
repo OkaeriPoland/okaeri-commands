@@ -94,7 +94,7 @@ public class CommandsBukkit extends OkaeriCommands {
             return commandContext.get("sender");
         }
 
-        return super.resolveMissingArgument(invocationContext, commandContext, command, param, index);
+        return super.getMissingArgumentHandler().resolve(invocationContext, commandContext, command, param, index);
     }
 
     @Override
@@ -160,7 +160,7 @@ public class CommandsBukkit extends OkaeriCommands {
     private boolean executeCommand(@NonNull ServiceMeta service, @NonNull CommandContext commandContext, @NonNull CommandSender sender, @NonNull String label, @NonNull String[] args) {
 
         String fullCommand = (label + " " + String.join(" ", args)).trim();
-        this.accessHandler.checkAccess(service, InvocationContext.of(service, label, args), commandContext);
+        this.getAccessHandler().checkAccess(service, InvocationContext.of(service, label, args), commandContext);
 
         Optional<InvocationContext> invocationOptional = this.invocationMatch(fullCommand);
         if (!invocationOptional.isPresent()) {
@@ -168,7 +168,7 @@ public class CommandsBukkit extends OkaeriCommands {
         }
 
         InvocationContext invocationContext = invocationOptional.get();
-        this.accessHandler.checkAccess(invocationContext.getExecutor(), invocationContext, commandContext);
+        this.getAccessHandler().checkAccess(invocationContext.getExecutor(), invocationContext, commandContext);
 
         if (invocationContext.isAsync()) {
             Runnable prepareAndExecuteAsync = () -> this.handleExecution(sender, invocationContext, commandContext);
@@ -189,7 +189,7 @@ public class CommandsBukkit extends OkaeriCommands {
 
     private void handleError(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull Throwable throwable) {
 
-        Object result = this.errorHandler.handle(commandContext, invocationContext, throwable);
+        Object result = this.getErrorHandler().handle(commandContext, invocationContext, throwable);
         if (result == null) {
             return;
         }
@@ -199,7 +199,7 @@ public class CommandsBukkit extends OkaeriCommands {
             throw new RuntimeException("Cannot dispatch error", throwable);
         }
 
-        if (this.resultHandler.handle(result, commandContext, invocationContext)) {
+        if (this.getResultHandler().handle(result, commandContext, invocationContext)) {
             return;
         }
 
@@ -211,7 +211,7 @@ public class CommandsBukkit extends OkaeriCommands {
             InvocationMeta invocationMeta = this.invocationPrepare(invocationContext, commandContext);
             Object result = invocationMeta.call();
 
-            if (this.resultHandler.handle(result, commandContext, invocationContext)) {
+            if (this.getResultHandler().handle(result, commandContext, invocationContext)) {
                 return;
             }
 
