@@ -4,6 +4,7 @@ import eu.okaeri.commands.handler.access.AccessHandler;
 import eu.okaeri.commands.handler.argument.MissingArgumentHandler;
 import eu.okaeri.commands.handler.completion.CompletionHandler;
 import eu.okaeri.commands.handler.error.ErrorHandler;
+import eu.okaeri.commands.handler.instance.InstanceCreatorHandler;
 import eu.okaeri.commands.handler.result.ResultHandler;
 import eu.okaeri.commands.handler.text.TextHandler;
 import eu.okaeri.commands.meta.CommandMeta;
@@ -13,7 +14,6 @@ import eu.okaeri.commands.service.CommandService;
 import eu.okaeri.commands.service.InvocationContext;
 import eu.okaeri.commands.type.resolver.TypeResolver;
 import lombok.NonNull;
-import lombok.SneakyThrows;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Parameter;
@@ -35,6 +35,8 @@ public interface Commands {
 
     OkaeriCommands completionHandler(@NonNull CompletionHandler completionHandler);
 
+    OkaeriCommands instanceCreatorHandler(@NonNull InstanceCreatorHandler creatorHandler);
+
     Commands registerCommand(@NonNull Class<? extends CommandService> clazz);
 
     Commands registerCommand(@NonNull CommandService service);
@@ -50,9 +52,6 @@ public interface Commands {
     String resolveText(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull String text);
 
     Object resolveMissingArgument(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull CommandMeta command, @NonNull Parameter param, int i);
-
-    @SneakyThrows
-    <T extends CommandService> T createInstance(@NonNull Class<T> clazz);
 
     List<CommandMeta> findByLabel(@NonNull String label);
 

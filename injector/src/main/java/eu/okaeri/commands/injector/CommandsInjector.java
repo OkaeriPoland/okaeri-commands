@@ -12,6 +12,7 @@ public class CommandsInjector implements CommandsExtension {
 
     @Override
     public void register(Commands commands) {
-        commands.missingArgumentHandler(new CommandsInjectorArgumentHandler(this.injector));
+        commands.missingArgumentHandler(new InjectorArgumentHandler(this.injector));
+        commands.instanceCreatorHandler(new InjectorInstanceCreatorHandler(this.injector));
     }
 }

@@ -12,6 +12,8 @@ import eu.okaeri.commands.handler.completion.CompletionHandler;
 import eu.okaeri.commands.handler.completion.DefaultCompletionHandler;
 import eu.okaeri.commands.handler.error.DefaultErrorHandler;
 import eu.okaeri.commands.handler.error.ErrorHandler;
+import eu.okaeri.commands.handler.instance.DefaultInstanceCreatorHandler;
+import eu.okaeri.commands.handler.instance.InstanceCreatorHandler;
 import eu.okaeri.commands.handler.result.DefaultResultHandler;
 import eu.okaeri.commands.handler.result.ResultHandler;
 import eu.okaeri.commands.handler.text.DefaultTextHandler;
@@ -28,7 +30,6 @@ import eu.okaeri.commands.type.DefaultCommandsTypes;
 import eu.okaeri.commands.type.resolver.TypeResolver;
 import lombok.Data;
 import lombok.NonNull;
-import lombok.SneakyThrows;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -60,6 +61,7 @@ public class OkaeriCommands implements Commands {
     protected MissingArgumentHandler missingArgumentHandler = new DefaultMissingArgumentHandler();
     protected AccessHandler accessHandler = new DefaultAccessHandler();
     protected CompletionHandler completionHandler = new DefaultCompletionHandler();
+    protected InstanceCreatorHandler instanceCreatorHandler = new DefaultInstanceCreatorHandler();
 
     public OkaeriCommands() {
         this.registerType(new DefaultCommandsTypes());
@@ -102,8 +104,14 @@ public class OkaeriCommands implements Commands {
     }
 
     @Override
+    public OkaeriCommands instanceCreatorHandler(@NonNull InstanceCreatorHandler creatorHandler) {
+        this.instanceCreatorHandler = creatorHandler;
+        return this;
+    }
+
+    @Override
     public Commands registerCommand(@NonNull Class<? extends CommandService> clazz) {
-        return this.registerCommand(this.createInstance(clazz));
+        return this.registerCommand(this.instanceCreatorHandler.createInstance(clazz));
     }
 
     @Override
@@ -130,7 +138,7 @@ public class OkaeriCommands implements Commands {
             }
 
             for (Class<? extends CommandService> nestedServiceType : serviceMeta.getNested()) {
-                this.registerCommand(serviceMeta, this.createInstance(nestedServiceType));
+                this.registerCommand(serviceMeta, this.instanceCreatorHandler.createInstance(nestedServiceType));
             }
         }
 
@@ -174,12 +182,6 @@ public class OkaeriCommands implements Commands {
     @Override
     public Object resolveMissingArgument(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
         return this.missingArgumentHandler.resolve(commandContext, invocationContext, command, param, index);
-    }
-
-    @Override
-    @SneakyThrows
-    public <T extends CommandService> T createInstance(@NonNull Class<T> clazz) {
-        return clazz.newInstance();
     }
 
     @Override
