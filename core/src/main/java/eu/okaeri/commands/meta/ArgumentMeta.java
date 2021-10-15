@@ -1,5 +1,6 @@
 package eu.okaeri.commands.meta;
 
+import eu.okaeri.commands.Commands;
 import eu.okaeri.commands.annotation.Arg;
 import eu.okaeri.commands.service.Option;
 import lombok.Data;
@@ -18,7 +19,7 @@ public class ArgumentMeta {
     }
 
     @SneakyThrows
-    public static ArgumentMeta of(@NonNull Parameter parameter, int index) {
+    public static ArgumentMeta of(@NonNull Commands commands, @NonNull Parameter parameter, int index) {
 
         Arg arg = parameter.getAnnotation(Arg.class);
 
@@ -27,7 +28,7 @@ public class ArgumentMeta {
         }
 
         ArgumentMeta meta = new ArgumentMeta();
-        meta.name = arg.value().isEmpty() ? parameter.getName() : arg.value();
+        meta.name = commands.resolveText(arg.value().isEmpty() ? parameter.getName() : arg.value());
         meta.index = index;
         meta.type = parameter.getType();
         meta.parameterizedType = parameter.getParameterizedType();

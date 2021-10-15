@@ -1,5 +1,6 @@
 package eu.okaeri.commands.meta;
 
+import eu.okaeri.commands.Commands;
 import eu.okaeri.commands.annotation.Executor;
 import eu.okaeri.commands.meta.pattern.PatternMeta;
 import eu.okaeri.commands.meta.pattern.element.PatternElement;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 @Data
 public class ExecutorMeta {
 
-    public static List<ExecutorMeta> of(@NonNull ServiceMeta serviceMeta, @NonNull Method method) {
+    public static List<ExecutorMeta> of(@NonNull Commands commands, @NonNull ServiceMeta serviceMeta, @NonNull Method method) {
 
         Executor executor = method.getAnnotation(Executor.class);
         if (executor == null) {
@@ -45,14 +46,14 @@ public class ExecutorMeta {
                 if (!ArgumentMeta.isArg(parameter)) {
                     continue;
                 }
-                arguments.add(ArgumentMeta.of(parameter, i));
+                arguments.add(ArgumentMeta.of(commands, parameter, i));
             }
             cmdExecutor.arguments = Collections.unmodifiableList(arguments);
 
             cmdExecutor.async = executor.async();
-            cmdExecutor.pattern = PatternMeta.of(patternPrefix, pattern, cmdExecutor.arguments);
-            cmdExecutor.description = executor.description();
-            cmdExecutor.usage = executor.usage();
+            cmdExecutor.pattern = PatternMeta.of(commands, patternPrefix, pattern, cmdExecutor.arguments);
+            cmdExecutor.description = commands.resolveText(executor.description());
+            cmdExecutor.usage = commands.resolveText(executor.usage());
             cmdExecutor.index = indexCounter.getAndIncrement();
 
             // validate if all arguments used in method definition ale present in the pattern

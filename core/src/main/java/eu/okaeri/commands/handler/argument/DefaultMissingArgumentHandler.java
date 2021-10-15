@@ -10,7 +10,7 @@ import java.lang.reflect.Parameter;
 public class DefaultMissingArgumentHandler implements MissingArgumentHandler {
 
     @Override
-    public Object resolve(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
+    public Object resolve(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
         Class<?> paramType = param.getType();
         if (CommandContext.class.isAssignableFrom(paramType)) {
             return commandContext;

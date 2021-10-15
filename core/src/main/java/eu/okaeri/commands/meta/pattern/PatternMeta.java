@@ -1,5 +1,6 @@
 package eu.okaeri.commands.meta.pattern;
 
+import eu.okaeri.commands.Commands;
 import eu.okaeri.commands.meta.ArgumentMeta;
 import eu.okaeri.commands.meta.pattern.element.OptionalElement;
 import eu.okaeri.commands.meta.pattern.element.PatternElement;
@@ -15,11 +16,11 @@ import java.util.stream.Collectors;
 @Data
 public class PatternMeta {
 
-    public static PatternMeta of(@NonNull String pattern) {
-        return of("", pattern, Collections.emptyList());
+    public static PatternMeta of(@NonNull Commands commands, @NonNull String pattern) {
+        return of(commands, "", pattern, Collections.emptyList());
     }
 
-    public static PatternMeta of(@NonNull String patternPrefix, @NonNull String pattern, @NonNull List<ArgumentMeta> arguments) {
+    public static PatternMeta of(@NonNull Commands commands, @NonNull String patternPrefix, @NonNull String pattern, @NonNull List<ArgumentMeta> arguments) {
 
         // prefix
         if (!patternPrefix.isEmpty()) {
@@ -29,7 +30,7 @@ public class PatternMeta {
                 pattern = patternPrefix + " " + pattern;
             }
         }
-        String finalPattern = pattern;
+        String finalPattern = commands.resolveText(pattern);
 
         // create meta
         AtomicInteger position = new AtomicInteger();

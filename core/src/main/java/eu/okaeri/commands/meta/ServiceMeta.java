@@ -1,5 +1,6 @@
 package eu.okaeri.commands.meta;
 
+import eu.okaeri.commands.Commands;
 import eu.okaeri.commands.annotation.Command;
 import eu.okaeri.commands.annotation.NestedCommand;
 import eu.okaeri.commands.service.CommandService;
@@ -15,7 +16,7 @@ import java.util.stream.Collectors;
 @Data
 public class ServiceMeta {
 
-    public static ServiceMeta of(ServiceMeta parent, @NonNull CommandService service) {
+    public static ServiceMeta of(@NonNull Commands commands, ServiceMeta parent, @NonNull CommandService service) {
 
         Class<? extends CommandService> serviceClazz = service.getClass();
         Command descriptor = serviceClazz.getAnnotation(Command.class);
@@ -25,11 +26,11 @@ public class ServiceMeta {
 
         ServiceMeta meta = new ServiceMeta();
         meta.implementor = service;
-        meta.label = getResultingLabel(parent, descriptor.label());
-        meta.originalLabel = descriptor.label();
-        meta.patternPrefix = getResultingPatternPrefix(parent, descriptor.label());
-        meta.aliases = Arrays.asList(descriptor.aliases());
-        meta.description = descriptor.description();
+        meta.label = commands.resolveText(getResultingLabel(parent, descriptor.label()));
+        meta.originalLabel = commands.resolveText(descriptor.label());
+        meta.patternPrefix = commands.resolveText(getResultingPatternPrefix(parent, descriptor.label()));
+        meta.aliases = Arrays.stream(descriptor.aliases()).map(commands::resolveText).collect(Collectors.toList());
+        meta.description = commands.resolveText(descriptor.description());
 
         meta.parent = parent;
         meta.nested = Arrays.stream(descriptor.nested())

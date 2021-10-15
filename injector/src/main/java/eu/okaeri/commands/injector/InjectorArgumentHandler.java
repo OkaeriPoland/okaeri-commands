@@ -20,7 +20,7 @@ public class InjectorArgumentHandler extends DefaultMissingArgumentHandler {
     private final Injector injector;
 
     @Override
-    public Object resolve(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
+    public Object resolve(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
 
         Class<?> paramType = param.getType();
         String name = (param.getAnnotation(Inject.class) == null) ? "" : param.getAnnotation(Inject.class).value();
@@ -30,6 +30,6 @@ public class InjectorArgumentHandler extends DefaultMissingArgumentHandler {
             return injectable.get().getObject();
         }
 
-        return super.resolve(commandContext, invocationContext, command, param, index);
+        return super.resolve(invocationContext, commandContext, command, param, index);
     }
 }
