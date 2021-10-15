@@ -52,6 +52,7 @@ public class ExecutorMeta {
 
             cmdExecutor.async = executor.async();
             cmdExecutor.pattern = PatternMeta.of(commands, patternPrefix, pattern, cmdExecutor.arguments);
+            cmdExecutor.completion = CompletionMeta.of(commands, method);
             cmdExecutor.description = commands.resolveText(executor.description());
             cmdExecutor.usage = commands.resolveText(executor.usage());
             cmdExecutor.index = indexCounter.getAndIncrement();
@@ -92,6 +93,7 @@ public class ExecutorMeta {
 
     private boolean async;
     private PatternMeta pattern;
+    private CompletionMeta completion;
     private String description;
     private String usage;
     private int index;

@@ -3,6 +3,7 @@ package eu.okaeri.commands;
 import eu.okaeri.commands.handler.access.AccessHandler;
 import eu.okaeri.commands.handler.argument.MissingArgumentHandler;
 import eu.okaeri.commands.handler.completion.CompletionHandler;
+import eu.okaeri.commands.handler.completion.NamedCompletionHandler;
 import eu.okaeri.commands.handler.error.ErrorHandler;
 import eu.okaeri.commands.handler.instance.InstanceCreatorHandler;
 import eu.okaeri.commands.handler.result.ResultHandler;
@@ -48,6 +49,8 @@ public interface Commands {
     Commands registerType(@NonNull CommandsExtension typesPack);
 
     Commands registerExtension(@NonNull CommandsExtension extension);
+
+    Commands registerCompletion(@NonNull String name, @NonNull NamedCompletionHandler handler);
 
     String resolveText(@NonNull String text);
 

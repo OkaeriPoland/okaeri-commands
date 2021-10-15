@@ -10,6 +10,7 @@ import eu.okaeri.commands.handler.argument.DefaultMissingArgumentHandler;
 import eu.okaeri.commands.handler.argument.MissingArgumentHandler;
 import eu.okaeri.commands.handler.completion.CompletionHandler;
 import eu.okaeri.commands.handler.completion.DefaultCompletionHandler;
+import eu.okaeri.commands.handler.completion.NamedCompletionHandler;
 import eu.okaeri.commands.handler.error.DefaultErrorHandler;
 import eu.okaeri.commands.handler.error.ErrorHandler;
 import eu.okaeri.commands.handler.instance.DefaultInstanceCreatorHandler;
@@ -54,6 +55,7 @@ public class OkaeriCommands implements Commands {
     protected List<CommandMeta> registeredCommands = new ArrayList<>();
     protected final List<TypeResolver> typeResolvers = new ArrayList<>();
     protected final Map<Type, TypeResolver> resolverCache = new ConcurrentHashMap<>();
+    protected final Map<String, NamedCompletionHandler> namedCompletionHandlers = new ConcurrentHashMap<>();
 
     protected ErrorHandler errorHandler = new DefaultErrorHandler();
     protected ResultHandler resultHandler = new DefaultResultHandler();
@@ -175,6 +177,12 @@ public class OkaeriCommands implements Commands {
     }
 
     @Override
+    public Commands registerCompletion(@NonNull String name, @NonNull NamedCompletionHandler handler) {
+        this.namedCompletionHandlers.put(name, handler);
+        return this;
+    }
+
+    @Override
     public String resolveText(@NonNull String text) {
         return this.textHandler.resolve(text);
     }
@@ -258,10 +266,38 @@ public class OkaeriCommands implements Commands {
             }
             // process required/optional
             else {
-                // TODO: completions resolvers
-                // add completions from general completion handler
                 Optional<ArgumentMeta> argumentOptional = pattern.getArgumentByName(element.getName());
-                argumentOptional.ifPresent(argumentMeta -> completions.addAll(this.completionHandler.complete(argumentMeta, invocationContext, commandContext)));
+                if (argumentOptional.isPresent()) {
+
+                    // get argument executor completions
+                    ArgumentMeta argumentMeta = argumentOptional.get();
+                    List<String> executorCompletions = executor.getCompletion().getCompletions(element.getName());
+
+                    // no completions from executor
+                    if (executorCompletions.isEmpty()) {
+                        // add completions from general completion handler
+                        completions.addAll(this.completionHandler.complete(argumentMeta, invocationContext, commandContext));
+                    }
+                    // process completions if applicable
+                    else {
+                        for (String completion : executorCompletions) {
+                            // named completion
+                            if (completion.startsWith("@")) {
+                                // get name from the special tag
+                                String completionName = completion.substring(1);
+                                NamedCompletionHandler completionHandler = this.namedCompletionHandlers.get(completionName);
+                                // if handled found receive completions and add all
+                                if (completionHandler != null) {
+                                    completions.addAll(completionHandler.complete(executor.getCompletion(), argumentMeta, invocationContext, commandContext));
+                                }
+                            }
+                            // simple completion, just add
+                            else {
+                                completions.add(completion);
+                            }
+                        }
+                    }
+                }
             }
         }
 

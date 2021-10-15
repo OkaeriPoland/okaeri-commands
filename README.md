@@ -42,7 +42,7 @@ public class ExampleCommand implements CommandService {
 
     // cmd
     //
-    // empty pattern represents command without 
+    // empty pattern represents command without
     // arguments (similar to @Default in other frameworks)
     //
     @Executor(pattern = "")
@@ -87,6 +87,7 @@ public class ExampleCommand implements CommandService {
     // required arguments can be specified using '<PARAMETER_NAME>'
     // or '*' (recommended with -parameters compiler option, uses in-order param name)
     //
+    @Completion(arg = "name", value = "@allplayers")
     @Executor(pattern = "hello *", description = "Prints hello message with name")
     public String hello_name(@Arg("name") String name) {
         return "hello " + name;
@@ -121,7 +122,7 @@ public class ExampleCommand implements CommandService {
 
     // cmd print <message>
     // cmd print Some message with unspecified length
-    // 
+    //
     // accepts all sequential arguments into one parameter
     //
     @Executor(pattern = "print *..." , description = "Prints system out message")
@@ -144,6 +145,13 @@ public class ExampleCommand implements CommandService {
     // mix param types and resolve unknown values by overriding Commands#resolveMissingArgument (e.g. DI)
     // preserve param names using javac -g:vars or specify them manually @Arg("name")
     //
+    // specify inline string completions or use previously registered named completion from Commands#registerCompletion
+    // you can also pass @CompletionData and read it in your custom completion implementation as you like
+    //
+    @Completion(arg = "name", value = "@allplayers", data = @CompletionData(name = "limit", value = "10"))
+    @Completion(arg = "perm", value = {"build", "break", "place"})
+    @Completion(arg = "value", value = {"allow", "deny"})
+    @Completion(arg = "flag", value = {"-silent"})
     @Executor(pattern = "player * set2 * * ?", description = "Complex command test")
     public String complex2(@Arg String name, int huh, @Arg String perm, @RawArgs String[] args, @Arg String value, String randomElement, @Arg Option<String> flag) {
         return (">> " + name + " " + perm + " " + value + " " + flag + "\n" + Arrays.toString(args));
