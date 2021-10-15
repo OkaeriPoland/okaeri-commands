@@ -425,7 +425,7 @@ public class OkaeriCommands implements Commands {
             }
 
             // pass to adapter for missing elements
-            call[i] = this.getMissingArgumentHandler().resolve(invocationContext, commandContext, commandMeta, param, i);
+            call[i] = this.resolveMissingArgument(invocationContext, commandContext, commandMeta, param, i);
         }
 
         return InvocationMeta.of(executorMethod, call, commandMeta.getService(), executor);
