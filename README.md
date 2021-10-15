@@ -11,9 +11,9 @@ Simple command framework with yet powerful features and ability to adapt. Part o
 ## Example Usage
 
 ```java
-Commands commands = CommandsManager.create(new CommandsAdapter());
-commands.register(ExampleCommand.class); // built for DI (accepts empty constructor by default)
-// commands.register(new ExampleCommand()); // pass own instance (e.g. with custom constructor parameters)
+Commands commands = new OkaeriCommands();
+commands.registerCommand(ExampleCommand.class); // built for DI (accepts empty constructor by default)
+// commands.registerCommand(new ExampleCommand()); // pass own instance (e.g. with custom constructor parameters)
 
 // call manually
 commands.call("cmd hello");
@@ -74,7 +74,7 @@ public class ExampleCommand implements CommandService {
     // cmd hi
     // cmd hii
     //
-    // overwrite usage/description with CommandsAdapter#resolveText()
+    // overwrite usage/description with Commands#resolveText()
     // available out-of-the-box in OkaeriPoland/okaeri-platform i18n integration
     //
     @Executor(pattern = {"hi", "hii"}, description = "!command-cmd-hi-description", usage = "!command-cmd-hi-usage")
@@ -141,7 +141,7 @@ public class ExampleCommand implements CommandService {
 
     // recommended usage
     //
-    // mix param types and resolve unknown values by overriding CommandsAdapter#resolveMissingArgument (e.g. DI)
+    // mix param types and resolve unknown values by overriding Commands#resolveMissingArgument (e.g. DI)
     // preserve param names using javac -g:vars or specify them manually @Arg("name")
     //
     @Executor(pattern = "player * set2 * * ?", description = "Complex command test")

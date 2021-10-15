@@ -43,7 +43,7 @@ public class ExampleCommand implements CommandService {
     // cmd hi
     // cmd hii
     //
-    // overwrite usage/description with CommandsAdapter#resolveText()
+    // overwrite usage/description with Commands#resolveText()
     // available out-of-the-box in OkaeriPoland/okaeri-platform i18n integration
     //
     @Executor(pattern = {"hi", "hii"}, description = "!command-cmd-hi-description", usage = "!command-cmd-hi-usage")
@@ -111,7 +111,7 @@ public class ExampleCommand implements CommandService {
 
     // recommended usage
     //
-    // mix param types and resolve unknown values by overriding CommandsAdapter#resolveMissingArgument (e.g. DI)
+    // mix param types and resolve unknown values by overriding Commands#resolveMissingArgument (e.g. DI)
     // preserve param names using javac -g:vars or specify them manually @Arg("name")
     //
     @Executor(pattern = "player * set2 * * ?", description = "Complex command test")

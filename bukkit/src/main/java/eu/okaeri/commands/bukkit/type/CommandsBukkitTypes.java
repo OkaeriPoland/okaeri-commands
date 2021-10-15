@@ -2,7 +2,6 @@ package eu.okaeri.commands.bukkit.type;
 
 import eu.okaeri.commands.Commands;
 import eu.okaeri.commands.CommandsExtension;
-import org.bukkit.potion.Potion;
 
 public class CommandsBukkitTypes implements CommandsExtension {
 
