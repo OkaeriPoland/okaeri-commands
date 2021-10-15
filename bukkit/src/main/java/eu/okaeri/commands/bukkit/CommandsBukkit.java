@@ -94,7 +94,7 @@ public class CommandsBukkit extends OkaeriCommands {
             return commandContext.get("sender");
         }
 
-        return super.getMissingArgumentHandler().resolve(invocationContext, commandContext, command, param, index);
+        return super.resolveMissingArgument(invocationContext, commandContext, command, param, index);
     }
 
     @Override
@@ -223,12 +223,21 @@ public class CommandsBukkit extends OkaeriCommands {
         } catch (CommandException exception) {
             // unpack exception
             Throwable cause = exception.getCause();
+            int currentIteration = 0;
             while (!(cause instanceof CommandException)) {
+                // did not find a cause that is CommandException
                 if (cause == null) {
                     this.handleError(commandContext, invocationContext, exception);
                     return;
                 }
-                cause = exception.getCause();
+                // cyclic exception protection i guess?
+                if (currentIteration >= 20) {
+                    this.handleError(commandContext, invocationContext, exception);
+                    return;
+                }
+                // gotta extract that cause
+                currentIteration += 1;
+                cause = cause.getCause();
             }
             this.handleError(commandContext, invocationContext, cause);
         }
