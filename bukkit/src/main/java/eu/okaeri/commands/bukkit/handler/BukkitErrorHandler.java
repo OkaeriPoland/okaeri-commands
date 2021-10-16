@@ -1,6 +1,7 @@
 package eu.okaeri.commands.bukkit.handler;
 
 import eu.okaeri.commands.Commands;
+import eu.okaeri.commands.exception.NoAccessException;
 import eu.okaeri.commands.exception.NoSuchCommandException;
 import eu.okaeri.commands.handler.error.ErrorHandler;
 import eu.okaeri.commands.help.HelpBuilder;
@@ -11,7 +12,6 @@ import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 
-import javax.naming.NoPermissionException;
 import java.util.UUID;
 import java.util.logging.Level;
 
@@ -55,7 +55,7 @@ public class BukkitErrorHandler implements ErrorHandler {
     @Override
     public Object handle(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull Throwable throwable) {
 
-        if (throwable instanceof NoPermissionException) {
+        if (throwable instanceof NoAccessException) {
             return this.resolveText(commandContext, invocationContext,
                     "${commands-system-permissions-error}", ChatColor.RED + "No permission {permission}!")
                     .replace("{permission}", throwable.getMessage());
