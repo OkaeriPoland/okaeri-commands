@@ -85,8 +85,8 @@ public class CommandsBrigadierBase {
 
             // check access (permissions)
             ServiceMeta service = metas.get(0).getService();
-            InvocationContext invocationContext = InvocationContext.of(service, service.getLabel(), new String[0]);
-            if (!this.commands.getAccessHandler().allowAccess(service, invocationContext, commandContext, false)) {
+            InvocationContext dummyContext = InvocationContext.of(service, service.getLabel(), new String[0]);
+            if (!this.commands.getAccessHandler().allowAccess(service, dummyContext, commandContext, false)) {
                 continue;
             }
 
@@ -99,6 +99,7 @@ public class CommandsBrigadierBase {
                 PatternMeta pattern = executor.getPattern();
 
                 // check access
+                InvocationContext invocationContext = InvocationContext.of(meta, service.getLabel(), "");
                 if (!this.commands.getAccessHandler().allowAccess(executor, invocationContext, commandContext)) {
                     continue;
                 }
