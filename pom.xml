@@ -7,7 +7,7 @@
     <groupId>eu.okaeri</groupId>
     <artifactId>okaeri-commands</artifactId>
     <packaging>pom</packaging>
-    <version>0.6.9</version>
+    <version>0.7.0</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -19,6 +19,7 @@
         <module>core</module>
         <module>bukkit</module>
         <module>injector</module>
+        <module>brigadier</module>
     </modules>
 
     <dependencies>
