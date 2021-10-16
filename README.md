@@ -45,8 +45,11 @@ public class ExampleCommand implements CommandService {
     // empty pattern represents command without
     // arguments (similar to @Default in other frameworks)
     //
-    @Executor(pattern = "")
-    public String def() {
+    // no pattern + method name starting with underscore 
+    // is the same as using @Executor(pattern = "")
+    //
+    @Executor
+    public String _def() {
         return "called default";
     }
 
@@ -54,6 +57,10 @@ public class ExampleCommand implements CommandService {
     //
     // simple commands with no additional effort
     // using method name is same as pattern = "woah"
+    //
+    // it also works for simple arguments:
+    // @Executor
+    // String woah(@Arg String name) -> cmd woah <name>
     //
     @Executor(description = "Prints woah message")
     public String woah() {

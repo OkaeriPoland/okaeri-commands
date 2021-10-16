@@ -14,8 +14,8 @@ import eu.okaeri.commands.service.CommandService;
 )
 public class ExampleWithNestedCommand implements CommandService {
 
-    @Executor(pattern = "")
-    public int def() {
+    @Executor
+    public int _def() {
         return 0;
     }
 
@@ -25,8 +25,8 @@ public class ExampleWithNestedCommand implements CommandService {
     )
     public static class Sub1 implements CommandService {
 
-        @Executor(pattern = "")
-        public int sub1() {
+        @Executor
+        public int _sub1() {
             return 1;
         }
 
@@ -38,8 +38,8 @@ public class ExampleWithNestedCommand implements CommandService {
         @Command(label = "sub1")
         public static class Sub1Sub1 implements CommandService {
 
-            @Executor(pattern = "")
-            public int sub11() {
+            @Executor
+            public int _sub11() {
                 return 11;
             }
         }
@@ -48,8 +48,8 @@ public class ExampleWithNestedCommand implements CommandService {
     @Command(label = "sub2")
     public static class Sub2 implements CommandService {
 
-        @Executor(pattern = "")
-        public int sub2() {
+        @Executor
+        public int _sub2() {
             return 2;
         }
 
