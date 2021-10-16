@@ -1,11 +1,9 @@
 package eu.okaeri.commands.meta;
 
-import eu.okaeri.commands.service.CommandException;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 @Data
@@ -25,14 +23,10 @@ public class InvocationMeta {
         return this.call();
     }
 
-    public Object call() throws CommandException {
+    public Object call() throws Exception {
         Method method = this.executor.getMethod();
         method.setAccessible(true);
-        try {
-            return method.invoke(this.service.getImplementor(), this.call);
-        } catch (IllegalAccessException | InvocationTargetException exception) {
-            throw new CommandException("Failed command invocation: " + this.getMethod(), exception);
-        }
+        return method.invoke(this.service.getImplementor(), this.call);
     }
 
     private Method method;

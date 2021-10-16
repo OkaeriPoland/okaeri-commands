@@ -16,7 +16,6 @@ import eu.okaeri.commands.service.InvocationContext;
 import eu.okaeri.commands.type.resolver.TypeResolver;
 import lombok.NonNull;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -78,7 +77,7 @@ public interface Commands {
 
     Optional<TypeResolver> findTypeResolver(@NonNull Type type);
 
-    <T> T call(@NonNull String command) throws InvocationTargetException, IllegalAccessException;
+    <T> T call(@NonNull String command) throws Exception;
 
     Optional<InvocationContext> invocationMatch(@NonNull String command);
 

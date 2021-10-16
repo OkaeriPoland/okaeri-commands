@@ -220,7 +220,7 @@ public class CommandsBukkit extends OkaeriCommands {
             }
 
             throw new RuntimeException("Unknown return type for excutor [allowed: BukkitResponse, String, void]");
-        } catch (CommandException exception) {
+        } catch (Exception exception) {
             // unpack exception
             Throwable cause = exception.getCause();
             int currentIteration = 0;
