@@ -12,5 +12,6 @@ public class CommandsBukkitTypes implements CommandsExtension {
         commands.registerType(new EnchantmentTypeResolver());
         commands.registerType(new PotionEffectTypeResolver());
         commands.registerType(new WorldTypeResolver());
+        commands.registerType(new GameModeTypeResolver());
     }
 }

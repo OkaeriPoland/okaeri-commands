@@ -6,8 +6,6 @@ import eu.okaeri.commands.service.InvocationContext;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -20,19 +18,18 @@ public class EnumTypeResolver extends BasicTypeResolver<Enum> {
 
     @Override
     @SneakyThrows
+    @SuppressWarnings("unchecked")
     public Enum resolve(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull ArgumentMeta argumentMeta, @NonNull String text) {
+
+        Class<? extends Enum> enumType = (Class<? extends Enum>) argumentMeta.getType();
 
         // 1:1 match ONE=ONE
         try {
-            Method enumMethod = argumentMeta.getType().getMethod("valueOf", String.class);
-            Object enumValue = enumMethod.invoke(null, text);
-            if (enumValue != null) {
-                return (Enum) enumValue;
-            }
+            return Enum.valueOf(enumType, text);
         }
         // match first case-insensitive
-        catch (InvocationTargetException ignored) {
-            Enum[] enumValues = (Enum[]) argumentMeta.getType().getEnumConstants();
+        catch (Exception ignored) {
+            Enum[] enumValues = enumType.getEnumConstants();
             for (Enum value : enumValues) {
                 if (!text.equalsIgnoreCase(value.name())) {
                     continue;
@@ -42,8 +39,8 @@ public class EnumTypeResolver extends BasicTypeResolver<Enum> {
         }
 
         // match fail
-        String enumValuesStr = Arrays.stream(argumentMeta.getType().getEnumConstants())
-                .map(item -> ((Enum) item).name())
+        String enumValuesStr = Arrays.stream(enumType.getEnumConstants())
+                .map(Enum::name)
                 .collect(Collectors.joining(", "));
 
         throw new IllegalArgumentException("invalid value (available: " + enumValuesStr + ")");
