@@ -23,27 +23,34 @@ public class BukkitAccessHandler implements AccessHandler {
     public final Commands commands;
 
     @Override
-    public boolean allowAccess(@NonNull ServiceMeta service, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
+    public boolean allowAccess(@NonNull ServiceMeta service, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, boolean checkExecutors) {
 
         if (!commandContext.has("sender", CommandSender.class)) {
             throw new RuntimeException("Cannot process command without sender in the context!");
         }
 
-        boolean noExecutorAccess = this.commands.findByLabel(service.getLabel()).stream()
-                .noneMatch(command -> this.allowAccess(command.getExecutor(), invocationContext, commandContext));
-
-        if (noExecutorAccess) {
-            return false;
+        CommandSender sender = commandContext.get("sender", CommandSender.class);
+        if (sender.isOp() || sender.hasPermission("*")) {
+            // SPEEEEEEEED
+            return true;
         }
 
-        CommandSender sender = commandContext.get("sender", CommandSender.class);
-        return this.hasPermissions(sender, this.getPermissions(service, invocationContext, commandContext), this.getMode(service));
+        if (checkExecutors) {
+            boolean noExecutorAccess = this.commands.findByLabel(service.getLabel()).stream()
+                    .noneMatch(command -> this.allowAccess(command.getExecutor(), invocationContext, commandContext));
+            if (noExecutorAccess) {
+                return false;
+            }
+        }
+
+        Set<String> permissions = this.getPermissions(service, invocationContext, commandContext);
+        return this.hasPermissions(sender, permissions, this.getMode(service));
     }
 
     @Override
-    public void checkAccess(@NonNull ServiceMeta service, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
+    public void checkAccess(@NonNull ServiceMeta service, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, boolean checkExecutors) {
 
-        if (this.allowAccess(service, invocationContext, commandContext)) {
+        if (this.allowAccess(service, invocationContext, commandContext, checkExecutors)) {
             return;
         }
 
@@ -72,7 +79,13 @@ public class BukkitAccessHandler implements AccessHandler {
         }
 
         CommandSender sender = commandContext.get("sender", CommandSender.class);
-        return this.hasPermissions(sender, this.getPermissions(executor, invocationContext, commandContext), this.getMode(executor));
+        if (sender.isOp() || sender.hasPermission("*")) {
+            // SPEEEEEEEED
+            return true;
+        }
+
+        Set<String> permissions = this.getPermissions(executor, invocationContext, commandContext);
+        return this.hasPermissions(sender, permissions, this.getMode(executor));
     }
 
     @Override

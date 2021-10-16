@@ -9,12 +9,12 @@ import lombok.NonNull;
 public class DefaultAccessHandler implements AccessHandler {
 
     @Override
-    public boolean allowAccess(@NonNull ServiceMeta service, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
+    public boolean allowAccess(@NonNull ServiceMeta service, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, boolean checkExecutors) {
         return true;
     }
 
     @Override
-    public void checkAccess(@NonNull ServiceMeta serviceMeta, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
+    public void checkAccess(@NonNull ServiceMeta service, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, boolean checkExecutors) {
     }
 
     @Override
