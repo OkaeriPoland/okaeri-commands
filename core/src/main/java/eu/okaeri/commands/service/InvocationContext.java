@@ -58,8 +58,4 @@ public class InvocationContext {
         }
         return this.command.getExecutor();
     }
-
-    public boolean isAsync() {
-        return this.getExecutor().isAsync();
-    }
 }

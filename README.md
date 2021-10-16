@@ -37,6 +37,12 @@ BenchmarkCommands.command_simple   thrpt    5  1253307.288 ± 31533.820  ops/s
 ## Example CommandService
 
 ```java
+// platform specific (bukkit)
+// makes all executors async,
+// to include/exclude single use @Async/@Sync
+@Async
+// declare command service using annotation
+// aliases can be also specified here
 @Command(label = "cmd", description = "Example command service")
 public class ExampleCommand implements CommandService {
 
