@@ -237,7 +237,7 @@ public class OkaeriCommands implements Commands {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T call(@NonNull String command) throws CommandException {
+    public <T> T call(@NonNull String command) throws Exception {
         Optional<InvocationContext> context = this.invocationMatch(command);
         if (!context.isPresent()) {
             throw new NoSuchCommandException("cannot call '" + command + "', no executor available");
