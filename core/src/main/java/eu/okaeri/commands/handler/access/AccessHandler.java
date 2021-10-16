@@ -8,9 +8,17 @@ import lombok.NonNull;
 
 public interface AccessHandler {
 
-    boolean allowAccess(@NonNull ServiceMeta service, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext);
+    default boolean allowAccess(@NonNull ServiceMeta service, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
+        return this.allowAccess(service, invocationContext, commandContext, true);
+    }
 
-    void checkAccess(@NonNull ServiceMeta serviceMeta, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext);
+    boolean allowAccess(@NonNull ServiceMeta service, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, boolean checkExecutors);
+
+    default void checkAccess(@NonNull ServiceMeta service, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
+        this.checkAccess(service, invocationContext, commandContext, true);
+    }
+
+    void checkAccess(@NonNull ServiceMeta service, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, boolean checkExecutors);
 
     boolean allowAccess(@NonNull ExecutorMeta executor, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext);
 

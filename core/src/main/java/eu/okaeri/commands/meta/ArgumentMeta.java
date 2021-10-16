@@ -8,6 +8,7 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 
 import java.lang.reflect.Parameter;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Optional;
 
@@ -30,9 +31,10 @@ public class ArgumentMeta {
         ArgumentMeta meta = new ArgumentMeta();
         meta.name = commands.resolveText(arg.value().isEmpty() ? parameter.getName() : arg.value());
         meta.index = index;
-        meta.type = parameter.getType();
+        meta.rawType = parameter.getType();
         meta.parameterizedType = parameter.getParameterizedType();
-        meta.optional = Option.class.isAssignableFrom(meta.type) || Optional.class.isAssignableFrom(meta.type);
+        meta.type = resolveType(meta.rawType, meta.parameterizedType);
+        meta.optional = Option.class.isAssignableFrom(meta.rawType) || Optional.class.isAssignableFrom(meta.rawType);
 
         return meta;
     }
@@ -41,6 +43,7 @@ public class ArgumentMeta {
     private String name;
     private int index;
     private Class<?> type;
+    private Class<?> rawType;
     private Type parameterizedType;
 
     public Object wrap(Object value) {
@@ -49,14 +52,28 @@ public class ArgumentMeta {
             return value;
         }
 
-        if (Option.class.isAssignableFrom(this.type)) {
+        if (Option.class.isAssignableFrom(this.rawType)) {
             return Option.of(value);
         }
 
-        if (Optional.class.isAssignableFrom(this.type)) {
+        if (Optional.class.isAssignableFrom(this.rawType)) {
             return Optional.of(value);
         }
 
         return value;
+    }
+
+    private static Class<?> resolveType(Class<?> rawType, Type parameterizedType) {
+
+        if (!Option.class.isAssignableFrom(rawType) && !Optional.class.isAssignableFrom(rawType)) {
+            return rawType;
+        }
+
+        Type paramType = ((ParameterizedType) parameterizedType).getRawType();
+        if (paramType instanceof Class<?>) {
+            rawType = (Class<?>) paramType;
+        }
+
+        return rawType;
     }
 }

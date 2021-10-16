@@ -3,12 +3,12 @@ package eu.okaeri.commands.handler.completion;
 import eu.okaeri.commands.meta.ArgumentMeta;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.InvocationContext;
-import eu.okaeri.commands.service.Option;
 import lombok.NonNull;
 
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -21,7 +21,7 @@ public class DefaultCompletionHandler implements CompletionHandler {
     @Override
     public List<String> complete(@NonNull ArgumentMeta argument, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
 
-        Class<?> type = this.resolveType(argument);
+        Class<?> type = argument.getType();
         Predicate<String> stringFilter = this.stringFilter(invocationContext);
 
         if (type.isEnum()) {
@@ -36,21 +36,6 @@ public class DefaultCompletionHandler implements CompletionHandler {
         }
 
         return Collections.emptyList();
-    }
-
-    protected Class<?> resolveType(ArgumentMeta argument) {
-
-        Class<?> type = argument.getType();
-        Type parameterizedType = argument.getParameterizedType();
-
-        if (Option.class.isAssignableFrom(type) || Optional.class.isAssignableFrom(type)) {
-            Type rawType = ((ParameterizedType) parameterizedType).getRawType();
-            if (rawType instanceof Class<?>) {
-                type = (Class<?>) rawType;
-            }
-        }
-
-        return type;
     }
 
     protected <T> List<T> filter(Predicate<T> filter, Stream<T> stream) {

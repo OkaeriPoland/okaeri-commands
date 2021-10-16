@@ -37,7 +37,7 @@ import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Data
 public class OkaeriCommands implements Commands {
@@ -53,6 +53,7 @@ public class OkaeriCommands implements Commands {
             }, Comparator.reverseOrder());
 
     protected List<CommandMeta> registeredCommands = new ArrayList<>();
+    protected final Map<String, List<CommandMeta>> registeredCommandsByLabel = new ConcurrentHashMap<>();
     protected final List<TypeResolver> typeResolvers = new ArrayList<>();
     protected final Map<Type, TypeResolver> resolverCache = new ConcurrentHashMap<>();
     protected final Map<String, NamedCompletionHandler> namedCompletionHandlers = new ConcurrentHashMap<>();
@@ -135,7 +136,16 @@ public class OkaeriCommands implements Commands {
             List<CommandMeta> commands = CommandMeta.of(this, service, serviceMeta, method);
 
             for (CommandMeta command : commands) {
+                // standard register
                 this.registeredCommands.add(command);
+                // cached resolve
+                Stream.concat(Stream.of(command.getService().getLabel()), command.getService().getAliases().stream()).forEach(label -> {
+                    List<CommandMeta> currentServices = this.registeredCommandsByLabel.computeIfAbsent(label, cLabel -> new ArrayList<>());
+                    currentServices.add(command);
+                    this.registeredCommandsByLabel.put(label, currentServices);
+                    currentServices.sort(META_COMPARATOR);
+                });
+                // callback
                 this.onRegister(command);
             }
 
@@ -199,15 +209,12 @@ public class OkaeriCommands implements Commands {
 
     @Override
     public List<CommandMeta> findByLabel(@NonNull String label) {
-        return this.registeredCommands.stream()
-                .filter(candidate -> candidate.isLabelApplicable(label))
-                .collect(Collectors.toList());
+        return this.registeredCommandsByLabel.getOrDefault(label, Collections.emptyList());
     }
 
     @Override
     public Optional<CommandMeta> findByLabelAndArgs(@NonNull String label, @NonNull String args) {
-        return this.registeredCommands.stream()
-                .filter(candidate -> candidate.isLabelApplicable(label))
+        return this.findByLabel(label).stream()
                 .filter(candidate -> candidate.getExecutor().getPattern().matches(args))
                 .findFirst();
     }
@@ -242,13 +249,17 @@ public class OkaeriCommands implements Commands {
     @Override
     public List<String> complete(@NonNull List<CommandMeta> metas, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
 
+        if (metas.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         String args = invocationContext.getArgs();
         List<String> completions = new ArrayList<>();
 
         for (CommandMeta meta : metas) {
 
             ServiceMeta service = meta.getService();
-            if (!this.getAccessHandler().allowAccess(service, invocationContext, commandContext)) {
+            if (!this.getAccessHandler().allowAccess(service, invocationContext, commandContext, false)) {
                 continue;
             }
 

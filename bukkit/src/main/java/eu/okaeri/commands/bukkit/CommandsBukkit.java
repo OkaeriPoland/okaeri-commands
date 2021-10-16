@@ -160,7 +160,7 @@ public class CommandsBukkit extends OkaeriCommands {
     private boolean executeCommand(@NonNull ServiceMeta service, @NonNull CommandContext commandContext, @NonNull CommandSender sender, @NonNull String label, @NonNull String[] args) {
 
         String fullCommand = (label + " " + String.join(" ", args)).trim();
-        this.getAccessHandler().checkAccess(service, InvocationContext.of(service, label, args), commandContext);
+        this.getAccessHandler().checkAccess(service, InvocationContext.of(service, label, args), commandContext, false);
 
         Optional<InvocationContext> invocationOptional = this.invocationMatch(fullCommand);
         if (!invocationOptional.isPresent()) {

@@ -23,7 +23,7 @@ public class BukkitCompletionHandler extends DefaultCompletionHandler {
     @Override
     public List<String> complete(@NonNull ArgumentMeta argument, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
 
-        Class<?> type = this.resolveType(argument);
+        Class<?> type = argument.getType();
         Predicate<String> stringFilter = this.stringFilter(invocationContext);
         CommandSender sender = commandContext.get("sender", CommandSender.class);
         Player player = (sender instanceof Player) ? ((Player) sender) : null;
