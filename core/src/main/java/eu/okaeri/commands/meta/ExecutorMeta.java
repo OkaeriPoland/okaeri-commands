@@ -51,7 +51,6 @@ public class ExecutorMeta {
             }
             cmdExecutor.arguments = Collections.unmodifiableList(arguments);
 
-            cmdExecutor.async = executor.async();
             cmdExecutor.pattern = PatternMeta.of(commands, patternPrefix, pattern, cmdExecutor.arguments, emptyPattern);
             cmdExecutor.completion = CompletionMeta.of(commands, method);
             cmdExecutor.description = commands.resolveText(executor.description());
@@ -92,7 +91,6 @@ public class ExecutorMeta {
     private Method method;
     private List<ArgumentMeta> arguments;
 
-    private boolean async;
     private PatternMeta pattern;
     private CompletionMeta completion;
     private String description;
