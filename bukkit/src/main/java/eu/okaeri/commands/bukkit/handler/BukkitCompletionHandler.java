@@ -27,23 +27,24 @@ public class BukkitCompletionHandler extends DefaultCompletionHandler {
         Predicate<String> stringFilter = this.stringFilter(invocationContext);
         CommandSender sender = commandContext.get("sender", CommandSender.class);
         Player player = (sender instanceof Player) ? ((Player) sender) : null;
+        int limit = this.getLimit(argument, invocationContext);
 
         if (OfflinePlayer.class.isAssignableFrom(type)) {
-            return this.filter(stringFilter, Bukkit.getServer().getOnlinePlayers().stream()
+            return this.filter(stringFilter, limit, Bukkit.getServer().getOnlinePlayers().stream()
                     .filter(onlinePlayer -> (player == null) || player.canSee(onlinePlayer) || sender.hasPermission("okaeri.commands.invisible"))
                     .map(HumanEntity::getName));
         }
 
         if (Enchantment.class.isAssignableFrom(type)) {
-            return this.filter(stringFilter, Arrays.stream(Enchantment.values()).map(Enchantment::getName));
+            return this.filter(stringFilter, limit, Arrays.stream(Enchantment.values()).map(Enchantment::getName));
         }
 
         if (PotionEffectType.class.isAssignableFrom(type)) {
-            return this.filter(stringFilter, Arrays.stream(PotionEffectType.values()).map(PotionEffectType::getName));
+            return this.filter(stringFilter, limit, Arrays.stream(PotionEffectType.values()).map(PotionEffectType::getName));
         }
 
         if (World.class.isAssignableFrom(type)) {
-            return this.filter(stringFilter, Bukkit.getWorlds().stream().map(World::getName));
+            return this.filter(stringFilter, limit, Bukkit.getWorlds().stream().map(World::getName));
         }
 
         return super.complete(argument, invocationContext, commandContext);
