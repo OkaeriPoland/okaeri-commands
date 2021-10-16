@@ -12,7 +12,7 @@ import java.util.List;
 @Command(label = "example-ra")
 public class ExampleRequiredArgsCommand implements CommandService {
 
-    @Executor(pattern = "")
+    @Executor
     private List<String> _default(@RawArgs List<String> args) {
         return args;
     }

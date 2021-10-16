@@ -16,11 +16,26 @@ import java.util.stream.Collectors;
 @Data
 public class PatternMeta {
 
-    public static PatternMeta of(@NonNull Commands commands, @NonNull String pattern) {
-        return of(commands, "", pattern, Collections.emptyList());
-    }
+    public static PatternMeta of(@NonNull Commands commands, @NonNull String patternPrefix, @NonNull String pattern, @NonNull List<ArgumentMeta> arguments, boolean generate) {
 
-    public static PatternMeta of(@NonNull Commands commands, @NonNull String patternPrefix, @NonNull String pattern, @NonNull List<ArgumentMeta> arguments) {
+        // auto-generate from method signature
+        if (generate || pattern.isEmpty()) {
+            String suffix = arguments.stream()
+                    .map(meta -> {
+                        if (meta.isOptional()) {
+                            return "?";
+                        } else {
+                            return "*";
+                        }
+                    })
+                    .collect(Collectors.joining(" "));
+            if (!suffix.isEmpty()) {
+                if (!pattern.isEmpty()) {
+                    pattern += " ";
+                }
+                pattern += suffix;
+            }
+        }
 
         // prefix
         if (!patternPrefix.isEmpty()) {

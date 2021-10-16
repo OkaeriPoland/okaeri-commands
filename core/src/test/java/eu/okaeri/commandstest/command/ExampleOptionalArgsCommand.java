@@ -13,7 +13,7 @@ import java.util.List;
 @Command(label = "example-oa")
 public class ExampleOptionalArgsCommand implements CommandService {
 
-    @Executor(pattern = "")
+    @Executor
     private List<String> _default(@RawArgs List<String> args) {
         return args;
     }

@@ -30,8 +30,9 @@ public class ExecutorMeta {
         AtomicInteger indexCounter = new AtomicInteger();
         String patternPrefix = serviceMeta.getPatternPrefix();
 
-        List<String> patterns = (executor.pattern().length == 0)
-                ? Collections.singletonList(method.getName())
+        boolean emptyPattern = executor.pattern().length == 0;
+        List<String> patterns = emptyPattern
+                ? Collections.singletonList(method.getName().startsWith("_") ? "" : method.getName())
                 : Arrays.asList(executor.pattern());
 
         return patterns.stream().map(pattern -> {
@@ -51,7 +52,7 @@ public class ExecutorMeta {
             cmdExecutor.arguments = Collections.unmodifiableList(arguments);
 
             cmdExecutor.async = executor.async();
-            cmdExecutor.pattern = PatternMeta.of(commands, patternPrefix, pattern, cmdExecutor.arguments);
+            cmdExecutor.pattern = PatternMeta.of(commands, patternPrefix, pattern, cmdExecutor.arguments, emptyPattern);
             cmdExecutor.completion = CompletionMeta.of(commands, method);
             cmdExecutor.description = commands.resolveText(executor.description());
             cmdExecutor.usage = commands.resolveText(executor.usage());

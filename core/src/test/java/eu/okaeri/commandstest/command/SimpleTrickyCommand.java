@@ -13,8 +13,8 @@ public class SimpleTrickyCommand implements CommandService {
         return "lists";
     }
 
-    @Executor(pattern = "*")
-    public String vote(@Arg("list") String list) {
+    @Executor
+    public String _list(@Arg("list") String list) {
         return list;
     }
 }
