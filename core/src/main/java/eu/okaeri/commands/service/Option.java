@@ -1,18 +1,17 @@
 package eu.okaeri.commands.service;
 
-import lombok.AccessLevel;
-import lombok.EqualsAndHashCode;
-import lombok.RequiredArgsConstructor;
-import lombok.ToString;
+import lombok.*;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 @ToString
 @EqualsAndHashCode
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-public class Option<T> {
+public class Option<T> implements Supplier<Optional<T>> {
 
-    public static <V> Option<V> of(V value) {
+    public static <V> Option<V> of(@Nullable V value) {
         return new Option<>(value);
     }
 
@@ -24,15 +23,17 @@ public class Option<T> {
         return this.value != null;
     }
 
+    @Override
     public Optional<T> get() {
         return Optional.ofNullable(this.value);
     }
 
+    @Nullable
     public T getOrNull() {
         return this.value;
     }
 
-    public T getOr(T element) {
+    public T getOr(@NonNull T element) {
         return (this.value == null) ? element : this.value;
     }
 

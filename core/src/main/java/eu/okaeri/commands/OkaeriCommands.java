@@ -350,6 +350,10 @@ public class OkaeriCommands implements Commands {
 
         String args = invocationContext.getArgs();
         CommandMeta commandMeta = invocationContext.getCommand();
+        if (commandMeta == null) {
+            throw new IllegalArgumentException("Cannot use dummy context for prepare: " + invocationContext);
+        }
+
         ExecutorMeta executor = commandMeta.getExecutor();
         PatternMeta pattern = executor.getPattern();
         List<ArgumentMeta> arguments = executor.getArguments();

@@ -11,7 +11,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class TestStandardTypeResolvers {
 
-    private static final InvocationContext DUMMY_IC = new InvocationContext();
+    private static final InvocationContext DUMMY_IC = InvocationContext.of("dummy", "");
     private static final CommandContext DUMMY_CC = new CommandContext();
     private static final ArgumentMeta DUMMY_AM = new ArgumentMeta();
 

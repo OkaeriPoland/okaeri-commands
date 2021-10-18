@@ -57,7 +57,7 @@ public class ArgumentMeta {
         }
 
         if (Optional.class.isAssignableFrom(this.rawType)) {
-            return Optional.of(value);
+            return Optional.ofNullable(value);
         }
 
         return value;

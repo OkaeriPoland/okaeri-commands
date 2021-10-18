@@ -13,6 +13,7 @@ import eu.okaeri.commands.bukkit.listener.PlayerCommandSendListener;
 import eu.okaeri.commands.bukkit.type.CommandsBukkitTypes;
 import eu.okaeri.commands.exception.NoSuchCommandException;
 import eu.okaeri.commands.meta.CommandMeta;
+import eu.okaeri.commands.meta.ExecutorMeta;
 import eu.okaeri.commands.meta.InvocationMeta;
 import eu.okaeri.commands.meta.ServiceMeta;
 import eu.okaeri.commands.service.CommandContext;
@@ -30,6 +31,7 @@ import org.bukkit.event.Event;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -184,7 +186,12 @@ public class CommandsBukkit extends OkaeriCommands {
         }
 
         InvocationContext invocationContext = invocationOptional.get();
-        this.getAccessHandler().checkAccess(invocationContext.getExecutor(), invocationContext, commandContext);
+        if (invocationContext.getCommand() == null) {
+            throw new IllegalArgumentException("Cannot use dummy context for execution: " + invocationContext);
+        }
+
+        ExecutorMeta executor = invocationContext.getCommand().getExecutor();
+        this.getAccessHandler().checkAccess(executor, invocationContext, commandContext);
 
         if (this.isAsync(invocationContext)) {
             Runnable prepareAndExecuteAsync = () -> this.handleExecution(sender, invocationContext, commandContext);
@@ -231,7 +238,12 @@ public class CommandsBukkit extends OkaeriCommands {
                 return;
             }
 
-            if (invocationContext.getExecutor().getMethod().getReturnType() == void.class) {
+            CommandMeta command = invocationContext.getCommand();
+            if (command == null) {
+                throw new IllegalArgumentException("Cannot use dummy context for execution: " + invocationContext);
+            }
+
+            if (command.getExecutor().getMethod().getReturnType() == void.class) {
                 return;
             }
 
@@ -261,10 +273,14 @@ public class CommandsBukkit extends OkaeriCommands {
 
     private boolean isAsync(@NonNull InvocationContext invocationContext) {
 
-        Class<? extends CommandService> serviceClass = invocationContext.getCommand().getService().getImplementor().getClass();
+        if ((invocationContext.getCommand() == null) || (invocationContext.getService() == null)) {
+            throw new IllegalArgumentException("Cannot use dummy context: " + invocationContext);
+        }
+
+        Class<? extends CommandService> serviceClass = invocationContext.getService().getImplementor().getClass();
         boolean serviceAsync = this.isAsyncCacheService.computeIfAbsent(serviceClass, this::isAsync);
 
-        Method executorMethod = invocationContext.getExecutor().getMethod();
+        Method executorMethod = invocationContext.getCommand().getExecutor().getMethod();
         Boolean methodAsync = this.isAsyncCacheMethod.computeIfAbsent(executorMethod, this::isAsync);
 
         // method overrides
@@ -276,6 +292,7 @@ public class CommandsBukkit extends OkaeriCommands {
         return serviceAsync;
     }
 
+    @Nullable
     private Boolean isAsync(@NonNull Method method) {
 
         Async methodAsync = method.getAnnotation(Async.class);
@@ -292,7 +309,7 @@ public class CommandsBukkit extends OkaeriCommands {
         return methodAsync != null;
     }
 
-    private Boolean isAsync(@NonNull Class<? extends CommandService> service) {
+    private boolean isAsync(@NonNull Class<? extends CommandService> service) {
 
         Async serviceAsync = service.getAnnotation(Async.class);
         Sync serviceSync = service.getAnnotation(Sync.class);

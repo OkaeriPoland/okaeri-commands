@@ -12,6 +12,7 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -340,10 +341,25 @@ public final class TestCommandCall {
     }
 
     @Test
+    @SneakyThrows
+    public void test_static_optional_optional_java() {
+        assertIterableEquals(Arrays.asList(Optional.of("Player1"), Optional.of("Player2")), this.commands.call("example-oa java-two-argument Player1 Player2"));
+        assertEquals(Arrays.asList(Optional.of("unknown1"), Optional.of("unknown2")), this.commands.call("example-oa java-two-argument unknown1 unknown2"));
+        assertEquals(Arrays.asList(Optional.of("null"), Optional.of("null")), this.commands.call("example-oa java-two-argument null null"));
+    }
+
+    @Test
     public void test_static_optional_optional_too_long() {
         assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-oa two-argument Player1 Player2 ???"));
         assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-oa two-argument unknown1 unknown2 ? ? ?"));
         assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-oa two-argument null null funny but it does not work that way"));
+    }
+
+    @Test
+    public void test_static_optional_optional_too_long_java() {
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-oa java-two-argument Player1 Player2 ???"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-oa java-two-argument unknown1 unknown2 ? ? ?"));
+        assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-oa java-two-argument null null funny but it does not work that way"));
     }
 
     @Test
@@ -356,10 +372,26 @@ public final class TestCommandCall {
 
     @Test
     @SneakyThrows
+    public void test_static_optional_optional_missing_single_java() {
+        assertIterableEquals(Arrays.asList(Optional.of("Player1"), Optional.empty()), this.commands.call("example-oa java-two-argument Player1"));
+        assertIterableEquals(Arrays.asList(Optional.of("Player1"), Optional.empty()), this.commands.call("example-oa java-two-argument Player1 "));
+        assertIterableEquals(Arrays.asList(Optional.of("Player1"), Optional.empty()), this.commands.call("example-oa java-two-argument Player1  "));
+    }
+
+    @Test
+    @SneakyThrows
     public void test_static_optional_optional_missing_all() {
         assertIterableEquals(Arrays.asList(Option.of(null), Option.of(null)), this.commands.call("example-oa two-argument"));
         assertIterableEquals(Arrays.asList(Option.of(null), Option.of(null)), this.commands.call("example-oa two-argument "));
         assertIterableEquals(Arrays.asList(Option.of(null), Option.of(null)), this.commands.call("example-oa two-argument  "));
+    }
+
+    @Test
+    @SneakyThrows
+    public void test_static_optional_optional_missing_all_java() {
+        assertIterableEquals(Arrays.asList(Optional.empty(), Optional.empty()), this.commands.call("example-oa java-two-argument"));
+        assertIterableEquals(Arrays.asList(Optional.empty(), Optional.empty()), this.commands.call("example-oa java-two-argument "));
+        assertIterableEquals(Arrays.asList(Optional.empty(), Optional.empty()), this.commands.call("example-oa java-two-argument  "));
     }
 
     @Test
