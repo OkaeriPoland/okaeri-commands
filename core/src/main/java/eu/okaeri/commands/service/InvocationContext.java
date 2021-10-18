@@ -1,47 +1,49 @@
 package eu.okaeri.commands.service;
 
 import eu.okaeri.commands.meta.CommandMeta;
-import eu.okaeri.commands.meta.ExecutorMeta;
 import eu.okaeri.commands.meta.ServiceMeta;
 import lombok.Data;
 import lombok.NonNull;
+import org.jetbrains.annotations.Nullable;
 
 @Data
 public class InvocationContext {
 
     public static InvocationContext of(@NonNull CommandMeta command, @NonNull String label, @NonNull String args) {
-        InvocationContext context = of(label, args);
-        context.command = command;
-        return context;
+        return new InvocationContext(command, null, label, String.join(" ", args));
     }
 
     public static InvocationContext of(@NonNull String label, @NonNull String args) {
-        InvocationContext context = new InvocationContext();
-        context.label = label;
-        context.args = args;
-        String[] argArr = args.trim().split(" ");
-        context.lastArg = argArr[argArr.length - 1];
-        context.openArgs = args.endsWith(" ");
-        return context;
+        return new InvocationContext(null, null, label, args);
     }
 
     public static InvocationContext of(@NonNull ServiceMeta service, @NonNull String label, @NonNull String[] args) {
-        InvocationContext context = of(label, String.join(" ", args));
-        context.service = service;
-        return context;
+        return new InvocationContext(null, service, label, String.join(" ", args));
     }
 
-    private CommandMeta command;
-    private ServiceMeta service;
-    private String label;
-    private String args;
-    private String lastArg;
-    private boolean openArgs;
-
-    public boolean isDummy() {
-        return this.command == null;
+    protected InvocationContext(CommandMeta command, ServiceMeta service, String label, String args) {
+        this.command = command;
+        this.service = service;
+        this.label = label;
+        this.args = args;
+        String[] argArr = args.trim().split(" ");
+        this.lastArg = argArr[argArr.length - 1];
+        this.openArgs = args.endsWith(" ");
     }
 
+    private final CommandMeta command;
+    private final ServiceMeta service;
+    private final String label;
+    private final String args;
+    private final String lastArg;
+    private final boolean openArgs;
+
+    @Nullable
+    public CommandMeta getCommand() {
+        return this.command;
+    }
+
+    @Nullable
     public ServiceMeta getService() {
         if (this.service != null) {
             return this.service;
@@ -50,12 +52,5 @@ public class InvocationContext {
             return null;
         }
         return this.command.getService();
-    }
-
-    public ExecutorMeta getExecutor() {
-        if (this.command == null) {
-            return null;
-        }
-        return this.command.getExecutor();
     }
 }

@@ -9,6 +9,7 @@ import eu.okaeri.commands.service.Option;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @Command(label = "example-oa")
 public class ExampleOptionalArgsCommand implements CommandService {
@@ -30,6 +31,12 @@ public class ExampleOptionalArgsCommand implements CommandService {
 
     @Executor(pattern = "two-argument ? ?")
     public Object _static_optional_optional(@Arg Option<String> name1, @Arg Option<String> name2) {
+        return Arrays.asList(name1, name2);
+    }
+
+    @Executor(pattern = "java-two-argument ? ?")
+    @SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+    public Object _static_joptional_joptional(@Arg Optional<String> name1, @Arg Optional<String> name2) {
         return Arrays.asList(name1, name2);
     }
 

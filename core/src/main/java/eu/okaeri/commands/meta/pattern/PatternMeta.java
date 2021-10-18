@@ -8,6 +8,7 @@ import eu.okaeri.commands.meta.pattern.element.RequiredElement;
 import eu.okaeri.commands.meta.pattern.element.StaticElement;
 import lombok.Data;
 import lombok.NonNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -319,6 +320,7 @@ public class PatternMeta {
                 .findAny();
     }
 
+    @Nullable
     public String getValueByArgument(@NonNull ArgumentMeta argument, @NonNull String[] parts) {
 
         String name = argument.getName();

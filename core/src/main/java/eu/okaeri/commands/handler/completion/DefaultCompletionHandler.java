@@ -39,11 +39,11 @@ public class DefaultCompletionHandler implements CompletionHandler {
 
     protected int getLimit(ArgumentMeta argumentMeta, InvocationContext invocationContext) {
 
-        if (invocationContext.isDummy()) {
+        if (invocationContext.getCommand() == null) {
             return FALLBACK_LIMIT;
         }
 
-        CompletionMeta completion = invocationContext.getExecutor().getCompletion();
+        CompletionMeta completion = invocationContext.getCommand().getExecutor().getCompletion();
         Map<String, String> data = completion.getData(argumentMeta.getName());
 
         if (data.containsKey("limit")) {
