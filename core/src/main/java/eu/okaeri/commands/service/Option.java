@@ -11,6 +11,8 @@ import java.util.function.Supplier;
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class Option<T> implements Supplier<Optional<T>> {
 
+    private final T value;
+
     public static <V> Option<V> of(@Nullable V value) {
         return new Option<>(value);
     }
@@ -36,6 +38,4 @@ public class Option<T> implements Supplier<Optional<T>> {
     public T getOr(@NonNull T element) {
         return (this.value == null) ? element : this.value;
     }
-
-    private final T value;
 }

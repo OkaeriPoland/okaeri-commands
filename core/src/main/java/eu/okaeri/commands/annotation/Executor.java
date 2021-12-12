@@ -9,6 +9,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Executor {
     String[] pattern() default {};
+
     String description() default "";
+
     String usage() default "{label} {pattern}";
 }

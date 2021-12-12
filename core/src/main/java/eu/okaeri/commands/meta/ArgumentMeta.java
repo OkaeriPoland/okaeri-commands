@@ -15,6 +15,13 @@ import java.util.Optional;
 @Data
 public class ArgumentMeta {
 
+    private boolean optional;
+    private String name;
+    private int index;
+    private Class<?> type;
+    private Class<?> rawType;
+    private Type parameterizedType;
+
     public static boolean isArg(Parameter parameter) {
         return parameter.getAnnotation(Arg.class) != null;
     }
@@ -39,12 +46,19 @@ public class ArgumentMeta {
         return meta;
     }
 
-    private boolean optional;
-    private String name;
-    private int index;
-    private Class<?> type;
-    private Class<?> rawType;
-    private Type parameterizedType;
+    private static Class<?> resolveType(Class<?> rawType, Type parameterizedType) {
+
+        if (!Option.class.isAssignableFrom(rawType) && !Optional.class.isAssignableFrom(rawType)) {
+            return rawType;
+        }
+
+        Type paramType = ((ParameterizedType) parameterizedType).getRawType();
+        if (paramType instanceof Class<?>) {
+            rawType = (Class<?>) paramType;
+        }
+
+        return rawType;
+    }
 
     public Object wrap(Object value) {
 
@@ -61,19 +75,5 @@ public class ArgumentMeta {
         }
 
         return value;
-    }
-
-    private static Class<?> resolveType(Class<?> rawType, Type parameterizedType) {
-
-        if (!Option.class.isAssignableFrom(rawType) && !Optional.class.isAssignableFrom(rawType)) {
-            return rawType;
-        }
-
-        Type paramType = ((ParameterizedType) parameterizedType).getRawType();
-        if (paramType instanceof Class<?>) {
-            rawType = (Class<?>) paramType;
-        }
-
-        return rawType;
     }
 }

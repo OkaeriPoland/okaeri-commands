@@ -18,7 +18,7 @@ public final class CommandsBukkitUnsafe {
         Server server = Bukkit.getServer();
         Field commandMapField = server.getClass().getDeclaredField("commandMap");
         commandMapField.setAccessible(true);
-        return  (CommandMap) commandMapField.get(server);
+        return (CommandMap) commandMapField.get(server);
     }
 
     @SneakyThrows
@@ -27,7 +27,7 @@ public final class CommandsBukkitUnsafe {
         CommandMap commandMap = getCommandMap();
         Field knownCommandsField = SimpleCommandMap.class.getDeclaredField("knownCommands");
         knownCommandsField.setAccessible(true);
-        return  (Map<String, Command>) knownCommandsField.get(commandMap);
+        return (Map<String, Command>) knownCommandsField.get(commandMap);
     }
 
     @SneakyThrows

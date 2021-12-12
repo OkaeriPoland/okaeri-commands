@@ -27,11 +27,10 @@ import static com.mojang.brigadier.builder.RequiredArgumentBuilder.argument;
 
 public class CommandsBrigadierBase {
 
-    protected OkaeriCommands commands;
-    protected Set<String> allLabels;
-
     protected final Map<Class<?>, ArgumentType<?>> argumentTypes = new HashMap<>();
     protected final Set<Class<?>> staticTypes = new HashSet<>();
+    protected OkaeriCommands commands;
+    protected Set<String> allLabels;
 
     public CommandsBrigadierBase() {
         // register argument types
@@ -56,9 +55,9 @@ public class CommandsBrigadierBase {
         // delay dumping all labels to first player
         if (this.allLabels == null) {
             this.allLabels = this.commands.getRegisteredCommands().stream()
-                    .map(CommandMeta::getService)
-                    .flatMap(service -> Stream.concat(Stream.of(service.getLabel()), service.getAliases().stream()))
-                    .collect(Collectors.toSet());
+                .map(CommandMeta::getService)
+                .flatMap(service -> Stream.concat(Stream.of(service.getLabel()), service.getAliases().stream()))
+                .collect(Collectors.toSet());
         }
 
         // update all known commands
@@ -197,8 +196,8 @@ public class CommandsBrigadierBase {
 
         // fallback and support for greedy strings
         return (patternElement.getWidth() == -1)
-                ? StringArgumentType.greedyString()
-                : StringArgumentType.word();
+            ? StringArgumentType.greedyString()
+            : StringArgumentType.word();
     }
 
     protected boolean canAssumeStatic(Class<?> type) {

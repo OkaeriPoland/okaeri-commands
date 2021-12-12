@@ -17,19 +17,28 @@ import java.util.stream.Collectors;
 @Data
 public class PatternMeta {
 
+    private List<PatternElement> elements;
+    private Map<String, PatternElement> nameToElement;
+    private Map<String, ArgumentMeta> nameToArgument;
+    private String raw;
+    private int staticElements;
+    private boolean staticOnly;
+    private boolean consuming;
+    private int elementsWidth;
+
     public static PatternMeta of(@NonNull Commands commands, @NonNull String patternPrefix, @NonNull String pattern, @NonNull List<ArgumentMeta> arguments, boolean generate) {
 
         // auto-generate from method signature
         if (generate || pattern.isEmpty()) {
             String suffix = arguments.stream()
-                    .map(meta -> {
-                        if (meta.isOptional()) {
-                            return "?";
-                        } else {
-                            return "*";
-                        }
-                    })
-                    .collect(Collectors.joining(" "));
+                .map(meta -> {
+                    if (meta.isOptional()) {
+                        return "?";
+                    } else {
+                        return "*";
+                    }
+                })
+                .collect(Collectors.joining(" "));
             if (!suffix.isEmpty()) {
                 if (!pattern.isEmpty()) {
                     pattern += " ";
@@ -55,64 +64,64 @@ public class PatternMeta {
         Map<String, ArgumentMeta> nameToArgument = new LinkedHashMap<>();
 
         meta.setElements(Collections.unmodifiableList(Arrays.stream(finalPattern.split(" "))
-                .map(part -> {
-                    int positionValue = position.getAndAdd(PatternElement.getWidthFromPatternElement(part));
-                    int argumentValue = argumentIndex.getAndIncrement();
-                    PatternElement element = PatternElement.of(part, positionValue);
+            .map(part -> {
+                int positionValue = position.getAndAdd(PatternElement.getWidthFromPatternElement(part));
+                int argumentValue = argumentIndex.getAndIncrement();
+                PatternElement element = PatternElement.of(part, positionValue);
 
-                    if (!(element instanceof StaticElement)) {
+                if (!(element instanceof StaticElement)) {
 
-                        if (element.getName() == null) {
-                            String metaName = (argumentValue < arguments.size())
-                                    ? arguments.get(argumentValue).getName()
-                                    : null;
-                            element.setName(metaName);
-                        }
-
-                        if (argumentValue < arguments.size()) {
-
-                            ArgumentMeta argumentMeta = arguments.get(argumentValue);
-                            nameToArgument.put(element.getName(), argumentMeta);
-
-                            if ((element instanceof OptionalElement)) {
-                                if (!argumentMeta.isOptional()) {
-                                    throw new IllegalArgumentException("Pattern describes optional element but argument is " +
-                                            "not java.lang.Optional nor eu.okaeri.commands.service.Option\nPattern: " + finalPattern + "\nArguments: " + arguments);
-                                }
-                            }
-                        }
-
-                        return element;
+                    if (element.getName() == null) {
+                        String metaName = (argumentValue < arguments.size())
+                            ? arguments.get(argumentValue).getName()
+                            : null;
+                        element.setName(metaName);
                     }
 
-                    argumentIndex.decrementAndGet();
+                    if (argumentValue < arguments.size()) {
+
+                        ArgumentMeta argumentMeta = arguments.get(argumentValue);
+                        nameToArgument.put(element.getName(), argumentMeta);
+
+                        if ((element instanceof OptionalElement)) {
+                            if (!argumentMeta.isOptional()) {
+                                throw new IllegalArgumentException("Pattern describes optional element but argument is " +
+                                    "not java.lang.Optional nor eu.okaeri.commands.service.Option\nPattern: " + finalPattern + "\nArguments: " + arguments);
+                            }
+                        }
+                    }
+
                     return element;
-                })
-                .collect(Collectors.toList())));
+                }
+
+                argumentIndex.decrementAndGet();
+                return element;
+            })
+            .collect(Collectors.toList())));
 
         meta.setNameToElement(meta.getElements().stream()
-                .filter(e -> !(e instanceof StaticElement))
-                .collect(Collectors.toMap(PatternElement::getName, e -> e)));
+            .filter(e -> !(e instanceof StaticElement))
+            .collect(Collectors.toMap(PatternElement::getName, e -> e)));
 
         meta.setNameToArgument(nameToArgument);
 
         meta.setRaw(meta.getElements().stream()
-                .map(PatternElement::render)
-                .collect(Collectors.joining(" ")));
+            .map(PatternElement::render)
+            .collect(Collectors.joining(" ")));
 
         meta.setStaticElements(Math.toIntExact(meta.getElements().stream()
-                .filter(element -> element instanceof StaticElement)
-                .count()));
+            .filter(element -> element instanceof StaticElement)
+            .count()));
 
         meta.setStaticOnly(meta.getElements().size() == meta.getStaticElements());
 
         meta.setConsuming(meta.getElements().stream()
-                .mapToInt(PatternElement::getWidth)
-                .anyMatch(i -> i == -1));
+            .mapToInt(PatternElement::getWidth)
+            .anyMatch(i -> i == -1));
 
         meta.setElementsWidth(meta.isConsuming() ? -1 : meta.getElements()
-                .stream().mapToInt(PatternElement::getWidth)
-                .sum());
+            .stream().mapToInt(PatternElement::getWidth)
+            .sum());
 
         // validate meta (only optional after optional)
         boolean foundOptional = false;
@@ -145,16 +154,6 @@ public class PatternMeta {
 
         return meta;
     }
-
-    private List<PatternElement> elements;
-    private Map<String, PatternElement> nameToElement;
-    private Map<String, ArgumentMeta> nameToArgument;
-    private String raw;
-
-    private int staticElements;
-    private boolean staticOnly;
-    private boolean consuming;
-    private int elementsWidth;
 
     public boolean applicable(@NonNull String pattern) {
 
@@ -316,8 +315,8 @@ public class PatternMeta {
 
     public Optional<PatternElement> getElementByName(@NonNull String name) {
         return this.getElements().stream()
-                .filter(element -> name.equals(element.getName()))
-                .findAny();
+            .filter(element -> name.equals(element.getName()))
+            .findAny();
     }
 
     @Nullable
@@ -352,7 +351,7 @@ public class PatternMeta {
 
     public String render() {
         return this.getElements().stream()
-                .map(PatternElement::render)
-                .collect(Collectors.joining(" "));
+            .map(PatternElement::render)
+            .collect(Collectors.joining(" "));
     }
 }

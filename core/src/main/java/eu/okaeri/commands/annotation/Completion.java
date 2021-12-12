@@ -10,8 +10,11 @@ import java.lang.annotation.*;
 public @interface Completion {
 
     String[] arg();
+
     String[] value() default {};
+
     Class<? extends NamedCompletionHandler> provider() default DEFAULT.class;
+
     CompletionData[] data() default {};
 
     abstract class DEFAULT implements NamedCompletionHandler {

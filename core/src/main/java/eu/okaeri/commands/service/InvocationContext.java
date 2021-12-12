@@ -9,6 +9,22 @@ import org.jetbrains.annotations.Nullable;
 @Data
 public class InvocationContext {
 
+    private final CommandMeta command;
+    private final ServiceMeta service;
+    private final String label;
+    private final String args;
+    private final String lastArg;
+    private final boolean openArgs;
+    protected InvocationContext(CommandMeta command, ServiceMeta service, String label, String args) {
+        this.command = command;
+        this.service = service;
+        this.label = label;
+        this.args = args;
+        String[] argArr = args.trim().split(" ");
+        this.lastArg = argArr[argArr.length - 1];
+        this.openArgs = args.endsWith(" ");
+    }
+
     public static InvocationContext of(@NonNull CommandMeta command, @NonNull String label, @NonNull String args) {
         return new InvocationContext(command, null, label, String.join(" ", args));
     }
@@ -20,23 +36,6 @@ public class InvocationContext {
     public static InvocationContext of(@NonNull ServiceMeta service, @NonNull String label, @NonNull String[] args) {
         return new InvocationContext(null, service, label, String.join(" ", args));
     }
-
-    protected InvocationContext(CommandMeta command, ServiceMeta service, String label, String args) {
-        this.command = command;
-        this.service = service;
-        this.label = label;
-        this.args = args;
-        String[] argArr = args.trim().split(" ");
-        this.lastArg = argArr[argArr.length - 1];
-        this.openArgs = args.endsWith(" ");
-    }
-
-    private final CommandMeta command;
-    private final ServiceMeta service;
-    private final String label;
-    private final String args;
-    private final String lastArg;
-    private final boolean openArgs;
 
     @Nullable
     public CommandMeta getCommand() {

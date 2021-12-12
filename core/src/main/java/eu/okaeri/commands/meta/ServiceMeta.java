@@ -16,6 +16,15 @@ import java.util.stream.Collectors;
 @Data
 public class ServiceMeta {
 
+    private CommandService implementor;
+    private String label;
+    private String originalLabel;
+    private String patternPrefix;
+    private List<String> aliases;
+    private String description;
+    private ServiceMeta parent;
+    private List<Class<? extends CommandService>> nested;
+
     public static ServiceMeta of(@NonNull Commands commands, ServiceMeta parent, @NonNull CommandService service) {
 
         Class<? extends CommandService> serviceClazz = service.getClass();
@@ -34,21 +43,11 @@ public class ServiceMeta {
 
         meta.parent = parent;
         meta.nested = Arrays.stream(descriptor.nested())
-                .map(NestedCommand::value)
-                .collect(Collectors.toList());
+            .map(NestedCommand::value)
+            .collect(Collectors.toList());
 
         return meta;
     }
-
-    private CommandService implementor;
-    private String label;
-    private String originalLabel;
-    private String patternPrefix;
-    private List<String> aliases;
-    private String description;
-
-    private ServiceMeta parent;
-    private List<Class<? extends CommandService>> nested;
 
     private static String getResultingLabel(ServiceMeta parent, @NonNull String fallback) {
         String label = null;

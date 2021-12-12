@@ -15,6 +15,9 @@ import java.util.stream.Collectors;
 @EqualsAndHashCode
 public class CompletionMeta {
 
+    private Map<String, List<String>> completions = new LinkedHashMap<>();
+    private Map<String, Map<String, String>> data = new LinkedHashMap<>();
+
     public static CompletionMeta of(@NonNull Commands commands, @NonNull Method method) {
 
         Completion[] completions = method.getAnnotationsByType(Completion.class);
@@ -26,8 +29,8 @@ public class CompletionMeta {
         for (Completion completion : completions) {
 
             List<String> values = Arrays.stream(completion.value())
-                    .map(commands::resolveText)
-                    .collect(Collectors.toList());
+                .map(commands::resolveText)
+                .collect(Collectors.toList());
 
             Map<String, String> dataMap = new LinkedHashMap<>();
             CompletionData[] completionData = completion.data();
@@ -47,9 +50,6 @@ public class CompletionMeta {
 
         return meta;
     }
-
-    private Map<String, List<String>> completions = new LinkedHashMap<>();
-    private Map<String, Map<String, String>> data = new LinkedHashMap<>();
 
     public List<String> getCompletions(@NonNull String argumentName) {
         List<String> list = this.completions.get(argumentName);

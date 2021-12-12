@@ -40,8 +40,8 @@ public class EnumTypeResolver extends BasicTypeResolver<Enum> {
 
         // match fail
         String enumValuesStr = Arrays.stream(enumType.getEnumConstants())
-                .map(Enum::name)
-                .collect(Collectors.joining(", "));
+            .map(Enum::name)
+            .collect(Collectors.joining(", "));
 
         throw new IllegalArgumentException("invalid value (available: " + enumValuesStr + ")");
     }

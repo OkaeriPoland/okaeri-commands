@@ -1,10 +1,16 @@
 package eu.okaeri.commands.meta.pattern.element;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NonNull;
 
 @Data
 @AllArgsConstructor
 public abstract class PatternElement {
+
+    private String name;
+    private int index;
+    private int width;
 
     public static PatternElement of(String part, int index) {
 
@@ -84,10 +90,6 @@ public abstract class PatternElement {
 
         return element;
     }
-
-    private String name;
-    private int index;
-    private int width;
 
     public abstract String render();
 }

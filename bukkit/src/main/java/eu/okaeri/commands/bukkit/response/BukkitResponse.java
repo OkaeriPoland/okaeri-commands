@@ -36,14 +36,14 @@ public interface BukkitResponse {
 
     default BukkitResponse sendToAllWithPermission(String permission) {
         return this.sendTo(new ArrayList<>(Bukkit.getOnlinePlayers()).stream()
-                .filter(player -> player.hasPermission(permission))
-                .collect(Collectors.toList()));
+            .filter(player -> player.hasPermission(permission))
+            .collect(Collectors.toList()));
     }
 
     default BukkitResponse sendToAllPlayersThatCanSee(Player player) {
         return this.sendTo(new ArrayList<>(Bukkit.getOnlinePlayers()).stream()
-                .filter(onlinePlayer -> onlinePlayer.canSee(player))
-                .collect(Collectors.toList()));
+            .filter(onlinePlayer -> onlinePlayer.canSee(player))
+            .collect(Collectors.toList()));
     }
 
     default BukkitResponse sendToConsole() {

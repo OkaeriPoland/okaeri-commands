@@ -173,9 +173,11 @@ public class ExampleCommand implements CommandService {
 ```
 
 ## Recommendations
+
 It is highly recommended to use `-parameters` compiler flag for better overall feature support.
 
 ### Maven (Java)
+
 ```xml
 <build>
   <plugins>
@@ -192,7 +194,9 @@ It is highly recommended to use `-parameters` compiler flag for better overall f
   </plugins>
 </build>
 ```
+
 ### Maven (Kotlin)
+
 ```xml
  <build>
   <plugins>
@@ -213,12 +217,15 @@ It is highly recommended to use `-parameters` compiler flag for better overall f
 ```
 
 ### Gradle (Java)
+
 ```groovy
 compileJava {
     options.compilerArgs << '-parameters' 
 }
 ```
+
 ### Gradle (Kotlin)
+
 ```groovy
 compileKotlin {
     kotlinOptions {

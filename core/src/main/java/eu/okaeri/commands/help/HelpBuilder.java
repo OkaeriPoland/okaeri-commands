@@ -27,11 +27,11 @@ public abstract class HelpBuilder {
 
         ExecutorMeta executor = meta.getExecutor();
         String usage = this.resolveText(commandContext, invocationContext, executor.getUsage())
-                .replace("{label}", invocationContext.getLabel())
-                .replace("{pattern}", executor.getPattern().getRaw());
+            .replace("{label}", invocationContext.getLabel())
+            .replace("{pattern}", executor.getPattern().getRaw());
 
         return this.getTemplateForEntry(commandContext, invocationContext)
-                .replace("{usage}", usage);
+            .replace("{usage}", usage);
     }
 
     public String renderDescription(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull CommandMeta meta) {
@@ -43,19 +43,19 @@ public abstract class HelpBuilder {
     public String render(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull Commands commands) {
 
         String entries = commands
-                .findByLabel(invocationContext.getLabel())
-                .stream()
-                .filter(meta -> meta.getExecutor().getIndex() == 0)
-                .filter(meta -> commands.getAccessHandler().allowAccess(meta.getExecutor(), invocationContext, commandContext))
-                .map(meta -> {
-                    String entry = this.renderEntry(commandContext, invocationContext, meta);
-                    String desc = this.renderDescription(invocationContext, commandContext, meta);
-                    return entry + (desc.isEmpty() ? "" : "\n" + desc);
-                })
-                .collect(Collectors.joining("\n"));
+            .findByLabel(invocationContext.getLabel())
+            .stream()
+            .filter(meta -> meta.getExecutor().getIndex() == 0)
+            .filter(meta -> commands.getAccessHandler().allowAccess(meta.getExecutor(), invocationContext, commandContext))
+            .map(meta -> {
+                String entry = this.renderEntry(commandContext, invocationContext, meta);
+                String desc = this.renderDescription(invocationContext, commandContext, meta);
+                return entry + (desc.isEmpty() ? "" : "\n" + desc);
+            })
+            .collect(Collectors.joining("\n"));
 
         return this.getTemplateForHelp(commandContext, invocationContext)
-                .replace("{label}", invocationContext.getLabel())
-                .replace("{entries}", entries);
+            .replace("{label}", invocationContext.getLabel())
+            .replace("{entries}", entries);
     }
 }
