@@ -44,21 +44,21 @@ public class PlayerCommandSendListener implements EventExecutor {
         commandContext.add("sender", player);
 
         Set<String> disallowedLabels = this.commands.getRegisteredServices().values().stream()
-                .filter(service -> {
-                    InvocationContext invocationContext = InvocationContext.of(service, service.getLabel(), new String[0]);
-                    return !this.commands.getAccessHandler().allowAccess(service, invocationContext, commandContext);
-                })
-                .flatMap(service -> {
-                    List<String> labels = new ArrayList<>();
-                    labels.add(service.getLabel());
-                    labels.add(service.getLabel() + ":" + service.getLabel());
-                    for (String alias : service.getAliases()) {
-                        labels.add(alias);
-                        labels.add(alias + ":" + alias);
-                    }
-                    return labels.stream();
-                })
-                .collect(Collectors.toSet());
+            .filter(service -> {
+                InvocationContext invocationContext = InvocationContext.of(service, service.getLabel(), new String[0]);
+                return !this.commands.getAccessHandler().allowAccess(service, invocationContext, commandContext);
+            })
+            .flatMap(service -> {
+                List<String> labels = new ArrayList<>();
+                labels.add(service.getLabel());
+                labels.add(service.getLabel() + ":" + service.getLabel());
+                for (String alias : service.getAliases()) {
+                    labels.add(alias);
+                    labels.add(alias + ":" + alias);
+                }
+                return labels.stream();
+            })
+            .collect(Collectors.toSet());
 
         commands.removeIf(disallowedLabels::contains);
     }

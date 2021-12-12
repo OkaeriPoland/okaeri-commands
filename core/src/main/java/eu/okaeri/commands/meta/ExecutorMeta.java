@@ -20,6 +20,14 @@ import java.util.stream.Collectors;
 @Data
 public class ExecutorMeta {
 
+    private Method method;
+    private List<ArgumentMeta> arguments;
+    private PatternMeta pattern;
+    private CompletionMeta completion;
+    private String description;
+    private String usage;
+    private int index;
+
     public static List<ExecutorMeta> of(@NonNull Commands commands, @NonNull ServiceMeta serviceMeta, @NonNull Method method) {
 
         Executor executor = method.getAnnotation(Executor.class);
@@ -32,8 +40,8 @@ public class ExecutorMeta {
 
         boolean emptyPattern = executor.pattern().length == 0;
         List<String> patterns = emptyPattern
-                ? Collections.singletonList(method.getName().startsWith("_") ? "" : method.getName())
-                : Arrays.asList(executor.pattern());
+            ? Collections.singletonList(method.getName().startsWith("_") ? "" : method.getName())
+            : Arrays.asList(executor.pattern());
 
         return patterns.stream().map(pattern -> {
 
@@ -87,13 +95,4 @@ public class ExecutorMeta {
             return cmdExecutor;
         }).collect(Collectors.toList());
     }
-
-    private Method method;
-    private List<ArgumentMeta> arguments;
-
-    private PatternMeta pattern;
-    private CompletionMeta completion;
-    private String description;
-    private String usage;
-    private int index;
 }

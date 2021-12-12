@@ -37,7 +37,7 @@ public class BukkitAccessHandler implements AccessHandler {
 
         if (checkExecutors) {
             boolean noExecutorAccess = this.commands.findByLabel(service.getLabel()).stream()
-                    .noneMatch(command -> this.allowAccess(command.getExecutor(), invocationContext, commandContext));
+                .noneMatch(command -> this.allowAccess(command.getExecutor(), invocationContext, commandContext));
             if (noExecutorAccess) {
                 return false;
             }
@@ -122,8 +122,8 @@ public class BukkitAccessHandler implements AccessHandler {
 
     protected Set<String> getPermissions(Permission permission, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
         return (permission == null) ? Collections.emptySet() : Arrays.stream(permission.value())
-                .map(perm -> this.commands.resolveText(invocationContext, commandContext, perm))
-                .collect(Collectors.toSet());
+            .map(perm -> this.commands.resolveText(invocationContext, commandContext, perm))
+            .collect(Collectors.toSet());
 
     }
 

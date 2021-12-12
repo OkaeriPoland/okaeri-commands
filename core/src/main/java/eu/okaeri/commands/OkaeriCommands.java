@@ -43,21 +43,19 @@ import java.util.stream.Stream;
 public class OkaeriCommands implements Commands {
 
     protected static final Comparator<CommandMeta> META_COMPARATOR = Comparator
-            .comparing((CommandMeta meta) -> {
-                List<PatternElement> elements = meta.getExecutor().getPattern().getElements();
-                return elements.size();
-            }, Comparator.reverseOrder())
-            .thenComparing((CommandMeta meta) -> {
-                List<PatternElement> elements = meta.getExecutor().getPattern().getElements();
-                return elements.stream().filter(element -> element instanceof StaticElement).count();
-            }, Comparator.reverseOrder());
-
-    protected List<CommandMeta> registeredCommands = new ArrayList<>();
+        .comparing((CommandMeta meta) -> {
+            List<PatternElement> elements = meta.getExecutor().getPattern().getElements();
+            return elements.size();
+        }, Comparator.reverseOrder())
+        .thenComparing((CommandMeta meta) -> {
+            List<PatternElement> elements = meta.getExecutor().getPattern().getElements();
+            return elements.stream().filter(element -> element instanceof StaticElement).count();
+        }, Comparator.reverseOrder());
     protected final Map<String, List<CommandMeta>> registeredCommandsByLabel = new ConcurrentHashMap<>();
     protected final List<TypeResolver> typeResolvers = new ArrayList<>();
     protected final Map<Type, TypeResolver> resolverCache = new ConcurrentHashMap<>();
     protected final Map<String, NamedCompletionHandler> namedCompletionHandlers = new ConcurrentHashMap<>();
-
+    protected List<CommandMeta> registeredCommands = new ArrayList<>();
     protected ErrorHandler errorHandler = new DefaultErrorHandler();
     protected ResultHandler resultHandler = new DefaultResultHandler();
     protected TextHandler textHandler = new DefaultTextHandler();
@@ -215,8 +213,8 @@ public class OkaeriCommands implements Commands {
     @Override
     public Optional<CommandMeta> findByLabelAndArgs(@NonNull String label, @NonNull String args) {
         return this.findByLabel(label).stream()
-                .filter(candidate -> candidate.getExecutor().getPattern().matches(args))
-                .findFirst();
+            .filter(candidate -> candidate.getExecutor().getPattern().matches(args))
+            .findFirst();
     }
 
     @Override
@@ -227,12 +225,12 @@ public class OkaeriCommands implements Commands {
         }
 
         return this.typeResolvers.stream()
-                .filter(resolver -> resolver.supports(type))
-                .findFirst()
-                .map(resolver -> {
-                    this.resolverCache.put(type, resolver);
-                    return resolver;
-                });
+            .filter(resolver -> resolver.supports(type))
+            .findFirst()
+            .map(resolver -> {
+                this.resolverCache.put(type, resolver);
+                return resolver;
+            });
     }
 
     @Override

@@ -6,11 +6,11 @@ import eu.okaeri.commands.annotation.NestedCommand;
 import eu.okaeri.commands.service.CommandService;
 
 @Command(
-        label = "example-wn",
-        nested = {
-                @NestedCommand(ExampleWithNestedCommand.Sub1.class),
-                @NestedCommand(ExampleWithNestedCommand.Sub2.class)
-        }
+    label = "example-wn",
+    nested = {
+        @NestedCommand(ExampleWithNestedCommand.Sub1.class),
+        @NestedCommand(ExampleWithNestedCommand.Sub2.class)
+    }
 )
 public class ExampleWithNestedCommand implements CommandService {
 
@@ -20,8 +20,8 @@ public class ExampleWithNestedCommand implements CommandService {
     }
 
     @Command(
-            label = "sub1",
-            nested = {@NestedCommand(Sub1.Sub1Sub1.class)}
+        label = "sub1",
+        nested = {@NestedCommand(Sub1.Sub1Sub1.class)}
     )
     public static class Sub1 implements CommandService {
 

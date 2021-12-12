@@ -25,12 +25,12 @@ public final class TestCommandCall {
     public void prepare() {
         this.commands = new OkaeriCommands();
         this.commands
-                .registerCommand(ExampleOptionalArgsCommand.class)
-                .registerCommand(ExampleRequiredArgsCommand.class)
-                .registerCommand(ExampleStaticArgsCommand.class)
-                .registerCommand(SimpleOptionalArgsCommand.class)
-                .registerCommand(SimpleRequiredArgsCommand.class)
-                .registerCommand(SimpleTrickyCommand.class);
+            .registerCommand(ExampleOptionalArgsCommand.class)
+            .registerCommand(ExampleRequiredArgsCommand.class)
+            .registerCommand(ExampleStaticArgsCommand.class)
+            .registerCommand(SimpleOptionalArgsCommand.class)
+            .registerCommand(SimpleRequiredArgsCommand.class)
+            .registerCommand(SimpleTrickyCommand.class);
     }
 
     @Test

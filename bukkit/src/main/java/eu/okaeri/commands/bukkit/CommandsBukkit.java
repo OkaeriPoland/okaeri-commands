@@ -56,12 +56,6 @@ public class CommandsBukkit extends OkaeriCommands {
     private final CommandMap commandMap;
     private final JavaPlugin plugin;
 
-    public static CommandsBukkit of(@NonNull JavaPlugin plugin) {
-        CommandsBukkit commandsBukkit = new CommandsBukkit(plugin);
-        commandsBukkit.registerListeners();
-        return commandsBukkit;
-    }
-
     protected CommandsBukkit(@NonNull JavaPlugin plugin) {
         this.plugin = plugin;
         this.commandMap = CommandsBukkitUnsafe.getCommandMap();
@@ -72,12 +66,19 @@ public class CommandsBukkit extends OkaeriCommands {
         this.completionHandler(new BukkitCompletionHandler());
     }
 
+    public static CommandsBukkit of(@NonNull JavaPlugin plugin) {
+        CommandsBukkit commandsBukkit = new CommandsBukkit(plugin);
+        commandsBukkit.registerListeners();
+        return commandsBukkit;
+    }
+
     @SuppressWarnings("unchecked")
     public void registerListeners() {
         try {
             Class<? extends Event> PlayerCommandSendEvent = (Class<? extends Event>) Class.forName("org.bukkit.event.player.PlayerCommandSendEvent");
             PlayerCommandSendListener playerCommandSendListener = new PlayerCommandSendListener(this, PlayerCommandSendEvent);
-            this.plugin.getServer().getPluginManager().registerEvent(PlayerCommandSendEvent, new Listener() {}, EventPriority.HIGHEST, playerCommandSendListener, this.plugin, true);
+            this.plugin.getServer().getPluginManager().registerEvent(PlayerCommandSendEvent, new Listener() {
+            }, EventPriority.HIGHEST, playerCommandSendListener, this.plugin, true);
         }
         catch (Exception exception) {
             this.plugin.getLogger().warning("Failed to register PlayerCommandSendEvent listener: " + exception + " (ignore if running an older version of Minecraft)");
@@ -85,7 +86,8 @@ public class CommandsBukkit extends OkaeriCommands {
         try {
             Class<? extends Event> AsyncTabCompleteEvent = (Class<? extends Event>) Class.forName("com.destroystokyo.paper.event.server.AsyncTabCompleteEvent");
             AsyncTabCompleteListener asyncTabCompleteListener = new AsyncTabCompleteListener(this, AsyncTabCompleteEvent);
-            this.plugin.getServer().getPluginManager().registerEvent(AsyncTabCompleteEvent, new Listener() {}, EventPriority.HIGHEST, asyncTabCompleteListener, this.plugin, true);
+            this.plugin.getServer().getPluginManager().registerEvent(AsyncTabCompleteEvent, new Listener() {
+            }, EventPriority.HIGHEST, asyncTabCompleteListener, this.plugin, true);
         }
         catch (Exception exception) {
             this.plugin.getLogger().warning("Failed to register AsyncTabCompleteEvent listener: " + exception + " (ignore if running an older version of Minecraft or not Paper)");
@@ -164,8 +166,8 @@ public class CommandsBukkit extends OkaeriCommands {
                 commandContext.add("sender", sender);
 
                 return CommandsBukkit.this.complete(metas,
-                        InvocationContext.of(service, alias, args),
-                        commandContext
+                    InvocationContext.of(service, alias, args),
+                    commandContext
                 );
             }
         };

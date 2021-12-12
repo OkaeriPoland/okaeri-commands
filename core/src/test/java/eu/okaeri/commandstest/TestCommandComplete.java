@@ -25,27 +25,6 @@ public final class TestCommandComplete {
         this.commands.registerCompletion("scripts", (completion, argument, invocationContext, commandContext) -> Arrays.asList("script.py", "script.groovy"));
     }
 
-    @Command(label = "tab1")
-    public static class TabCompleteCommand implements CommandService {
-
-        @Executor(pattern = {"static", "static2", "stat ic"})
-        public boolean _static() {
-            return true;
-        }
-
-        @Executor(pattern = "load *")
-        @Completions(@Completion(arg = "name", value = "@scripts"))
-        public boolean _load(@Arg String name) {
-            return true;
-        }
-
-        @Executor(pattern = "updateState *")
-        @Completions(@Completion(arg = "state", value = {"allow", "deny"}))
-        public String _state(@Arg String state) {
-            return state;
-        }
-    }
-
     @Test
     public void test_complete_1static() {
         assertIterableEquals(Arrays.asList("stat", "static", "static2"), this.commands.complete("tab1 s"));
@@ -71,5 +50,26 @@ public final class TestCommandComplete {
         assertIterableEquals(Arrays.asList("script.py", "script.groovy"), this.commands.complete("tab1 load "));
         assertIterableEquals(Arrays.asList("script.py", "script.groovy"), this.commands.complete("tab1 load  "));
         assertIterableEquals(Arrays.asList("allow", "deny"), this.commands.complete("tab1 updateState "));
+    }
+
+    @Command(label = "tab1")
+    public static class TabCompleteCommand implements CommandService {
+
+        @Executor(pattern = {"static", "static2", "stat ic"})
+        public boolean _static() {
+            return true;
+        }
+
+        @Executor(pattern = "load *")
+        @Completions(@Completion(arg = "name", value = "@scripts"))
+        public boolean _load(@Arg String name) {
+            return true;
+        }
+
+        @Executor(pattern = "updateState *")
+        @Completions(@Completion(arg = "state", value = {"allow", "deny"}))
+        public String _state(@Arg String state) {
+            return state;
+        }
     }
 }

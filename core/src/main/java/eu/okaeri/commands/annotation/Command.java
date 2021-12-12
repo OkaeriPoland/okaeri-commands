@@ -9,7 +9,10 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Command {
     String label();
+
     String[] aliases() default {};
+
     String description() default "";
+
     NestedCommand[] nested() default {};
 }

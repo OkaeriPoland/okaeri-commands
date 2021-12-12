@@ -27,22 +27,22 @@ public class BukkitErrorHandler implements ErrorHandler {
             @Override
             public String getTemplateForHelp(CommandContext commandContext, InvocationContext invocationContext) {
                 return BukkitErrorHandler.this.resolveText(commandContext, invocationContext,
-                        "${commands-system-usage-template}",
-                        ChatColor.YELLOW + "Correct usage of /{label}:\n{entries}");
+                    "${commands-system-usage-template}",
+                    ChatColor.YELLOW + "Correct usage of /{label}:\n{entries}");
             }
 
             @Override
             public String getTemplateForEntry(CommandContext commandContext, InvocationContext invocationContext) {
                 return BukkitErrorHandler.this.resolveText(commandContext, invocationContext,
-                        "${commands-system-usage-entry}",
-                        ChatColor.RESET + " - /{usage}");
+                    "${commands-system-usage-entry}",
+                    ChatColor.RESET + " - /{usage}");
             }
 
             @Override
             public String getTemplateForDescription(CommandContext commandContext, InvocationContext invocationContext) {
                 return BukkitErrorHandler.this.resolveText(commandContext, invocationContext,
-                        "${commands-system-usage-entry-description}",
-                        ChatColor.GRAY + "   {description}");
+                    "${commands-system-usage-entry-description}",
+                    ChatColor.GRAY + "   {description}");
             }
 
             @Override
@@ -58,7 +58,7 @@ public class BukkitErrorHandler implements ErrorHandler {
         if (throwable instanceof NoAccessException) {
             return this.resolveText(commandContext, invocationContext,
                     "${commands-system-permissions-error}", ChatColor.RED + "No permission {permission}!")
-                    .replace("{permission}", throwable.getMessage());
+                .replace("{permission}", throwable.getMessage());
         }
 
         if (throwable instanceof NoSuchCommandException) {
@@ -68,7 +68,7 @@ public class BukkitErrorHandler implements ErrorHandler {
         if (throwable instanceof CommandException) {
             return this.resolveText(commandContext, invocationContext,
                     "${commands-system-command-error}", ChatColor.RED + "Error: {message}")
-                    .replace("{message}", throwable.getMessage());
+                .replace("{message}", throwable.getMessage());
         }
 
         String exceptionID = String.valueOf(UUID.randomUUID()).split("-")[4];
@@ -82,8 +82,8 @@ public class BukkitErrorHandler implements ErrorHandler {
         }
 
         return this.resolveText(commandContext, invocationContext,
-                "${commands-system-unknown-error}", ChatColor.RED + "Unknown error! Reference ID: {id}")
-                .replace("{id}", exceptionID);
+            "${commands-system-unknown-error}", ChatColor.RED + "Unknown error! Reference ID: {id}")
+            .replace("{id}", exceptionID);
     }
 
     private String resolveText(CommandContext commandContext, InvocationContext invocationContext, String key, String def) {

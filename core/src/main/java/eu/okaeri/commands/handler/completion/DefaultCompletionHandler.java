@@ -25,9 +25,9 @@ public class DefaultCompletionHandler implements CompletionHandler {
 
         if (type.isEnum()) {
             return this.filter(stringFilter, limit, Arrays.stream(type.getEnumConstants())
-                    .map(Enum.class::cast)
-                    .map(Enum::name)
-                    .map(String::toLowerCase));
+                .map(Enum.class::cast)
+                .map(Enum::name)
+                .map(String::toLowerCase));
         }
 
         if (boolean.class.isAssignableFrom(type)) {
@@ -55,9 +55,9 @@ public class DefaultCompletionHandler implements CompletionHandler {
 
     protected <T> List<T> filter(Predicate<T> filter, int limit, Stream<T> stream) {
         return stream
-                .filter(filter)
-                .limit(limit)
-                .collect(Collectors.toList());
+            .filter(filter)
+            .limit(limit)
+            .collect(Collectors.toList());
     }
 
     protected Predicate<String> stringFilter(InvocationContext invocationContext) {

@@ -31,16 +31,16 @@ public class BukkitCompletionHandler extends DefaultCompletionHandler {
 
         if (OfflinePlayer.class.isAssignableFrom(type)) {
             return this.filter(stringFilter, limit, Bukkit.getServer().getOnlinePlayers().stream()
-                    .filter(onlinePlayer -> (player == null) || player.canSee(onlinePlayer) || sender.hasPermission("okaeri.commands.invisible"))
-                    .map(HumanEntity::getName));
+                .filter(onlinePlayer -> (player == null) || player.canSee(onlinePlayer) || sender.hasPermission("okaeri.commands.invisible"))
+                .map(HumanEntity::getName));
         }
 
         if (Enchantment.class.isAssignableFrom(type)) {
-            return this.filter(stringFilter, limit, Arrays.stream(Enchantment.values()).map(Enchantment::getName));
+            return this.filter(stringFilter, limit, Arrays.stream(Enchantment.values()).map(Enchantment::getName).map(String::toLowerCase));
         }
 
         if (PotionEffectType.class.isAssignableFrom(type)) {
-            return this.filter(stringFilter, limit, Arrays.stream(PotionEffectType.values()).map(PotionEffectType::getName));
+            return this.filter(stringFilter, limit, Arrays.stream(PotionEffectType.values()).map(PotionEffectType::getName).map(String::toLowerCase));
         }
 
         if (World.class.isAssignableFrom(type)) {

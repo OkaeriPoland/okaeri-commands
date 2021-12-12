@@ -9,6 +9,11 @@ import java.lang.reflect.Method;
 @Data
 public class InvocationMeta {
 
+    private Method method;
+    private Object[] call;
+    private ServiceMeta service;
+    private ExecutorMeta executor;
+
     public static InvocationMeta of(@NonNull Method method, Object[] call, @NonNull ServiceMeta service, @NonNull ExecutorMeta executor) {
         InvocationMeta meta = new InvocationMeta();
         meta.method = method;
@@ -28,10 +33,4 @@ public class InvocationMeta {
         method.setAccessible(true);
         return method.invoke(this.service.getImplementor(), this.call);
     }
-
-    private Method method;
-    private Object[] call;
-
-    private ServiceMeta service;
-    private ExecutorMeta executor;
 }

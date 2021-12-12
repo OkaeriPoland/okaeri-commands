@@ -28,8 +28,8 @@ public class SimpleNamedCompletionHandler implements NamedCompletionHandler {
         int filterLimit = data.containsKey("limit") ? Integer.parseInt(data.get("limit")) : DEFAULT_FILTER_LIMIT;
 
         return this.provider.get()
-                .filter(name -> lastArg.isEmpty() || name.toLowerCase(Locale.ROOT).startsWith(lastArg))
-                .limit(filterLimit)
-                .collect(Collectors.toList());
+            .filter(name -> lastArg.isEmpty() || name.toLowerCase(Locale.ROOT).startsWith(lastArg))
+            .limit(filterLimit)
+            .collect(Collectors.toList());
     }
 }

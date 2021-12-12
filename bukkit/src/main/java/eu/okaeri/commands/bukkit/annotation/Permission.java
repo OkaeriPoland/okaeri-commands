@@ -10,6 +10,7 @@ import java.lang.annotation.Target;
 public @interface Permission {
 
     String[] value();
+
     Mode mode() default Mode.ANY;
 
     enum Mode {
