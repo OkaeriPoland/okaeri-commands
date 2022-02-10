@@ -8,6 +8,7 @@ import eu.okaeri.commands.handler.error.ErrorHandler;
 import eu.okaeri.commands.handler.instance.InstanceCreatorHandler;
 import eu.okaeri.commands.handler.result.ResultHandler;
 import eu.okaeri.commands.handler.text.TextHandler;
+import eu.okaeri.commands.handler.validation.ParameterValidationHandler;
 import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.meta.InvocationMeta;
 import eu.okaeri.commands.service.CommandContext;
@@ -36,6 +37,8 @@ public interface Commands {
     OkaeriCommands completionHandler(@NonNull CompletionHandler completionHandler);
 
     OkaeriCommands instanceCreatorHandler(@NonNull InstanceCreatorHandler creatorHandler);
+
+    OkaeriCommands parameterValidationHandler(@NonNull ParameterValidationHandler validationHandler);
 
     ErrorHandler getErrorHandler();
 
