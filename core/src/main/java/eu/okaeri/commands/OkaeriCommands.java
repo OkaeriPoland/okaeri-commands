@@ -7,7 +7,9 @@ import eu.okaeri.commands.exception.NoSuchCommandException;
 import eu.okaeri.commands.handler.access.AccessHandler;
 import eu.okaeri.commands.handler.access.DefaultAccessHandler;
 import eu.okaeri.commands.handler.argument.DefaultMissingArgumentHandler;
+import eu.okaeri.commands.handler.validation.DefaultParameterValidationHandler;
 import eu.okaeri.commands.handler.argument.MissingArgumentHandler;
+import eu.okaeri.commands.handler.validation.ParameterValidationHandler;
 import eu.okaeri.commands.handler.completion.CompletionHandler;
 import eu.okaeri.commands.handler.completion.DefaultCompletionHandler;
 import eu.okaeri.commands.handler.completion.NamedCompletionHandler;
@@ -19,6 +21,7 @@ import eu.okaeri.commands.handler.result.DefaultResultHandler;
 import eu.okaeri.commands.handler.result.ResultHandler;
 import eu.okaeri.commands.handler.text.DefaultTextHandler;
 import eu.okaeri.commands.handler.text.TextHandler;
+import eu.okaeri.commands.handler.validation.ValidationResult;
 import eu.okaeri.commands.meta.*;
 import eu.okaeri.commands.meta.pattern.PatternMeta;
 import eu.okaeri.commands.meta.pattern.element.PatternElement;
@@ -63,6 +66,7 @@ public class OkaeriCommands implements Commands {
     protected AccessHandler accessHandler = new DefaultAccessHandler();
     protected CompletionHandler completionHandler = new DefaultCompletionHandler();
     protected InstanceCreatorHandler instanceCreatorHandler = new DefaultInstanceCreatorHandler();
+    protected ParameterValidationHandler parameterValidationHandler = new DefaultParameterValidationHandler();
 
     public OkaeriCommands() {
         this.registerType(new DefaultCommandsTypes());
@@ -107,6 +111,12 @@ public class OkaeriCommands implements Commands {
     @Override
     public OkaeriCommands instanceCreatorHandler(@NonNull InstanceCreatorHandler creatorHandler) {
         this.instanceCreatorHandler = creatorHandler;
+        return this;
+    }
+
+    @Override
+    public OkaeriCommands parameterValidationHandler(@NonNull ParameterValidationHandler validationHandler) {
+        this.parameterValidationHandler = validationHandler;
         return this;
     }
 
@@ -357,12 +367,14 @@ public class OkaeriCommands implements Commands {
         List<ArgumentMeta> arguments = executor.getArguments();
 
         Map<Integer, Object> callArguments = new LinkedHashMap<>();
+        Map<Integer, ArgumentMeta> argumentMap = new LinkedHashMap<>();
         String[] argsArr = args.split(" ");
 
         if ((argsArr.length == 1) && argsArr[0].isEmpty()) {
             argsArr = new String[0];
         }
 
+        // resolve command text arguments to value mappings
         for (ArgumentMeta argument : arguments) {
 
             String value = pattern.getValueByArgument(argument, argsArr);
@@ -389,6 +401,7 @@ public class OkaeriCommands implements Commands {
             }
 
             callArguments.put(argument.getIndex(), argument.wrap(resolvedValue));
+            argumentMap.put(argument.getIndex(), argument);
         }
 
         if (arguments.size() != callArguments.size()) {
@@ -400,6 +413,7 @@ public class OkaeriCommands implements Commands {
         int parametersLength = methodParameters.length;
         Object[] call = new Object[parametersLength];
 
+        // fill method call with command arguments and others
         for (int i = 0; i < parametersLength; i++) {
 
             // argument present
@@ -439,6 +453,21 @@ public class OkaeriCommands implements Commands {
 
             // pass to adapter for missing elements
             call[i] = this.resolveMissingArgument(invocationContext, commandContext, commandMeta, param, i);
+        }
+
+        // validate
+        for (int i = 0; i < call.length; i++) {
+
+            Parameter param = methodParameters[i];
+            Object value = call[i];
+
+            ValidationResult validationResult = this.parameterValidationHandler.validate(invocationContext, commandContext, commandMeta, param, value, i);
+            if (validationResult.isValid()) {
+                continue;
+            }
+
+            ArgumentMeta argument = argumentMap.get(i);
+            throw new CommandException(argument.getName() + " - " + validationResult.getMessage());
         }
 
         return InvocationMeta.of(executorMethod, call, commandMeta.getService(), executor);
