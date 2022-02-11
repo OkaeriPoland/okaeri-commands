@@ -15,6 +15,7 @@ public class InvocationContext {
     private final String args;
     private final String lastArg;
     private final boolean openArgs;
+
     protected InvocationContext(CommandMeta command, ServiceMeta service, String label, String args) {
         this.command = command;
         this.service = service;

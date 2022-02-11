@@ -246,12 +246,24 @@ public class OkaeriCommands implements Commands {
     @Override
     @SuppressWarnings("unchecked")
     public <T> T call(@NonNull String command) throws Exception {
+
         Optional<InvocationContext> context = this.invocationMatch(command);
         if (!context.isPresent()) {
             throw new NoSuchCommandException("cannot call '" + command + "', no executor available");
         }
+
         InvocationContext invocationContext = context.get();
-        return (T) this.invocationPrepare(invocationContext, new CommandContext()).call();
+        CommandContext commandContext = new CommandContext();
+
+        InvocationMeta invocationMeta = this.invocationPrepare(invocationContext, commandContext);
+        ServiceMeta service = invocationContext.getService();
+
+        if (service != null) {
+            CommandService implementor = service.getImplementor();
+            implementor.preInvoke(invocationContext, commandContext, invocationMeta);
+        }
+
+        return (T) invocationMeta.call();
     }
 
     @Override
@@ -366,13 +378,18 @@ public class OkaeriCommands implements Commands {
         PatternMeta pattern = executor.getPattern();
         List<ArgumentMeta> arguments = executor.getArguments();
 
-        Map<Integer, Object> callArguments = new LinkedHashMap<>();
-        Map<Integer, ArgumentMeta> argumentMap = new LinkedHashMap<>();
+        Map<Integer, Object> cmdIndexToObjectMap = new LinkedHashMap<>();
+        Map<ArgumentMeta, Object> metaToObjectMap = new LinkedHashMap<>();
+        Map<Integer, ArgumentMeta> cmdIndexToMetaMap = new LinkedHashMap<>();
         String[] argsArr = args.split(" ");
 
         if ((argsArr.length == 1) && argsArr[0].isEmpty()) {
             argsArr = new String[0];
         }
+
+        // call pre-resolve
+        CommandService implementor = commandMeta.getService().getImplementor();
+        implementor.preResolve(invocationContext, commandContext);
 
         // resolve command text arguments to value mappings
         for (ArgumentMeta argument : arguments) {
@@ -400,12 +417,12 @@ public class OkaeriCommands implements Commands {
                 throw new CommandException(argument.getName() + " - " + exception.getMessage());
             }
 
-            callArguments.put(argument.getIndex(), argument.wrap(resolvedValue));
-            argumentMap.put(argument.getIndex(), argument);
+            cmdIndexToObjectMap.put(argument.getIndex(), argument.wrap(resolvedValue));
+            cmdIndexToMetaMap.put(argument.getIndex(), argument);
         }
 
-        if (arguments.size() != callArguments.size()) {
-            throw new IllegalArgumentException("method arguments size (" + arguments.size() + ") does not match call arguments size (" + callArguments.size() + ")");
+        if (arguments.size() != cmdIndexToObjectMap.size()) {
+            throw new IllegalArgumentException("method arguments size (" + arguments.size() + ") does not match call arguments size (" + cmdIndexToObjectMap.size() + ")");
         }
 
         Method executorMethod = executor.getMethod();
@@ -417,7 +434,7 @@ public class OkaeriCommands implements Commands {
         for (int i = 0; i < parametersLength; i++) {
 
             // argument present
-            Object callArgument = callArguments.get(i);
+            Object callArgument = cmdIndexToObjectMap.get(i);
             if (callArgument != null) {
                 call[i] = callArgument;
                 continue;
@@ -466,11 +483,11 @@ public class OkaeriCommands implements Commands {
                 continue;
             }
 
-            ArgumentMeta argument = argumentMap.get(i);
+            ArgumentMeta argument = cmdIndexToMetaMap.get(i);
             throw new CommandException(argument.getName() + " - " + validationResult.getMessage());
         }
 
-        return InvocationMeta.of(executorMethod, call, commandMeta.getService(), executor);
+        return InvocationMeta.of(invocationContext, commandContext, executor, call);
     }
 
     @Override

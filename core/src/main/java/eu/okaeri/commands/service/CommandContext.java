@@ -2,6 +2,7 @@ package eu.okaeri.commands.service;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -29,5 +30,9 @@ public class CommandContext {
 
     public Object get(String key) {
         return this.metadata.get(key);
+    }
+
+    public Map<String, Object> all() {
+        return Collections.unmodifiableMap(this.metadata);
     }
 }
