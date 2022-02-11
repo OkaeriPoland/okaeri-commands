@@ -45,7 +45,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class CommandsBukkit extends OkaeriCommands {
 
-    public static final Duration SYNC_WARN_TIME = Duration.ofMillis(10);
+    public static final Duration PRE_INVOKE_SYNC_WARN_TIME = Duration.ofMillis(5);
+    public static final Duration TOTAL_SYNC_WARN_TIME = Duration.ofMillis(10);
 
     private final Map<Method, Boolean> isAsyncCacheMethod = new ConcurrentHashMap<>();
     private final Map<Class<? extends CommandService>, Boolean> isAsyncCacheService = new ConcurrentHashMap<>();
@@ -179,6 +180,7 @@ public class CommandsBukkit extends OkaeriCommands {
 
     private boolean executeCommand(@NonNull ServiceMeta service, @NonNull CommandContext commandContext, @NonNull CommandSender sender, @NonNull String label, @NonNull String[] args) {
 
+        Instant start = Instant.now(); // time match and permissions check too, who know how fast is it
         String fullCommand = (label + " " + String.join(" ", args)).trim();
         this.getAccessHandler().checkAccess(service, InvocationContext.of(service, label, args), commandContext, false);
 
@@ -194,6 +196,11 @@ public class CommandsBukkit extends OkaeriCommands {
 
         ExecutorMeta executor = invocationContext.getCommand().getExecutor();
         this.getAccessHandler().checkAccess(executor, invocationContext, commandContext);
+        Duration durationToPreInvoke = Duration.between(Instant.now(), start);
+
+        if (durationToPreInvoke.compareTo(PRE_INVOKE_SYNC_WARN_TIME) > 0) {
+            this.syncTimeWarn(service, executor, fullCommand, commandContext, durationToPreInvoke, "pre-invoke");
+        }
 
         if (this.isAsync(invocationContext)) {
             Runnable prepareAndExecuteAsync = () -> this.handleExecution(sender, invocationContext, commandContext);
@@ -201,12 +208,11 @@ public class CommandsBukkit extends OkaeriCommands {
             return true;
         }
 
-        Instant start = Instant.now();
         this.handleExecution(sender, invocationContext, commandContext);
-        Duration duration = Duration.between(Instant.now(), start);
+        Duration durationWithInvoke = Duration.between(Instant.now(), start);
 
-        if (duration.compareTo(SYNC_WARN_TIME) > 0) {
-            this.plugin.getLogger().warning("Command execution took " + duration.toMillis() + " ms! [" + Thread.currentThread().getName() + "]");
+        if (durationWithInvoke.compareTo(TOTAL_SYNC_WARN_TIME) > 0) {
+            this.syncTimeWarn(service, executor, fullCommand, commandContext, durationWithInvoke, "total");
         }
 
         return true;
@@ -234,8 +240,14 @@ public class CommandsBukkit extends OkaeriCommands {
     private void handleExecution(@NonNull CommandSender sender, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
         try {
             InvocationMeta invocationMeta = this.invocationPrepare(invocationContext, commandContext);
-            Object result = invocationMeta.call();
+            ServiceMeta service = invocationContext.getService();
 
+            if (service != null) {
+                CommandService implementor = service.getImplementor();
+                implementor.preInvoke(invocationContext, commandContext, invocationMeta);
+            }
+
+            Object result = invocationMeta.call();
             if (this.getResultHandler().handle(result, commandContext, invocationContext)) {
                 return;
             }
@@ -321,5 +333,23 @@ public class CommandsBukkit extends OkaeriCommands {
         }
 
         return serviceAsync != null;
+    }
+
+    private void syncTimeWarn(ServiceMeta service, ExecutorMeta executor, String fullCommand, CommandContext commandContext, Duration duration, String type) {
+
+        // my.package.MyCommand#my_method
+        String implementorName = service.getImplementor().getClass().getName();
+        String methodName = executor.getMethod().getName();
+        String signature = implementorName + "#" + methodName;
+
+        // (cmd: mycmd params, context={sender=CraftPlayer{name=Player1}, some=value})
+        String context = "(cmd: " + fullCommand + ", context: " + commandContext.all() + ")";
+
+        // main thread, 11 ms
+        String thread = Thread.currentThread().getName();
+        String durationText = duration.toMillis() + " ms";
+
+        // dump!
+        this.plugin.getLogger().warning(signature + " " + context + " execution took " + durationText + "! [" + thread + "] [" + type + "]");
     }
 }
