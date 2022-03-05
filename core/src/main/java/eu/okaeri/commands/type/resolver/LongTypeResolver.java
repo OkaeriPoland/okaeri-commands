@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 public class LongTypeResolver extends BasicTypeResolver<Long> {
 
     @Override
-    public boolean supports(Class<?> type) {
+    public boolean supports(@NonNull Class<?> type) {
         return Long.class.isAssignableFrom(type) || (type == long.class);
     }
 

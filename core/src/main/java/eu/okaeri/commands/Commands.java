@@ -14,6 +14,7 @@ import eu.okaeri.commands.meta.InvocationMeta;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.CommandService;
 import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.type.resolver.SimpleTypeResolverAdapter;
 import eu.okaeri.commands.type.resolver.TypeResolver;
 import lombok.NonNull;
 
@@ -21,6 +22,7 @@ import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 public interface Commands {
 
@@ -59,6 +61,10 @@ public interface Commands {
     Commands registerCommand(@NonNull CommandService service);
 
     Commands registerType(@NonNull TypeResolver typeResolver);
+
+    <T> Commands registerType(@NonNull Class<T> type, @NonNull Function<String, T> consumer);
+
+    <T> Commands registerType(@NonNull Class<T> type, @NonNull SimpleTypeResolverAdapter<T> adapter);
 
     Commands registerTypeExclusive(@NonNull Type removeAnyForType, @NonNull TypeResolver typeResolver);
 

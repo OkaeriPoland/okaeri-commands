@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 public class FloatTypeResolver extends BasicTypeResolver<Float> {
 
     @Override
-    public boolean supports(Class<?> type) {
+    public boolean supports(@NonNull Class<?> type) {
         return Float.class.isAssignableFrom(type) || (type == float.class);
     }
 

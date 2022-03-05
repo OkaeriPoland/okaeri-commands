@@ -7,9 +7,7 @@ import eu.okaeri.commands.exception.NoSuchCommandException;
 import eu.okaeri.commands.handler.access.AccessHandler;
 import eu.okaeri.commands.handler.access.DefaultAccessHandler;
 import eu.okaeri.commands.handler.argument.DefaultMissingArgumentHandler;
-import eu.okaeri.commands.handler.validation.DefaultParameterValidationHandler;
 import eu.okaeri.commands.handler.argument.MissingArgumentHandler;
-import eu.okaeri.commands.handler.validation.ParameterValidationHandler;
 import eu.okaeri.commands.handler.completion.CompletionHandler;
 import eu.okaeri.commands.handler.completion.DefaultCompletionHandler;
 import eu.okaeri.commands.handler.completion.NamedCompletionHandler;
@@ -21,6 +19,8 @@ import eu.okaeri.commands.handler.result.DefaultResultHandler;
 import eu.okaeri.commands.handler.result.ResultHandler;
 import eu.okaeri.commands.handler.text.DefaultTextHandler;
 import eu.okaeri.commands.handler.text.TextHandler;
+import eu.okaeri.commands.handler.validation.DefaultParameterValidationHandler;
+import eu.okaeri.commands.handler.validation.ParameterValidationHandler;
 import eu.okaeri.commands.handler.validation.ValidationResult;
 import eu.okaeri.commands.meta.*;
 import eu.okaeri.commands.meta.pattern.PatternMeta;
@@ -31,6 +31,8 @@ import eu.okaeri.commands.service.CommandException;
 import eu.okaeri.commands.service.CommandService;
 import eu.okaeri.commands.service.InvocationContext;
 import eu.okaeri.commands.type.DefaultCommandsTypes;
+import eu.okaeri.commands.type.resolver.SimpleTypeResolver;
+import eu.okaeri.commands.type.resolver.SimpleTypeResolverAdapter;
 import eu.okaeri.commands.type.resolver.TypeResolver;
 import lombok.Data;
 import lombok.NonNull;
@@ -40,6 +42,7 @@ import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 @Data
@@ -54,6 +57,7 @@ public class OkaeriCommands implements Commands {
             List<PatternElement> elements = meta.getExecutor().getPattern().getElements();
             return elements.stream().filter(element -> element instanceof StaticElement).count();
         }, Comparator.reverseOrder());
+
     protected final Map<String, List<CommandMeta>> registeredCommandsByLabel = new ConcurrentHashMap<>();
     protected final List<TypeResolver> typeResolvers = new ArrayList<>();
     protected final Map<Type, TypeResolver> resolverCache = new ConcurrentHashMap<>();
@@ -171,6 +175,16 @@ public class OkaeriCommands implements Commands {
         this.typeResolvers.add(0, typeResolver);
         this.resolverCache.clear();
         return this;
+    }
+
+    @Override
+    public <T> Commands registerType(@NonNull Class<T> type, @NonNull Function<String, T> consumer) {
+        return this.registerType(type, (inv, com, arg, text) -> consumer.apply(text));
+    }
+
+    @Override
+    public <T> Commands registerType(@NonNull Class<T> type, @NonNull SimpleTypeResolverAdapter<T> adapter) {
+        return this.registerType(new SimpleTypeResolver<T>(type, adapter));
     }
 
     @Override
