@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 
 public class EnumTypeResolver extends BasicTypeResolver<Enum> {
 
+    public static final int ERROR_ENUMS_LIMIT = 10;
+
     @Override
     public boolean supports(@NonNull Class<?> type) {
         return type.isEnum();
@@ -41,7 +43,13 @@ public class EnumTypeResolver extends BasicTypeResolver<Enum> {
         // match fail
         String enumValuesStr = Arrays.stream(enumType.getEnumConstants())
             .map(Enum::name)
+            .limit(ERROR_ENUMS_LIMIT)
             .collect(Collectors.joining(", "));
+
+        int enumLength = enumType.getEnumConstants().length;
+        if (enumLength > ERROR_ENUMS_LIMIT) {
+            enumValuesStr += " and " + (enumLength - ERROR_ENUMS_LIMIT) + " more";
+        }
 
         throw new IllegalArgumentException("invalid value (available: " + enumValuesStr + ")");
     }
