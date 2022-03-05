@@ -156,7 +156,7 @@ public class ExampleCommand implements CommandService {
     // recommended usage
     //
     // mix param types and resolve unknown values by overriding Commands#resolveMissingArgument (e.g. DI)
-    // preserve param names using javac -g:vars or specify them manually @Arg("name")
+    // preserve param names using javac's -parameters or specify them manually @Arg("name")
     //
     // specify inline string completions or use previously registered named completion from Commands#registerCompletion
     // you can also pass @CompletionData and read it in your custom completion implementation as you like
