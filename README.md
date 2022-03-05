@@ -90,7 +90,7 @@ public class ExampleCommand implements CommandService {
     // overwrite usage/description with Commands#resolveText()
     // available out-of-the-box in OkaeriPoland/okaeri-platform i18n integration
     //
-    @Executor(pattern = {"hi", "hii"}, description = "!command-cmd-hi-description", usage = "!command-cmd-hi-usage")
+    @Executor(pattern = {"hi", "hii"}, description = "${command-cmd-hi-description}", usage = "${command-cmd-hi-usage}")
     public String hi() {
         return "hi!";
     }
