@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 public class DoubleTypeResolver extends BasicTypeResolver<Double> {
 
     @Override
-    public boolean supports(Class<?> type) {
+    public boolean supports(@NonNull Class<?> type) {
         return Double.class.isAssignableFrom(type) || (type == double.class);
     }
 

@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 public class EnumTypeResolver extends BasicTypeResolver<Enum> {
 
     @Override
-    public boolean supports(Class<?> type) {
+    public boolean supports(@NonNull Class<?> type) {
         return type.isEnum();
     }
 

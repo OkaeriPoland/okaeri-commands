@@ -8,7 +8,7 @@ import lombok.NonNull;
 public class CharacterTypeResolver extends BasicTypeResolver<Character> {
 
     @Override
-    public boolean supports(Class<?> type) {
+    public boolean supports(@NonNull Class<?> type) {
         return Character.class.isAssignableFrom(type) || (type == char.class);
     }
 
