@@ -47,9 +47,20 @@ public final class TestCommandComplete {
         assertIterableEquals(Collections.singletonList("load"), this.commands.complete("tab1 lo"));
         assertIterableEquals(Collections.singletonList("load"), this.commands.complete("tab1 loa"));
         assertIterableEquals(Collections.singletonList("load"), this.commands.complete("tab1 load"));
-        assertIterableEquals(Arrays.asList("script.py", "script.groovy"), this.commands.complete("tab1 load "));
-        assertIterableEquals(Arrays.asList("script.py", "script.groovy"), this.commands.complete("tab1 load  "));
+        assertIterableEquals(Arrays.asList("script.groovy", "script.py"), this.commands.complete("tab1 load "));
+        assertIterableEquals(Arrays.asList("script.groovy", "script.py"), this.commands.complete("tab1 load  "));
         assertIterableEquals(Arrays.asList("allow", "deny"), this.commands.complete("tab1 updateState "));
+        assertIterableEquals(Collections.singletonList("allow"), this.commands.complete("tab1 updateState a"));
+        assertIterableEquals(Collections.singletonList("allow"), this.commands.complete("tab1 updateState allow"));
+    }
+
+    @Test
+    public void test_complete_1static_1required_1static() {
+        assertIterableEquals(Arrays.asList("player1", "player2"), this.commands.complete("tab1 join pla"));
+        assertIterableEquals(Collections.singletonList("player1"), this.commands.complete("tab1 join player1"));
+        assertIterableEquals(Arrays.asList("ask", "force"), this.commands.complete("tab1 join player1 "));
+        assertIterableEquals(Collections.singletonList("force"), this.commands.complete("tab1 join player1 f"));
+        assertIterableEquals(Collections.singletonList("ask"), this.commands.complete("tab1 join player1 a"));
     }
 
     @Command(label = "tab1")
@@ -70,6 +81,18 @@ public final class TestCommandComplete {
         @Completions(@Completion(arg = "state", value = {"allow", "deny"}))
         public String _state(@Arg String state) {
             return state;
+        }
+
+        @Executor(pattern = "join * force")
+        @Completions({@Completion(arg = "player", value = {"player1", "player2"})})
+        public String _join_force(@Arg String player) {
+            return player;
+        }
+
+        @Executor(pattern = "join * ask")
+        @Completions({@Completion(arg = "player", value = {"player1", "player2"})})
+        public String _join_ask(@Arg String player) {
+            return player;
         }
     }
 }

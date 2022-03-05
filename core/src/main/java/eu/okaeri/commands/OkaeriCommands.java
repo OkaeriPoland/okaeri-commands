@@ -304,6 +304,7 @@ public class OkaeriCommands implements Commands {
 
             PatternMeta pattern = executor.getPattern();
             Optional<PatternElement> elementOptional = pattern.getCurrentElement(args);
+            String lastArgLower = invocationContext.getLastArg().toLowerCase(Locale.ROOT);
 
             if (!elementOptional.isPresent()) {
                 continue;
@@ -341,8 +342,8 @@ public class OkaeriCommands implements Commands {
                                     completions.addAll(completionHandler.complete(executor.getCompletion(), argumentMeta, invocationContext, commandContext));
                                 }
                             }
-                            // simple completion, just add
-                            else {
+                            // simple completion, just add if matching
+                            else if (invocationContext.isOpenArgs() || completion.toLowerCase(Locale.ROOT).startsWith(lastArgLower)) {
                                 completions.add(completion);
                             }
                         }
@@ -351,7 +352,7 @@ public class OkaeriCommands implements Commands {
             }
         }
 
-        return new ArrayList<>(new LinkedHashSet<>(completions));
+        return new ArrayList<>(new TreeSet<>(completions));
     }
 
     @Override
