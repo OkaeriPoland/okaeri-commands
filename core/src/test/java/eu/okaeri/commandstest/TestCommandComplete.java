@@ -72,25 +72,25 @@ public final class TestCommandComplete {
         }
 
         @Executor(pattern = "load *")
-        @Completions(@Completion(arg = "name", value = "@scripts"))
+        @Completion(arg = "name", value = "@scripts")
         public boolean _load(@Arg String name) {
             return true;
         }
 
         @Executor(pattern = "updateState *")
-        @Completions(@Completion(arg = "state", value = {"allow", "deny"}))
+        @Completion(arg = "state", value = {"allow", "deny"})
         public String _state(@Arg String state) {
             return state;
         }
 
         @Executor(pattern = "join * force")
-        @Completions({@Completion(arg = "player", value = {"player1", "player2"})})
+        @Completion(arg = "player", value = {"player1", "player2"})
         public String _join_force(@Arg String player) {
             return player;
         }
 
         @Executor(pattern = "join * ask")
-        @Completions({@Completion(arg = "player", value = {"player1", "player2"})})
+        @Completion(arg = "player", value = {"player1", "player2"})
         public String _join_ask(@Arg String player) {
             return player;
         }
