@@ -18,5 +18,6 @@ public class DefaultCommandsTypes implements CommandsExtension {
         commands.registerType(new DoubleTypeResolver());
         commands.registerType(new IntegerTypeResolver());
         commands.registerType(new CharSequenceTypeResolver());
+        commands.registerType(new DurationTypeResolver());
     }
 }
