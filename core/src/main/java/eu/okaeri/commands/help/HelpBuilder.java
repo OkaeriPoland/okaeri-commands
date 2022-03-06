@@ -9,6 +9,9 @@ import lombok.Data;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Data
@@ -47,6 +50,17 @@ public abstract class HelpBuilder {
             .stream()
             .filter(meta -> meta.getExecutor().getIndex() == 0)
             .filter(meta -> commands.getAccessHandler().allowAccess(meta.getExecutor(), invocationContext, commandContext))
+            .sorted(Comparator.comparing(meta -> meta.getExecutor().getPattern().getRaw()))
+            .collect(Collectors.groupingBy(meta -> meta.getExecutor().getPattern().getRaw().split(" ")[0]))
+            .values()
+            .stream()
+            .sorted(Comparator.<List<CommandMeta>, Integer>comparing(List::size, Comparator.reverseOrder())
+                .thenComparing(Comparator.comparing(metas -> metas.stream()
+                    .mapToInt(meta -> meta.getExecutor().getPattern().getElements().size())
+                    .max()
+                    .orElse(0), Comparator.reverseOrder()))
+                .thenComparing(Comparator.comparing(metas -> metas.get(0).getExecutor().getPattern().getRaw().split(" ")[0])))
+            .flatMap(Collection::stream)
             .map(meta -> {
                 String entry = this.renderEntry(commandContext, invocationContext, meta);
                 String desc = this.renderDescription(invocationContext, commandContext, meta);
