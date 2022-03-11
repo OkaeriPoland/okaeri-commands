@@ -199,7 +199,7 @@ public class CommandsBukkit extends OkaeriCommands {
         Duration durationToPreInvoke = Duration.between(Instant.now(), start);
 
         if (durationToPreInvoke.compareTo(PRE_INVOKE_SYNC_WARN_TIME) > 0) {
-            this.syncTimeWarn(service, executor, fullCommand, commandContext, durationToPreInvoke, "pre-invoke");
+            this.syncTimeWarn(service, executor, fullCommand, commandContext, durationToPreInvoke, "pre-handle");
         }
 
         if (this.isAsync(invocationContext)) {
