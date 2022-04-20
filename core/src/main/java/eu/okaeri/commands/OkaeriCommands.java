@@ -502,7 +502,12 @@ public class OkaeriCommands implements Commands {
             throw new CommandException(argument.getName() + " - " + validationResult.getMessage());
         }
 
-        return InvocationMeta.of(invocationContext, commandContext, executor, call);
+        // check late access
+        InvocationMeta invocationMeta = InvocationMeta.of(invocationContext, commandContext, executor, call);
+        this.accessHandler.checkCall(invocationMeta);
+
+        // read to go!
+        return invocationMeta;
     }
 
     @Override
