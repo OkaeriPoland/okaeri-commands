@@ -27,21 +27,21 @@ public class BukkitErrorHandler implements ErrorHandler {
             @Override
             public String getTemplateForHelp(CommandContext commandContext, InvocationContext invocationContext) {
                 return BukkitErrorHandler.this.resolveText(commandContext, invocationContext,
-                    "${commands-system-usage-template}",
+                    "${commandSystemUsageTemplate}",
                     ChatColor.YELLOW + "Correct usage of /{label}:\n{entries}");
             }
 
             @Override
             public String getTemplateForEntry(CommandContext commandContext, InvocationContext invocationContext) {
                 return BukkitErrorHandler.this.resolveText(commandContext, invocationContext,
-                    "${commands-system-usage-entry}",
+                    "${commandSystemUsageEntry}",
                     ChatColor.RESET + " - /{usage}");
             }
 
             @Override
             public String getTemplateForDescription(CommandContext commandContext, InvocationContext invocationContext) {
                 return BukkitErrorHandler.this.resolveText(commandContext, invocationContext,
-                    "${commands-system-usage-entry-description}",
+                    "${commandSystemUsageEntryDescription}",
                     ChatColor.GRAY + "   {description}");
             }
 
@@ -55,10 +55,35 @@ public class BukkitErrorHandler implements ErrorHandler {
     @Override
     public Object handle(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull Throwable throwable) {
 
+        String message = throwable.getMessage();
         if (throwable instanceof NoAccessException) {
+
+            // empty
+            if (message.isEmpty()) {
+                return this.resolveText(commandContext, invocationContext,
+                    "${commandSystemAccessError}",
+                    ChatColor.RED + "Cannot access command!"
+                );
+            }
+
+            // variable
+            if (message.startsWith("${") && message.endsWith("}")) {
+                return this.resolveText(commandContext, invocationContext, message, message);
+            }
+
+            // permission
+            if (message.matches("[a-zA-Z0-9_\\-\\.]+")) {
+                return this.resolveText(commandContext, invocationContext,
+                    "${commandSystemPermissionsError}",
+                    "No permission {permission}!"
+                ).replace("{message}", message);
+            }
+
+            // other
             return this.resolveText(commandContext, invocationContext,
-                    "${commands-system-permissions-error}", ChatColor.RED + "No permission {permission}!")
-                .replace("{permission}", throwable.getMessage());
+                "${commandSystemAccessMessageError}",
+                ChatColor.RED + "{message}"
+            ).replace("{message}", message);
         }
 
         if (throwable instanceof NoSuchCommandException) {
@@ -67,8 +92,9 @@ public class BukkitErrorHandler implements ErrorHandler {
 
         if (throwable instanceof CommandException) {
             return this.resolveText(commandContext, invocationContext,
-                    "${commands-system-command-error}", ChatColor.RED + "Error: {message}")
-                .replace("{message}", throwable.getMessage());
+                "${commandSystemCommandError}",
+                ChatColor.RED + "Error: {message}"
+            ).replace("{message}", message);
         }
 
         String exceptionID = String.valueOf(UUID.randomUUID()).split("-")[4];
@@ -82,8 +108,9 @@ public class BukkitErrorHandler implements ErrorHandler {
         }
 
         return this.resolveText(commandContext, invocationContext,
-            "${commands-system-unknown-error}", ChatColor.RED + "Unknown error! Reference ID: {id}")
-            .replace("{id}", exceptionID);
+            "${commandSystemUnknownError}",
+            ChatColor.RED + "Unknown error! Reference ID: {id}"
+        ).replace("{id}", exceptionID);
     }
 
     private String resolveText(CommandContext commandContext, InvocationContext invocationContext, String key, String def) {
