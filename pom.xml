@@ -7,7 +7,7 @@
     <groupId>eu.okaeri</groupId>
     <artifactId>okaeri-commands</artifactId>
     <packaging>pom</packaging>
-    <version>0.8.5</version>
+    <version>0.8.6</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
