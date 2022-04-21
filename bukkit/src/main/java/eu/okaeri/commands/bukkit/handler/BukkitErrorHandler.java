@@ -75,8 +75,8 @@ public class BukkitErrorHandler implements ErrorHandler {
             if (message.matches("[a-zA-Z0-9_\\-\\.]+")) {
                 return this.resolveText(commandContext, invocationContext,
                     "${commandSystemPermissionsError}",
-                    "No permission {permission}!"
-                ).replace("{message}", message);
+                    ChatColor.RED + "No permission {permission}!"
+                ).replace("{permission}", message);
             }
 
             // other
