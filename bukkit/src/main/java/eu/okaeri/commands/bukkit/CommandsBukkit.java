@@ -22,6 +22,7 @@ import eu.okaeri.commands.service.CommandService;
 import eu.okaeri.commands.service.InvocationContext;
 import lombok.Getter;
 import lombok.NonNull;
+import lombok.Setter;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
@@ -144,38 +145,58 @@ public class CommandsBukkit extends OkaeriCommands {
         List<CommandMeta> metas = this.registeredCommands.get(serviceLabel);
         metas.add(command);
 
-        Command bukkitCommand = new Command(serviceLabel) {
-
-            @Override
-            public boolean execute(CommandSender sender, String label, String[] args) {
-
-                CommandContext commandContext = new CommandContext();
-                commandContext.add("sender", sender);
-
-                try {
-                    return CommandsBukkit.this.executeCommand(service, commandContext, sender, label, args);
-                } catch (CommandException exception) {
-                    CommandsBukkit.this.handleError(commandContext, InvocationContext.of(service, label, args), exception);
-                    return true;
-                }
-            }
-
-            @Override
-            public List<String> tabComplete(CommandSender sender, String alias, String[] args) throws IllegalArgumentException {
-
-                CommandContext commandContext = new CommandContext();
-                commandContext.add("sender", sender);
-
-                return CommandsBukkit.this.complete(metas,
-                    InvocationContext.of(service, alias, args),
-                    commandContext
-                );
-            }
-        };
-
+        Command bukkitCommand = new Wrapper(serviceLabel, this, service, metas);
         bukkitCommand.setAliases(service.getAliases());
         bukkitCommand.setDescription(service.getDescription());
+
         this.commandMap.register(serviceLabel, bukkitCommand);
+    }
+
+    /*
+      @deprecated Unsafe non-stable API allowing to access okaeri-commands from Bukkit API
+     */
+    @Getter
+    @Setter
+    @Deprecated
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    public static class Wrapper extends Command {
+
+        private CommandsBukkit commands;
+        private ServiceMeta service;
+        private List<CommandMeta> metas;
+
+        protected Wrapper(@NonNull String name, @NonNull CommandsBukkit commands, @NonNull ServiceMeta service, @NonNull List<CommandMeta> metas) {
+            super(name);
+            this.commands = commands;
+            this.service = service;
+            this.metas = metas;
+        }
+
+        @Override
+        public boolean execute(CommandSender sender, String label, String[] args) {
+
+            CommandContext commandContext = new CommandContext();
+            commandContext.add("sender", sender);
+
+            try {
+                return this.commands.executeCommand(this.service, commandContext, sender, label, args);
+            } catch (CommandException exception) {
+                this.commands.handleError(commandContext, InvocationContext.of(this.service, label, args), exception);
+                return true;
+            }
+        }
+
+        @Override
+        public List<String> tabComplete(CommandSender sender, String alias, String[] args) throws IllegalArgumentException {
+
+            CommandContext commandContext = new CommandContext();
+            commandContext.add("sender", sender);
+
+            return this.commands.complete(this.metas,
+                InvocationContext.of(this.service, alias, args),
+                commandContext
+            );
+        }
     }
 
     private boolean executeCommand(@NonNull ServiceMeta service, @NonNull CommandContext commandContext, @NonNull CommandSender sender, @NonNull String label, @NonNull String[] args) {
