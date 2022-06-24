@@ -7,7 +7,9 @@ import eu.okaeri.commands.service.InvocationContext;
 import lombok.NonNull;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -37,20 +39,24 @@ public class DefaultCompletionHandler implements CompletionHandler {
         return Collections.emptyList();
     }
 
-    protected int getLimit(ArgumentMeta argumentMeta, InvocationContext invocationContext) {
+    protected int getLimit(@NonNull ArgumentMeta argumentMeta, @NonNull InvocationContext invocationContext) {
+        return this.getData(argumentMeta, invocationContext, "limit", () -> FALLBACK_LIMIT, Integer::parseInt);
+    }
+
+    protected <T> T getData(@NonNull ArgumentMeta argumentMeta, @NonNull InvocationContext invocationContext, @NonNull String name, @NonNull Supplier<T> fallback, @NonNull Function<String, T> resolver) {
 
         if (invocationContext.getCommand() == null) {
-            return FALLBACK_LIMIT;
+            return fallback.get();
         }
 
         CompletionMeta completion = invocationContext.getCommand().getExecutor().getCompletion();
         Map<String, String> data = completion.getData(argumentMeta.getName());
 
-        if (data.containsKey("limit")) {
-            return Integer.parseInt(data.get("limit"));
+        if (data.containsKey(name)) {
+            return resolver.apply(data.get(name));
         }
 
-        return FALLBACK_LIMIT;
+        return fallback.get();
     }
 
     protected <T> List<T> filter(Predicate<T> filter, int limit, Stream<T> stream) {
