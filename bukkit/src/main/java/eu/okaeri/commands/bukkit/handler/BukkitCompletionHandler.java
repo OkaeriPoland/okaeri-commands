@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Predicate;
 
+@SuppressWarnings({"SimplifiableIfStatement", "RedundantIfStatement"})
 public class BukkitCompletionHandler extends DefaultCompletionHandler {
 
     @Override
@@ -30,8 +31,29 @@ public class BukkitCompletionHandler extends DefaultCompletionHandler {
         int limit = this.getLimit(argument, invocationContext);
 
         if (OfflinePlayer.class.isAssignableFrom(type)) {
+
+            boolean completeSelf = this.getData(argument, invocationContext,
+                "self", () -> true,
+                Boolean::parseBoolean
+            );
+
             return this.filter(stringFilter, limit, Bukkit.getServer().getOnlinePlayers().stream()
-                .filter(onlinePlayer -> (player == null) || player.canSee(onlinePlayer) || sender.hasPermission("okaeri.commands.invisible"))
+                .filter(onlinePlayer -> {
+                    // non-player senders complete all players
+                    if (player == null) {
+                        return true;
+                    }
+                    // sender should be hidden when self=false
+                    if (!completeSelf && onlinePlayer.equals(player)) {
+                        return false;
+                    }
+                    // sender should not complete hidden players
+                    if (!player.canSee(onlinePlayer) && !sender.hasPermission("okaeri.commands.invisible")) {
+                        return false;
+                    }
+                    // complete otherwise
+                    return true;
+                })
                 .map(HumanEntity::getName));
         }
 
