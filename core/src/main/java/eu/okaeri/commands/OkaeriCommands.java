@@ -292,19 +292,25 @@ public class OkaeriCommands implements Commands {
 
         for (CommandMeta meta : metas) {
 
+            InvocationContext localInvocationContext = InvocationContext.of(
+                meta,
+                invocationContext.getLabel(),
+                invocationContext.getArgs()
+            );
+
             ServiceMeta service = meta.getService();
-            if (!this.getAccessHandler().allowAccess(service, invocationContext, commandContext, false)) {
+            if (!this.getAccessHandler().allowAccess(service, localInvocationContext, commandContext, false)) {
                 continue;
             }
 
             ExecutorMeta executor = meta.getExecutor();
-            if (!this.getAccessHandler().allowAccess(executor, invocationContext, commandContext)) {
+            if (!this.getAccessHandler().allowAccess(executor, localInvocationContext, commandContext)) {
                 continue;
             }
 
             PatternMeta pattern = executor.getPattern();
             Optional<PatternElement> elementOptional = pattern.getCurrentElement(args);
-            String lastArgLower = invocationContext.getLastArg().toLowerCase(Locale.ROOT);
+            String lastArgLower = localInvocationContext.getLastArg().toLowerCase(Locale.ROOT);
 
             if (!elementOptional.isPresent()) {
                 continue;
@@ -327,7 +333,7 @@ public class OkaeriCommands implements Commands {
                     // no completions from executor
                     if (executorCompletions.isEmpty()) {
                         // add completions from general completion handler
-                        completions.addAll(this.getCompletionHandler().complete(argumentMeta, invocationContext, commandContext));
+                        completions.addAll(this.getCompletionHandler().complete(argumentMeta, localInvocationContext, commandContext));
                     }
                     // process completions if applicable
                     else {
@@ -339,11 +345,11 @@ public class OkaeriCommands implements Commands {
                                 NamedCompletionHandler completionHandler = this.namedCompletionHandlers.get(completionName);
                                 // if handled found receive completions and add all
                                 if (completionHandler != null) {
-                                    completions.addAll(completionHandler.complete(executor.getCompletion(), argumentMeta, invocationContext, commandContext));
+                                    completions.addAll(completionHandler.complete(executor.getCompletion(), argumentMeta, localInvocationContext, commandContext));
                                 }
                             }
                             // simple completion, just add if matching
-                            else if (invocationContext.isOpenArgs() || completion.toLowerCase(Locale.ROOT).startsWith(lastArgLower)) {
+                            else if (localInvocationContext.isOpenArgs() || completion.toLowerCase(Locale.ROOT).startsWith(lastArgLower)) {
                                 completions.add(completion);
                             }
                         }
