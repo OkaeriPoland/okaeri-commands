@@ -17,7 +17,7 @@ import java.util.stream.Stream;
 @RequiredArgsConstructor
 public class SimpleNamedCompletionHandler implements NamedCompletionHandler {
 
-    private static final int DEFAULT_FILTER_LIMIT = 10;
+    private static final int DEFAULT_FILTER_LIMIT = 1000;
     private final Supplier<Stream<String>> provider;
 
     @Override
