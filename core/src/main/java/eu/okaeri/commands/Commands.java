@@ -74,13 +74,25 @@ public interface Commands {
 
     Commands registerExtension(@NonNull CommandsExtension extension);
 
-    Commands registerCompletion(@NonNull String name, @NonNull NamedCompletionHandler handler);
+    Commands registerCompletion(@NonNull String name, @NonNull NamedCompletionHandler handler, boolean auto);
+
+    default Commands registerCompletion(@NonNull String name, @NonNull NamedCompletionHandler handler) {
+        return this.registerCompletion(name, handler, true);
+    }
 
     Commands registerCompletion(@NonNull String name, @NonNull Supplier<Stream<String>> streamHandler);
 
-    Commands registerCompletion(@NonNull Class<?> type, @NonNull NamedCompletionHandler handler);
+    Commands registerCompletion(@NonNull String name, @NonNull Function<CommandContext, Stream<String>> streamHandler);
+
+    Commands registerCompletion(@NonNull Class<?> type, @NonNull NamedCompletionHandler handler, boolean auto);
+
+    default Commands registerCompletion(@NonNull Class<?> type, @NonNull NamedCompletionHandler handler) {
+        return this.registerCompletion(type, handler, true);
+    }
 
     Commands registerCompletion(@NonNull Class<?> type, @NonNull Supplier<Stream<String>> streamHandler);
+
+    Commands registerCompletion(@NonNull Class<?> type, @NonNull Function<CommandContext, Stream<String>> streamHandler);
 
     String resolveText(@NonNull String text);
 
