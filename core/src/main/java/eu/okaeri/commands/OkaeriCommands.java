@@ -43,6 +43,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 @Data
@@ -62,7 +63,9 @@ public class OkaeriCommands implements Commands {
     protected final List<TypeResolver> typeResolvers = new ArrayList<>();
     protected final Map<Type, TypeResolver> resolverCache = new ConcurrentHashMap<>();
     protected final Map<String, NamedCompletionHandler> namedCompletionHandlers = new ConcurrentHashMap<>();
+    protected final Map<Class<?>, NamedCompletionHandler> typeCompletionHandlers = new ConcurrentHashMap<>();
     protected List<CommandMeta> registeredCommands = new ArrayList<>();
+
     protected ErrorHandler errorHandler = new DefaultErrorHandler();
     protected ResultHandler resultHandler = new DefaultResultHandler();
     protected TextHandler textHandler = new DefaultTextHandler();
@@ -215,6 +218,30 @@ public class OkaeriCommands implements Commands {
     }
 
     @Override
+    public Commands registerCompletion(@NonNull String name, @NonNull Supplier<Stream<String>> streamHandler) {
+        return this.registerCompletion(name, (completionData, argument, invocationContext, commandContext) -> CompletionHandler.filter(
+            CompletionHandler.getLimit(argument, invocationContext),
+            CompletionHandler.stringFilter(invocationContext),
+            streamHandler.get()
+        ));
+    }
+
+    @Override
+    public Commands registerCompletion(@NonNull Class<?> type, @NonNull NamedCompletionHandler handler) {
+        this.typeCompletionHandlers.put(type, handler);
+        return this;
+    }
+
+    @Override
+    public Commands registerCompletion(@NonNull Class<?> type, @NonNull Supplier<Stream<String>> streamHandler) {
+        return this.registerCompletion(type, (completionData, argument, invocationContext, commandContext) -> CompletionHandler.filter(
+            CompletionHandler.getLimit(argument, invocationContext),
+            CompletionHandler.stringFilter(invocationContext),
+            streamHandler.get()
+        ));
+    }
+
+    @Override
     public String resolveText(@NonNull String text) {
         return this.getTextHandler().resolve(text);
     }
@@ -332,8 +359,16 @@ public class OkaeriCommands implements Commands {
 
                     // no completions from executor
                     if (executorCompletions.isEmpty()) {
+                        // add completions from type completion handler
+                        NamedCompletionHandler typeCompletionHandler = this.typeCompletionHandlers.get(argumentMeta.getType());
+                        if (typeCompletionHandler != null) {
+                            completions.addAll(typeCompletionHandler.complete(executor.getCompletion(), argumentMeta, localInvocationContext, commandContext));
+                        }
                         // add completions from general completion handler
-                        completions.addAll(this.getCompletionHandler().complete(argumentMeta, localInvocationContext, commandContext));
+                        else {
+                            List<String> generalCompletions = this.getCompletionHandler().complete(argumentMeta, localInvocationContext, commandContext);
+                            completions.addAll(generalCompletions);
+                        }
                     }
                     // process completions if applicable
                     else {
