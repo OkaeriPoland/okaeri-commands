@@ -212,33 +212,55 @@ public class OkaeriCommands implements Commands {
     }
 
     @Override
-    public Commands registerCompletion(@NonNull String name, @NonNull NamedCompletionHandler handler) {
+    public Commands registerCompletion(@NonNull String name, @NonNull NamedCompletionHandler handler, boolean auto) {
+
+        if (auto) {
+            this.namedCompletionHandlers.put(name, (completionData, argument, invocationContext, commandContext) -> CompletionHandler.filter(
+                CompletionHandler.getLimit(argument, invocationContext),
+                CompletionHandler.stringFilter(invocationContext),
+                handler.complete(completionData, argument, invocationContext, commandContext).stream()
+            ));
+            return this;
+        }
+
         this.namedCompletionHandlers.put(name, handler);
         return this;
     }
 
     @Override
     public Commands registerCompletion(@NonNull String name, @NonNull Supplier<Stream<String>> streamHandler) {
-        return this.registerCompletion(name, (completionData, argument, invocationContext, commandContext) -> CompletionHandler.filter(
-            CompletionHandler.getLimit(argument, invocationContext),
-            CompletionHandler.stringFilter(invocationContext),
-            streamHandler.get()
-        ));
+        return this.registerCompletion(name, (u1, u2, u3, u4) -> streamHandler.get().toList(), true);
     }
 
     @Override
-    public Commands registerCompletion(@NonNull Class<?> type, @NonNull NamedCompletionHandler handler) {
+    public Commands registerCompletion(@NonNull String name, @NonNull Function<CommandContext, Stream<String>> streamHandler) {
+        return this.registerCompletion(name, (u1, u2, u3, commandContext) -> streamHandler.apply(commandContext).toList(), true);
+    }
+
+    @Override
+    public Commands registerCompletion(@NonNull Class<?> type, @NonNull NamedCompletionHandler handler, boolean auto) {
+
+        if (auto) {
+            this.typeCompletionHandlers.put(type, (completionData, argument, invocationContext, commandContext) -> CompletionHandler.filter(
+                CompletionHandler.getLimit(argument, invocationContext),
+                CompletionHandler.stringFilter(invocationContext),
+                handler.complete(completionData, argument, invocationContext, commandContext).stream()
+            ));
+            return this;
+        }
+
         this.typeCompletionHandlers.put(type, handler);
         return this;
     }
 
     @Override
     public Commands registerCompletion(@NonNull Class<?> type, @NonNull Supplier<Stream<String>> streamHandler) {
-        return this.registerCompletion(type, (completionData, argument, invocationContext, commandContext) -> CompletionHandler.filter(
-            CompletionHandler.getLimit(argument, invocationContext),
-            CompletionHandler.stringFilter(invocationContext),
-            streamHandler.get()
-        ));
+        return this.registerCompletion(type, (u1, u2, u3, u4) -> streamHandler.get().toList(), true);
+    }
+
+    @Override
+    public Commands registerCompletion(@NonNull Class<?> type, @NonNull Function<CommandContext, Stream<String>> streamHandler) {
+        return this.registerCompletion(type, (u1, u2, u3, commandContext) -> streamHandler.apply(commandContext).toList(), true);
     }
 
     @Override
