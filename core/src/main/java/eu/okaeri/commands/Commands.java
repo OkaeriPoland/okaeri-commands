@@ -23,6 +23,8 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 public interface Commands {
 
@@ -73,6 +75,12 @@ public interface Commands {
     Commands registerExtension(@NonNull CommandsExtension extension);
 
     Commands registerCompletion(@NonNull String name, @NonNull NamedCompletionHandler handler);
+
+    Commands registerCompletion(@NonNull String name, @NonNull Supplier<Stream<String>> streamHandler);
+
+    Commands registerCompletion(@NonNull Class<?> type, @NonNull NamedCompletionHandler handler);
+
+    Commands registerCompletion(@NonNull Class<?> type, @NonNull Supplier<Stream<String>> streamHandler);
 
     String resolveText(@NonNull String text);
 

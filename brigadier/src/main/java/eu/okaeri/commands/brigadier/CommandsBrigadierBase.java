@@ -7,6 +7,7 @@ import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.mojang.brigadier.tree.RootCommandNode;
 import eu.okaeri.commands.OkaeriCommands;
+import eu.okaeri.commands.handler.completion.NamedCompletionHandler;
 import eu.okaeri.commands.meta.ArgumentMeta;
 import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.meta.ExecutorMeta;
@@ -171,7 +172,13 @@ public class CommandsBrigadierBase {
                         // only certain types can be assumed as static
                         if (this.canAssumeStatic(type)) {
                             // resolve completions using completion handler
-                            List<String> argumentCompletions = this.commands.getCompletionHandler().complete(argumentMeta, invocationContext, commandContext);
+                            List<String> argumentCompletions;
+                            NamedCompletionHandler typeCompletionHandler = this.commands.getTypeCompletionHandlers().get(argumentMeta.getType());
+                            if (typeCompletionHandler != null) {
+                                argumentCompletions = typeCompletionHandler.complete(executor.getCompletion(), argumentMeta, invocationContext, commandContext);
+                            } else {
+                                argumentCompletions = this.commands.getCompletionHandler().complete(argumentMeta, invocationContext, commandContext);
+                            }
                             // this section bifurcates so we need to track it separately
                             List<CommandNode> newNodes = new ArrayList<>();
                             // every completion needs to be added separately

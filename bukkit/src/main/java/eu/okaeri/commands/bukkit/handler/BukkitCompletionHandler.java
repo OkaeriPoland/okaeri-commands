@@ -25,10 +25,11 @@ public class BukkitCompletionHandler extends DefaultCompletionHandler {
     public List<String> complete(@NonNull ArgumentMeta argument, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
 
         Class<?> type = argument.getType();
+        int limit = this.getLimit(argument, invocationContext);
         Predicate<String> stringFilter = this.stringFilter(invocationContext);
+
         CommandSender sender = commandContext.get("sender", CommandSender.class);
         Player player = (sender instanceof Player) ? ((Player) sender) : null;
-        int limit = this.getLimit(argument, invocationContext);
 
         if (OfflinePlayer.class.isAssignableFrom(type)) {
 
@@ -37,7 +38,7 @@ public class BukkitCompletionHandler extends DefaultCompletionHandler {
                 Boolean::parseBoolean
             );
 
-            return this.filter(stringFilter, limit, Bukkit.getServer().getOnlinePlayers().stream()
+            return this.filter(limit, stringFilter, Bukkit.getServer().getOnlinePlayers().stream()
                 .filter(onlinePlayer -> {
                     // non-player senders complete all players
                     if (player == null) {
@@ -58,15 +59,15 @@ public class BukkitCompletionHandler extends DefaultCompletionHandler {
         }
 
         if (Enchantment.class.isAssignableFrom(type)) {
-            return this.filter(stringFilter, limit, Arrays.stream(Enchantment.values()).map(Enchantment::getName).map(String::toLowerCase));
+            return this.filter(limit, stringFilter, Arrays.stream(Enchantment.values()).map(Enchantment::getName).map(String::toLowerCase));
         }
 
         if (PotionEffectType.class.isAssignableFrom(type)) {
-            return this.filter(stringFilter, limit, Arrays.stream(PotionEffectType.values()).map(PotionEffectType::getName).map(String::toLowerCase));
+            return this.filter(limit, stringFilter, Arrays.stream(PotionEffectType.values()).map(PotionEffectType::getName).map(String::toLowerCase));
         }
 
         if (World.class.isAssignableFrom(type)) {
-            return this.filter(stringFilter, limit, Bukkit.getWorlds().stream().map(World::getName));
+            return this.filter(limit, stringFilter, Bukkit.getWorlds().stream().map(World::getName));
         }
 
         return super.complete(argument, invocationContext, commandContext);
