@@ -5,6 +5,7 @@ import eu.okaeri.commands.bukkit.annotation.Permission;
 import eu.okaeri.commands.exception.NoAccessException;
 import eu.okaeri.commands.handler.access.AccessHandler;
 import eu.okaeri.commands.meta.ExecutorMeta;
+import eu.okaeri.commands.meta.InvocationMeta;
 import eu.okaeri.commands.meta.ServiceMeta;
 import eu.okaeri.commands.service.CommandContext;
 import eu.okaeri.commands.service.InvocationContext;
@@ -12,6 +13,7 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.command.CommandSender;
 
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
@@ -43,7 +45,7 @@ public class BukkitAccessHandler implements AccessHandler {
             }
         }
 
-        Set<String> permissions = this.getPermissions(service, invocationContext, commandContext);
+        Set<String> permissions = this.getAccessPermissions(service, invocationContext, commandContext);
         return this.hasPermissions(sender, permissions, this.getMode(service));
     }
 
@@ -54,7 +56,7 @@ public class BukkitAccessHandler implements AccessHandler {
             return;
         }
 
-        String[] perms = this.getPermissions(service, invocationContext, commandContext).toArray(new String[0]);
+        String[] perms = this.getAccessPermissions(service, invocationContext, commandContext).toArray(new String[0]);
         Permission.Mode mode = this.getMode(service);
 
         if (perms.length == 0) {
@@ -84,7 +86,7 @@ public class BukkitAccessHandler implements AccessHandler {
             return true;
         }
 
-        Set<String> permissions = this.getPermissions(executor, invocationContext, commandContext);
+        Set<String> permissions = this.getAccessPermissions(executor, invocationContext, commandContext);
         return this.hasPermissions(sender, permissions, this.getMode(executor));
     }
 
@@ -95,7 +97,7 @@ public class BukkitAccessHandler implements AccessHandler {
             return;
         }
 
-        String[] perms = this.getPermissions(executor, invocationContext, commandContext).toArray(new String[0]);
+        String[] perms = this.getAccessPermissions(executor, invocationContext, commandContext).toArray(new String[0]);
         Permission.Mode mode = this.getMode(executor);
 
         if (perms.length == 0) {
@@ -112,15 +114,29 @@ public class BukkitAccessHandler implements AccessHandler {
         }
     }
 
-    protected Set<String> getPermissions(@NonNull ServiceMeta service, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
-        return this.getPermissions(service.getImplementor().getClass().getAnnotation(Permission.class), invocationContext, commandContext);
+    @Override
+    public boolean allowCall(@NonNull InvocationMeta invocationMeta) {
+
+        Method method = invocationMeta.getExecutor().getMethod();
+        Permission permission = method.getAnnotation(Permission.class);
+
+        return AccessHandler.super.allowCall(invocationMeta);
     }
 
-    protected Set<String> getPermissions(@NonNull ExecutorMeta executor, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
-        return this.getPermissions(executor.getMethod().getAnnotation(Permission.class), invocationContext, commandContext);
+    @Override
+    public void checkCall(@NonNull InvocationMeta invocationMeta) {
+        AccessHandler.super.checkCall(invocationMeta);
     }
 
-    protected Set<String> getPermissions(Permission permission, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
+    protected Set<String> getAccessPermissions(@NonNull ServiceMeta service, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
+        return this.getPermissions(service.getImplementor().getClass().getAnnotation(Permission.class), invocationContext, commandContext, Permission.Scope.ACCESS);
+    }
+
+    protected Set<String> getAccessPermissions(@NonNull ExecutorMeta executor, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
+        return this.getPermissions(executor.getMethod().getAnnotation(Permission.class), invocationContext, commandContext, Permission.Scope.ACCESS);
+    }
+
+    protected Set<String> getPermissions(Permission permission, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull Permission.Scope scope) {
         return (permission == null) ? Collections.emptySet() : Arrays.stream(permission.value())
             .map(perm -> this.commands.resolveText(invocationContext, commandContext, perm))
             .collect(Collectors.toSet());
@@ -137,6 +153,10 @@ public class BukkitAccessHandler implements AccessHandler {
 
     protected Permission.Mode getMode(Permission permission) {
         return (permission == null) ? Permission.Mode.ALL : permission.mode();
+    }
+
+    protected Permission.Scope getScope(Permission permission) {
+        return (permission == null) ? Permission.Scope.ACCESS : permission.scope();
     }
 
     protected boolean hasPermissions(@NonNull CommandSender sender, @NonNull Set<String> permissions, @NonNull Permission.Mode mode) {

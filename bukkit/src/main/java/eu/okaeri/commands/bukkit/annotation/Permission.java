@@ -13,8 +13,21 @@ public @interface Permission {
 
     Mode mode() default Mode.ANY;
 
+    Scope scope() default Scope.ACCESS;
+
     enum Mode {
         ANY,
         ALL
+    }
+
+    enum Scope {
+        /**
+         * Used for tab-completion, help generation and defining general access.
+         */
+        ACCESS,
+        /**
+         * Used only pre-call when command is matched and has resolved arguments.
+         */
+        CALL
     }
 }
