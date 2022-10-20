@@ -6,7 +6,6 @@ import eu.okaeri.commands.service.InvocationContext;
 import eu.okaeri.commands.type.resolver.BasicTypeResolver;
 import lombok.NonNull;
 import org.bukkit.enchantments.Enchantment;
-import org.bukkit.potion.PotionEffectType;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -26,7 +25,7 @@ public class EnchantmentTypeResolver extends BasicTypeResolver<Enchantment> {
 
     @Override
     public boolean supports(@NonNull Class<?> type) {
-        return PotionEffectType.class.isAssignableFrom(type);
+        return Enchantment.class.isAssignableFrom(type);
     }
 
     @Override
