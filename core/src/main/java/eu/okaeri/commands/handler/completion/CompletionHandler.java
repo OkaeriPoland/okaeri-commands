@@ -41,10 +41,12 @@ public interface CompletionHandler {
     }
 
     static <T> List<T> filter(int limit, @NonNull Predicate<T> filter, @NonNull Stream<T> stream) {
-        return stream
-            .filter(filter)
-            .limit(limit)
-            .collect(Collectors.toList());
+        try (Stream<T> finalStream = stream) {
+            return stream
+                .filter(filter)
+                .limit(limit)
+                .collect(Collectors.toList());
+        }
     }
 
     static Predicate<String> stringFilter(@NonNull InvocationContext invocationContext) {
