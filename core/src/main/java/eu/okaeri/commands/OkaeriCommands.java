@@ -44,6 +44,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Data
@@ -229,12 +230,12 @@ public class OkaeriCommands implements Commands {
 
     @Override
     public Commands registerCompletion(@NonNull String name, @NonNull Supplier<Stream<String>> streamHandler) {
-        return this.registerCompletion(name, (u1, u2, u3, u4) -> streamHandler.get().toList(), true);
+        return this.registerCompletion(name, (u1, u2, u3, u4) -> streamHandler.get().collect(Collectors.toList()), true);
     }
 
     @Override
     public Commands registerCompletion(@NonNull String name, @NonNull Function<CommandContext, Stream<String>> streamHandler) {
-        return this.registerCompletion(name, (u1, u2, u3, commandContext) -> streamHandler.apply(commandContext).toList(), true);
+        return this.registerCompletion(name, (u1, u2, u3, commandContext) -> streamHandler.apply(commandContext).collect(Collectors.toList()), true);
     }
 
     @Override
@@ -255,12 +256,12 @@ public class OkaeriCommands implements Commands {
 
     @Override
     public Commands registerCompletion(@NonNull Class<?> type, @NonNull Supplier<Stream<String>> streamHandler) {
-        return this.registerCompletion(type, (u1, u2, u3, u4) -> streamHandler.get().toList(), true);
+        return this.registerCompletion(type, (u1, u2, u3, u4) -> streamHandler.get().collect(Collectors.toList()), true);
     }
 
     @Override
     public Commands registerCompletion(@NonNull Class<?> type, @NonNull Function<CommandContext, Stream<String>> streamHandler) {
-        return this.registerCompletion(type, (u1, u2, u3, commandContext) -> streamHandler.apply(commandContext).toList(), true);
+        return this.registerCompletion(type, (u1, u2, u3, commandContext) -> streamHandler.apply(commandContext).collect(Collectors.toList()), true);
     }
 
     @Override
