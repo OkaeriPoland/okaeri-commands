@@ -18,6 +18,7 @@ import eu.okaeri.commands.type.resolver.SimpleTypeResolverAdapter;
 import eu.okaeri.commands.type.resolver.TypeResolver;
 import lombok.NonNull;
 
+import java.io.Closeable;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -26,7 +27,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-public interface Commands {
+public interface Commands extends Closeable {
 
     OkaeriCommands errorHandler(@NonNull ErrorHandler errorHandler);
 

@@ -1,5 +1,6 @@
 package eu.okaeri.commands.bukkit;
 
+import lombok.NonNull;
 import lombok.SneakyThrows;
 import org.bukkit.Bukkit;
 import org.bukkit.Server;
@@ -31,12 +32,12 @@ public final class CommandsBukkitUnsafe {
     }
 
     @SneakyThrows
-    public static Optional<Command> getCommand(String label) {
+    public static Optional<Command> getCommand(@NonNull String label) {
         return Optional.ofNullable(getKnownCommands().get(label));
     }
 
     @SneakyThrows
-    public static boolean unregister(String label) {
+    public static boolean unregister(@NonNull String label) {
         Command command = getKnownCommands().remove(label);
         if (command == null) {
             return false;
