@@ -34,6 +34,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.time.Duration;
@@ -72,6 +73,11 @@ public class CommandsBukkit extends OkaeriCommands {
         CommandsBukkit commandsBukkit = new CommandsBukkit(plugin);
         commandsBukkit.registerListeners();
         return commandsBukkit;
+    }
+
+    @Override
+    public void close() throws IOException {
+        this.getRegisteredServices().forEach((label, service) -> CommandsBukkitUnsafe.unregister(label));
     }
 
     @SuppressWarnings("unchecked")
