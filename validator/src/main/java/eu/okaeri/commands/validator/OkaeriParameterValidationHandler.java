@@ -1,4 +1,4 @@
-package eu.okaeri.commands.injector;
+package eu.okaeri.commands.validator;
 
 import eu.okaeri.commands.handler.validation.DefaultParameterValidationHandler;
 import eu.okaeri.commands.handler.validation.ValidationResult;
