@@ -1,4 +1,4 @@
-package eu.okaeri.commands.injector;
+package eu.okaeri.commands.validator;
 
 import eu.okaeri.commands.Commands;
 import eu.okaeri.commands.CommandsExtension;
