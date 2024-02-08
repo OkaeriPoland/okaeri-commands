@@ -1,5 +1,6 @@
 package eu.okaeri.commands.handler.completion;
 
+import eu.okaeri.commands.Commands;
 import eu.okaeri.commands.meta.ArgumentMeta;
 import eu.okaeri.commands.meta.CompletionMeta;
 import eu.okaeri.commands.service.CommandContext;
@@ -17,6 +18,9 @@ public interface CompletionHandler {
 
     static final List<String> BOOLEAN_COMPLETIONS = Collections.unmodifiableList(Arrays.asList("true", "false"));
     static final int FALLBACK_LIMIT = 1000;
+
+    default void registerNamed(@NonNull Commands commands) {
+    }
 
     List<String> complete(@NonNull ArgumentMeta argument, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext);
 

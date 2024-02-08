@@ -113,6 +113,7 @@ public class OkaeriCommands implements Commands {
     @Override
     public OkaeriCommands completionHandler(@NonNull CompletionHandler completionHandler) {
         this.completionHandler = completionHandler;
+        this.completionHandler.registerNamed(this);
         return this;
     }
 
