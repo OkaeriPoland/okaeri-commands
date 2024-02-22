@@ -3,8 +3,8 @@ package eu.okaeri.commands.handler.completion;
 import eu.okaeri.commands.Commands;
 import eu.okaeri.commands.meta.ArgumentMeta;
 import eu.okaeri.commands.meta.CompletionMeta;
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 import lombok.NonNull;
 
 import java.util.*;
@@ -22,19 +22,19 @@ public interface CompletionHandler {
     default void registerNamed(@NonNull Commands commands) {
     }
 
-    List<String> complete(@NonNull ArgumentMeta argument, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext);
+    List<String> complete(@NonNull ArgumentMeta argument, @NonNull Invocation invocation, @NonNull CommandData data);
 
-    static int getLimit(@NonNull ArgumentMeta argumentMeta, @NonNull InvocationContext invocationContext) {
-        return getData(argumentMeta, invocationContext, "limit", () -> FALLBACK_LIMIT, Integer::parseInt);
+    static int getLimit(@NonNull ArgumentMeta argumentMeta, @NonNull Invocation invocation) {
+        return getData(argumentMeta, invocation, "limit", () -> FALLBACK_LIMIT, Integer::parseInt);
     }
 
-    static <T> T getData(@NonNull ArgumentMeta argumentMeta, @NonNull InvocationContext invocationContext, @NonNull String name, @NonNull Supplier<T> fallback, @NonNull Function<String, T> resolver) {
+    static <T> T getData(@NonNull ArgumentMeta argumentMeta, @NonNull Invocation invocation, @NonNull String name, @NonNull Supplier<T> fallback, @NonNull Function<String, T> resolver) {
 
-        if (invocationContext.getCommand() == null) {
+        if (invocation.getCommand() == null) {
             return fallback.get();
         }
 
-        CompletionMeta completion = invocationContext.getCommand().getExecutor().getCompletion();
+        CompletionMeta completion = invocation.getCommand().getExecutor().getCompletion();
         Map<String, String> data = completion.getData(argumentMeta.getName());
 
         if (data.containsKey(name)) {
@@ -53,8 +53,8 @@ public interface CompletionHandler {
         }
     }
 
-    static Predicate<String> stringFilter(@NonNull InvocationContext invocationContext) {
-        String lastArg = invocationContext.isOpenArgs() ? "" : invocationContext.getLastArg().toLowerCase(Locale.ROOT);
+    static Predicate<String> stringFilter(@NonNull Invocation invocation) {
+        String lastArg = invocation.isOpenArgs() ? "" : invocation.getLastArg().toLowerCase(Locale.ROOT);
         return name -> lastArg.isEmpty() || name.toLowerCase(Locale.ROOT).startsWith(lastArg);
     }
 }

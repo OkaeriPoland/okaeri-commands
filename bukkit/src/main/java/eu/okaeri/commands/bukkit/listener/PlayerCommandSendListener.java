@@ -1,8 +1,8 @@
 package eu.okaeri.commands.bukkit.listener;
 
 import eu.okaeri.commands.bukkit.CommandsBukkit;
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 import lombok.SneakyThrows;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -40,13 +40,13 @@ public class PlayerCommandSendListener implements EventExecutor {
         Player player = (Player) this.PlayerCommandSendEventGetPlayer.bindTo(event).invoke();
         Collection<String> commands = (Collection<String>) this.PlayerCommandSendEventGetCommands.bindTo(event).invoke();
 
-        CommandContext commandContext = new CommandContext();
-        commandContext.add("sender", player);
+        CommandData data = new CommandData();
+        data.add("sender", player);
 
         Set<String> disallowedLabels = this.commands.getRegisteredServices().values().stream()
             .filter(service -> {
-                InvocationContext invocationContext = InvocationContext.of(service, service.getLabel(), new String[0]);
-                return !this.commands.getAccessHandler().allowAccess(service, invocationContext, commandContext);
+                Invocation invocation = Invocation.of(service, service.getLabel(), new String[0]);
+                return !this.commands.getAccessHandler().allowAccess(service, invocation, data);
             })
             .flatMap(service -> {
                 List<String> labels = new ArrayList<>();

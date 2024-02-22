@@ -1,6 +1,7 @@
 package eu.okaeri.commands.bukkit;
 
 import eu.okaeri.commands.OkaeriCommands;
+import eu.okaeri.commands.annotation.Context;
 import eu.okaeri.commands.bukkit.annotation.Async;
 import eu.okaeri.commands.bukkit.annotation.Sender;
 import eu.okaeri.commands.bukkit.annotation.Sync;
@@ -16,10 +17,10 @@ import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.meta.ExecutorMeta;
 import eu.okaeri.commands.meta.InvocationMeta;
 import eu.okaeri.commands.meta.ServiceMeta;
-import eu.okaeri.commands.service.CommandContext;
+import eu.okaeri.commands.service.CommandData;
 import eu.okaeri.commands.service.CommandException;
 import eu.okaeri.commands.service.CommandService;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.Invocation;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -103,26 +104,26 @@ public class CommandsBukkit extends OkaeriCommands {
     }
 
     @Override
-    public Object resolveMissingArgument(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
+    public Object resolveMissingArgument(@NonNull Invocation invocation, @NonNull CommandData data, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
 
         Class<?> paramType = param.getType();
 
         // TODO: player only command
-        if (Player.class.equals(paramType) && (param.getAnnotation(Sender.class) != null)) {
-            return commandContext.get("sender", Player.class);
+        if (Player.class.equals(paramType) && ((param.getAnnotation(Context.class) != null) || (param.getAnnotation(Sender.class) != null))) {
+            return data.get("sender", Player.class);
         }
 
         // TODO: console only command
         if (ConsoleCommandSender.class.equals(paramType)) {
-            return commandContext.get("sender", ConsoleCommandSender.class);
+            return data.get("sender", ConsoleCommandSender.class);
         }
 
         // other sender
-        if (CommandSender.class.equals(paramType) && commandContext.has("sender", CommandSender.class)) {
-            return commandContext.get("sender");
+        if (CommandSender.class.equals(paramType) && data.has("sender", CommandSender.class)) {
+            return data.get("sender");
         }
 
-        return super.resolveMissingArgument(invocationContext, commandContext, command, param, index);
+        return super.resolveMissingArgument(invocation, data, command, param, index);
     }
 
     @Override
@@ -181,13 +182,13 @@ public class CommandsBukkit extends OkaeriCommands {
         @Override
         public boolean execute(CommandSender sender, String label, String[] args) {
 
-            CommandContext commandContext = new CommandContext();
-            commandContext.add("sender", sender);
+            CommandData data = new CommandData();
+            data.add("sender", sender);
 
             try {
-                return this.commands.executeCommand(this.service, commandContext, sender, label, args);
+                return this.commands.executeCommand(this.service, data, sender, label, args);
             } catch (CommandException exception) {
-                this.commands.handleError(commandContext, InvocationContext.of(this.service, label, args), exception);
+                this.commands.handleError(data, Invocation.of(this.service, label, args), exception);
                 return true;
             }
         }
@@ -195,100 +196,100 @@ public class CommandsBukkit extends OkaeriCommands {
         @Override
         public List<String> tabComplete(CommandSender sender, String alias, String[] args) throws IllegalArgumentException {
 
-            CommandContext commandContext = new CommandContext();
-            commandContext.add("sender", sender);
+            CommandData data = new CommandData();
+            data.add("sender", sender);
 
             return this.commands.complete(this.metas,
-                InvocationContext.of(this.service, alias, args),
-                commandContext
+                Invocation.of(this.service, alias, args),
+                data
             );
         }
     }
 
-    private boolean executeCommand(@NonNull ServiceMeta service, @NonNull CommandContext commandContext, @NonNull CommandSender sender, @NonNull String label, @NonNull String[] args) {
+    private boolean executeCommand(@NonNull ServiceMeta service, @NonNull CommandData data, @NonNull CommandSender sender, @NonNull String label, @NonNull String[] args) {
 
         Instant start = Instant.now(); // time match and permissions check too, who know how fast is it
         String fullCommand = (label + " " + String.join(" ", args)).trim();
-        this.getAccessHandler().checkAccess(service, InvocationContext.of(service, label, args), commandContext, false);
+        this.getAccessHandler().checkAccess(service, Invocation.of(service, label, args), data, false);
 
-        Optional<InvocationContext> invocationOptional = this.invocationMatch(fullCommand);
+        Optional<Invocation> invocationOptional = this.invocationMatch(fullCommand);
         if (!invocationOptional.isPresent()) {
             throw new NoSuchCommandException(fullCommand);
         }
 
-        InvocationContext invocationContext = invocationOptional.get();
-        if (invocationContext.getCommand() == null) {
-            throw new IllegalArgumentException("Cannot use dummy context for execution: " + invocationContext);
+        Invocation invocation = invocationOptional.get();
+        if (invocation.getCommand() == null) {
+            throw new IllegalArgumentException("Cannot use dummy context for execution: " + invocation);
         }
 
-        ExecutorMeta executor = invocationContext.getCommand().getExecutor();
-        this.getAccessHandler().checkAccess(executor, invocationContext, commandContext);
+        ExecutorMeta executor = invocation.getCommand().getExecutor();
+        this.getAccessHandler().checkAccess(executor, invocation, data);
         Duration durationToPreInvoke = Duration.between(Instant.now(), start);
 
         if (durationToPreInvoke.compareTo(PRE_INVOKE_SYNC_WARN_TIME) > 0) {
-            this.syncTimeWarn(service, executor, fullCommand, commandContext, durationToPreInvoke, "pre-handle");
+            this.syncTimeWarn(service, executor, fullCommand, data, durationToPreInvoke, "pre-handle");
         }
 
-        if (this.isAsync(invocationContext)) {
-            Runnable prepareAndExecuteAsync = () -> this.handleExecution(sender, invocationContext, commandContext);
+        if (this.isAsync(invocation)) {
+            Runnable prepareAndExecuteAsync = () -> this.handleExecution(sender, invocation, data);
             this.plugin.getServer().getScheduler().runTaskAsynchronously(this.plugin, prepareAndExecuteAsync);
             return true;
         }
 
-        this.handleExecution(sender, invocationContext, commandContext);
+        this.handleExecution(sender, invocation, data);
         Duration durationWithInvoke = Duration.between(Instant.now(), start);
 
         if (durationWithInvoke.compareTo(TOTAL_SYNC_WARN_TIME) > 0) {
-            this.syncTimeWarn(service, executor, fullCommand, commandContext, durationWithInvoke, "total");
+            this.syncTimeWarn(service, executor, fullCommand, data, durationWithInvoke, "total");
         }
 
         return true;
     }
 
-    private void handleError(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull Throwable throwable) {
+    private void handleError(@NonNull CommandData data, @NonNull Invocation invocation, @NonNull Throwable throwable) {
 
-        Object result = this.getErrorHandler().handle(commandContext, invocationContext, throwable);
+        Object result = this.getErrorHandler().handle(data, invocation, throwable);
         if (result == null) {
             return;
         }
 
-        CommandSender sender = commandContext.get("sender", CommandSender.class);
+        CommandSender sender = data.get("sender", CommandSender.class);
         if (sender == null) {
             throw new RuntimeException("Cannot dispatch error", throwable);
         }
 
-        if (this.getResultHandler().handle(result, commandContext, invocationContext)) {
+        if (this.getResultHandler().handle(result, data, invocation)) {
             return;
         }
 
         throw new RuntimeException("Unknown return type for errorHandler [allowed: BukkitResponse, String, null]", throwable);
     }
 
-    private void handleExecution(@NonNull CommandSender sender, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
+    private void handleExecution(@NonNull CommandSender sender, @NonNull Invocation invocation, @NonNull CommandData data) {
         try {
-            InvocationMeta invocationMeta = this.invocationPrepare(invocationContext, commandContext);
-            ServiceMeta service = invocationContext.getService();
+            InvocationMeta invocationMeta = this.invocationPrepare(invocation, data);
+            ServiceMeta service = invocation.getService();
 
             if (service != null) {
                 CommandService implementor = service.getImplementor();
-                implementor.preInvoke(invocationContext, commandContext, invocationMeta);
+                implementor.preInvoke(invocation, data, invocationMeta);
             }
 
             Object result = invocationMeta.call();
-            if (this.getResultHandler().handle(result, commandContext, invocationContext)) {
+            if (this.getResultHandler().handle(result, data, invocation)) {
                 return;
             }
 
-            CommandMeta command = invocationContext.getCommand();
+            CommandMeta command = invocation.getCommand();
             if (command == null) {
-                throw new IllegalArgumentException("Cannot use dummy context for execution: " + invocationContext);
+                throw new IllegalArgumentException("Cannot use dummy context for execution: " + invocation);
             }
 
             if (command.getExecutor().getMethod().getReturnType() == void.class) {
                 return;
             }
 
-            throw new RuntimeException("Unknown return type for excutor [allowed: BukkitResponse, String, void]");
+            throw new RuntimeException("Unknown return type for executor [allowed: BukkitResponse, String, void]");
         } catch (Exception exception) {
             // unpack exception
             Throwable cause = exception.getCause();
@@ -296,32 +297,32 @@ public class CommandsBukkit extends OkaeriCommands {
             while (!(cause instanceof CommandException)) {
                 // did not find a cause that is CommandException
                 if (cause == null) {
-                    this.handleError(commandContext, invocationContext, exception);
+                    this.handleError(data, invocation, exception);
                     return;
                 }
                 // cyclic exception protection i guess?
                 if (currentIteration >= 20) {
-                    this.handleError(commandContext, invocationContext, exception);
+                    this.handleError(data, invocation, exception);
                     return;
                 }
                 // gotta extract that cause
                 currentIteration += 1;
                 cause = cause.getCause();
             }
-            this.handleError(commandContext, invocationContext, cause);
+            this.handleError(data, invocation, cause);
         }
     }
 
-    private boolean isAsync(@NonNull InvocationContext invocationContext) {
+    private boolean isAsync(@NonNull Invocation invocation) {
 
-        if ((invocationContext.getCommand() == null) || (invocationContext.getService() == null)) {
-            throw new IllegalArgumentException("Cannot use dummy context: " + invocationContext);
+        if ((invocation.getCommand() == null) || (invocation.getService() == null)) {
+            throw new IllegalArgumentException("Cannot use dummy context: " + invocation);
         }
 
-        Class<? extends CommandService> serviceClass = invocationContext.getService().getImplementor().getClass();
+        Class<? extends CommandService> serviceClass = invocation.getService().getImplementor().getClass();
         boolean serviceAsync = this.isAsyncCacheService.computeIfAbsent(serviceClass, this::isAsync);
 
-        Method executorMethod = invocationContext.getCommand().getExecutor().getMethod();
+        Method executorMethod = invocation.getCommand().getExecutor().getMethod();
         Boolean methodAsync = this.isAsyncCacheMethod.computeIfAbsent(executorMethod, this::isAsync);
 
         // method overrides
@@ -362,7 +363,7 @@ public class CommandsBukkit extends OkaeriCommands {
         return serviceAsync != null;
     }
 
-    private void syncTimeWarn(ServiceMeta service, ExecutorMeta executor, String fullCommand, CommandContext commandContext, Duration duration, String type) {
+    private void syncTimeWarn(ServiceMeta service, ExecutorMeta executor, String fullCommand, CommandData data, Duration duration, String type) {
 
         // my.package.MyCommand#my_method
         String implementorName = service.getImplementor().getClass().getName();
@@ -370,7 +371,7 @@ public class CommandsBukkit extends OkaeriCommands {
         String signature = implementorName + "#" + methodName;
 
         // (cmd: mycmd params, context={sender=CraftPlayer{name=Player1}, some=value})
-        String context = "(cmd: " + fullCommand + ", context: " + commandContext.all() + ")";
+        String context = "(cmd: " + fullCommand + ", context: " + data.all() + ")";
 
         // main thread, 11 ms
         String thread = Thread.currentThread().getName();

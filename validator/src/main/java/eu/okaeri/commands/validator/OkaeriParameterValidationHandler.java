@@ -3,8 +3,8 @@ package eu.okaeri.commands.validator;
 import eu.okaeri.commands.handler.validation.DefaultParameterValidationHandler;
 import eu.okaeri.commands.handler.validation.ValidationResult;
 import eu.okaeri.commands.meta.CommandMeta;
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 import eu.okaeri.validator.ConstraintViolation;
 import eu.okaeri.validator.Validator;
 import lombok.NonNull;
@@ -21,11 +21,11 @@ public class OkaeriParameterValidationHandler extends DefaultParameterValidation
     private final Validator validator;
 
     @Override
-    public ValidationResult validate(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull CommandMeta command, @NonNull Parameter param, Object value, int index) {
+    public ValidationResult validate(@NonNull Invocation invocation, @NonNull CommandData data, @NonNull CommandMeta command, @NonNull Parameter param, Object value, int index) {
 
         Set<ConstraintViolation> constraintViolations = this.validator.validateParameter(param, value);
         if (constraintViolations.isEmpty()) {
-            return super.validate(invocationContext, commandContext, command, param, value, index);
+            return super.validate(invocation, data, command, param, value, index);
         }
 
         return ValidationResult.invalid(constraintViolations.stream()

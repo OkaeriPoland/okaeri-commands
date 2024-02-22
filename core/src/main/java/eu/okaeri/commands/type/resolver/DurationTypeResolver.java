@@ -1,8 +1,8 @@
 package eu.okaeri.commands.type.resolver;
 
 import eu.okaeri.commands.meta.ArgumentMeta;
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 
@@ -27,7 +27,7 @@ public class DurationTypeResolver extends BasicTypeResolver<Duration> {
     }
 
     @Override
-    public Duration resolve(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull ArgumentMeta argumentMeta, @NonNull String text) {
+    public Duration resolve(@NonNull Invocation invocation, @NonNull CommandData data, @NonNull ArgumentMeta argumentMeta, @NonNull String text) {
         return readJbodPattern(text).orElseThrow(() -> new IllegalArgumentException("invalid format, use '1h', '1h30m' or similar, supported units: d, h, m, s, ms, ns"));
     }
 

@@ -32,13 +32,22 @@ public class RawResponse implements BukkitResponse {
     }
 
     @Override
-    public BukkitResponse withField(@NonNull String field, @NonNull String value) {
+    public BukkitResponse with(@NonNull String field, @NonNull String value) {
         this.fields.put(field, value);
         return this;
     }
 
     @Override
     public String render() {
-        return ResponseUtils.replaceAll(this.raw(), this.fields());
+        return replaceAll(this.raw(), this.fields());
+    }
+
+    protected static String replaceAll(@NonNull String in, @NonNull Map<String, String> map) {
+
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            in = in.replace("{" + entry.getKey() + "}", entry.getValue());
+        }
+
+        return in;
     }
 }

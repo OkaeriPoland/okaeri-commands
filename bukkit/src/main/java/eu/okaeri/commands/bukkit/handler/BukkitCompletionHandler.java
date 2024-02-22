@@ -3,8 +3,8 @@ package eu.okaeri.commands.bukkit.handler;
 import eu.okaeri.commands.Commands;
 import eu.okaeri.commands.handler.completion.DefaultCompletionHandler;
 import eu.okaeri.commands.meta.ArgumentMeta;
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 import lombok.NonNull;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -26,32 +26,32 @@ public class BukkitCompletionHandler extends DefaultCompletionHandler {
     @Override
     public void registerNamed(@NonNull Commands commands) {
         super.registerNamed(commands);
-        commands.registerCompletion("bukkit:player:name", (completion, argument, invocationContext, commandContext) ->
-            this.completePlayer(argument, invocationContext, commandContext, HumanEntity::getName));
-        commands.registerCompletion("bukkit:player:address", (completion, argument, invocationContext, commandContext) ->
-            this.completePlayer(argument, invocationContext, commandContext, player -> player.getAddress().getAddress().getHostAddress()));
-        commands.registerCompletion("bukkit:player:uuid", (completion, argument, invocationContext, commandContext) ->
-            this.completePlayer(argument, invocationContext, commandContext, player -> player.getUniqueId().toString()));
-        commands.registerCompletion("bukkit:enchantment", (completion, argument, invocationContext, commandContext) ->
-            this.completeEnchantment(invocationContext, this.getLimit(argument, invocationContext)));
-        commands.registerCompletion("bukkit:potioneffecttype", (completion, argument, invocationContext, commandContext) ->
-            this.completePotionEffectType(invocationContext, this.getLimit(argument, invocationContext)));
-        commands.registerCompletion("bukkit:world", (completion, argument, invocationContext, commandContext) ->
-            this.completeWorld(invocationContext, this.getLimit(argument, invocationContext)));
+        commands.registerCompletion("bukkit:player:name", (completion, argument, invocation, data) ->
+            this.completePlayer(argument, invocation, data, HumanEntity::getName));
+        commands.registerCompletion("bukkit:player:address", (completion, argument, invocation, data) ->
+            this.completePlayer(argument, invocation, data, player -> player.getAddress().getAddress().getHostAddress()));
+        commands.registerCompletion("bukkit:player:uuid", (completion, argument, invocation, data) ->
+            this.completePlayer(argument, invocation, data, player -> player.getUniqueId().toString()));
+        commands.registerCompletion("bukkit:enchantment", (completion, argument, invocation, data) ->
+            this.completeEnchantment(invocation, this.getLimit(argument, invocation)));
+        commands.registerCompletion("bukkit:potioneffecttype", (completion, argument, invocation, data) ->
+            this.completePotionEffectType(invocation, this.getLimit(argument, invocation)));
+        commands.registerCompletion("bukkit:world", (completion, argument, invocation, data) ->
+            this.completeWorld(invocation, this.getLimit(argument, invocation)));
     }
 
-    protected List<String> completePlayer(@NotNull ArgumentMeta argument, @NotNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull Function<Player, String> mapper) {
+    protected List<String> completePlayer(@NotNull ArgumentMeta argument, @NotNull Invocation invocation, @NonNull CommandData data, @NonNull Function<Player, String> mapper) {
 
-        int limit = this.getLimit(argument, invocationContext);
-        CommandSender sender = commandContext.get("sender", CommandSender.class);
+        int limit = this.getLimit(argument, invocation);
+        CommandSender sender = data.get("sender", CommandSender.class);
         Player player = (sender instanceof Player) ? ((Player) sender) : null;
 
-        boolean completeSelf = this.getData(argument, invocationContext,
+        boolean completeSelf = this.getData(argument, invocation,
             "self", () -> true,
             Boolean::parseBoolean
         );
 
-        return this.filter(limit, this.stringFilter(invocationContext), Bukkit.getServer().getOnlinePlayers().stream()
+        return this.filter(limit, this.stringFilter(invocation), Bukkit.getServer().getOnlinePlayers().stream()
             .filter(onlinePlayer -> {
                 // non-player senders complete all players
                 if (player == null) {
@@ -71,43 +71,40 @@ public class BukkitCompletionHandler extends DefaultCompletionHandler {
             .map(mapper));
     }
 
-    protected List<String> completeEnchantment(@NonNull InvocationContext invocationContext, int limit) {
-        return this.filter(limit, this.stringFilter(invocationContext), Arrays.stream(Enchantment.values()).map(Enchantment::getName).map(String::toLowerCase));
+    protected List<String> completeEnchantment(@NonNull Invocation invocation, int limit) {
+        return this.filter(limit, this.stringFilter(invocation), Arrays.stream(Enchantment.values()).map(Enchantment::getName).map(String::toLowerCase));
     }
 
-    protected List<String> completePotionEffectType(@NotNull InvocationContext invocationContext, int limit) {
-        return this.filter(limit, this.stringFilter(invocationContext), Arrays.stream(PotionEffectType.values()).map(PotionEffectType::getName).map(String::toLowerCase));
+    protected List<String> completePotionEffectType(@NotNull Invocation invocation, int limit) {
+        return this.filter(limit, this.stringFilter(invocation), Arrays.stream(PotionEffectType.values()).map(PotionEffectType::getName).map(String::toLowerCase));
     }
 
-    protected List<String> completeWorld(@NotNull InvocationContext invocationContext, int limit) {
-        return this.filter(limit, this.stringFilter(invocationContext), Bukkit.getWorlds().stream().map(World::getName));
+    protected List<String> completeWorld(@NotNull Invocation invocation, int limit) {
+        return this.filter(limit, this.stringFilter(invocation), Bukkit.getWorlds().stream().map(World::getName));
     }
 
     @Override
-    public List<String> complete(@NonNull ArgumentMeta argument, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
+    public List<String> complete(@NonNull ArgumentMeta argument, @NonNull Invocation invocation, @NonNull CommandData data) {
 
         Class<?> type = argument.getType();
-        int limit = this.getLimit(argument, invocationContext);
-
-        CommandSender sender = commandContext.get("sender", CommandSender.class);
-        Player player = (sender instanceof Player) ? ((Player) sender) : null;
+        int limit = this.getLimit(argument, invocation);
 
         if (OfflinePlayer.class.isAssignableFrom(type)) {
-            return this.completePlayer(argument, invocationContext, commandContext, HumanEntity::getName);
+            return this.completePlayer(argument, invocation, data, HumanEntity::getName);
         }
 
         if (Enchantment.class.isAssignableFrom(type)) {
-            return this.completeEnchantment(invocationContext, limit);
+            return this.completeEnchantment(invocation, limit);
         }
 
         if (PotionEffectType.class.isAssignableFrom(type)) {
-            return this.completePotionEffectType(invocationContext, limit);
+            return this.completePotionEffectType(invocation, limit);
         }
 
         if (World.class.isAssignableFrom(type)) {
-            return this.completeWorld(invocationContext, limit);
+            return this.completeWorld(invocation, limit);
         }
 
-        return super.complete(argument, invocationContext, commandContext);
+        return super.complete(argument, invocation, data);
     }
 }

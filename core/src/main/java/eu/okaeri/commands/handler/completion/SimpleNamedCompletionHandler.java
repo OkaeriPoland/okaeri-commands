@@ -2,8 +2,8 @@ package eu.okaeri.commands.handler.completion;
 
 import eu.okaeri.commands.meta.ArgumentMeta;
 import eu.okaeri.commands.meta.CompletionMeta;
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -19,10 +19,10 @@ public class SimpleNamedCompletionHandler implements NamedCompletionHandler {
     private final Supplier<Stream<String>> provider;
 
     @Override
-    public List<String> complete(@NonNull CompletionMeta completionData, @NonNull ArgumentMeta argument, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
+    public List<String> complete(@NonNull CompletionMeta completionData, @NonNull ArgumentMeta argument, @NonNull Invocation invocation, @NonNull CommandData data) {
 
-        int limit = CompletionHandler.getLimit(argument, invocationContext);
-        Predicate<String> stringFilter = CompletionHandler.stringFilter(invocationContext);
+        int limit = CompletionHandler.getLimit(argument, invocation);
+        Predicate<String> stringFilter = CompletionHandler.stringFilter(invocation);
 
         return CompletionHandler.filter(limit, stringFilter, this.provider.get());
     }

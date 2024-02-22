@@ -11,9 +11,9 @@ import eu.okaeri.commands.handler.text.TextHandler;
 import eu.okaeri.commands.handler.validation.ParameterValidationHandler;
 import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.meta.InvocationMeta;
-import eu.okaeri.commands.service.CommandContext;
+import eu.okaeri.commands.service.CommandData;
 import eu.okaeri.commands.service.CommandService;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.Invocation;
 import eu.okaeri.commands.type.resolver.SimpleTypeResolverAdapter;
 import eu.okaeri.commands.type.resolver.TypeResolver;
 import lombok.NonNull;
@@ -83,7 +83,7 @@ public interface Commands extends Closeable {
 
     Commands registerCompletion(@NonNull String name, @NonNull Supplier<Stream<String>> streamHandler);
 
-    Commands registerCompletion(@NonNull String name, @NonNull Function<CommandContext, Stream<String>> streamHandler);
+    Commands registerCompletion(@NonNull String name, @NonNull Function<CommandData, Stream<String>> streamHandler);
 
     Commands registerCompletion(@NonNull Class<?> type, @NonNull NamedCompletionHandler handler, boolean auto);
 
@@ -93,13 +93,13 @@ public interface Commands extends Closeable {
 
     Commands registerCompletion(@NonNull Class<?> type, @NonNull Supplier<Stream<String>> streamHandler);
 
-    Commands registerCompletion(@NonNull Class<?> type, @NonNull Function<CommandContext, Stream<String>> streamHandler);
+    Commands registerCompletion(@NonNull Class<?> type, @NonNull Function<CommandData, Stream<String>> streamHandler);
 
     String resolveText(@NonNull String text);
 
-    String resolveText(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull String text);
+    String resolveText(@NonNull Invocation invocation, @NonNull CommandData data, @NonNull String text);
 
-    Object resolveMissingArgument(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull CommandMeta command, @NonNull Parameter param, int i);
+    Object resolveMissingArgument(@NonNull Invocation invocation, @NonNull CommandData data, @NonNull CommandMeta command, @NonNull Parameter param, int i);
 
     List<CommandMeta> findByLabel(@NonNull String label);
 
@@ -109,11 +109,11 @@ public interface Commands extends Closeable {
 
     <T> T call(@NonNull String command) throws Exception;
 
-    Optional<InvocationContext> invocationMatch(@NonNull String command);
+    Optional<Invocation> invocationMatch(@NonNull String command);
 
-    InvocationMeta invocationPrepare(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext);
+    InvocationMeta invocationPrepare(@NonNull Invocation invocation, @NonNull CommandData data);
 
-    List<String> complete(@NonNull List<CommandMeta> metas, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext);
+    List<String> complete(@NonNull List<CommandMeta> metas, @NonNull Invocation invocation, @NonNull CommandData data);
 
     List<String> complete(@NonNull String command);
 

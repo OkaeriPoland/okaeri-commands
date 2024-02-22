@@ -5,13 +5,13 @@ import lombok.NonNull;
 
 public interface CommandService {
 
-    default void preResolve(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
+    default void preResolve(@NonNull Invocation invocation, @NonNull CommandData data) {
     }
 
-    default void preInvoke(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull InvocationMeta invocationMeta) {
+    default void preInvoke(@NonNull Invocation invocation, @NonNull CommandData data, @NonNull InvocationMeta invocationMeta) {
     }
 
-    default Object postInvoke(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull InvocationMeta invocationMeta, Object result) {
+    default Object postInvoke(@NonNull Invocation invocation, @NonNull CommandData data, @NonNull InvocationMeta invocationMeta, Object result) {
         return result;
     }
 }

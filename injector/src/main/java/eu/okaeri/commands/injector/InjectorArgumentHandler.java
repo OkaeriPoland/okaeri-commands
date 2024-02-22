@@ -2,8 +2,8 @@ package eu.okaeri.commands.injector;
 
 import eu.okaeri.commands.handler.argument.DefaultMissingArgumentHandler;
 import eu.okaeri.commands.meta.CommandMeta;
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 import eu.okaeri.injector.Injector;
 import eu.okaeri.injector.annotation.Inject;
 import lombok.NonNull;
@@ -19,7 +19,7 @@ public class InjectorArgumentHandler extends DefaultMissingArgumentHandler {
     private final Injector injector;
 
     @Override
-    public Object resolve(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
+    public Object resolve(@NonNull Invocation invocation, @NonNull CommandData data, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
 
         Class<?> paramType = param.getType();
         String name = (param.getAnnotation(Inject.class) == null) ? "" : param.getAnnotation(Inject.class).value();
@@ -29,6 +29,6 @@ public class InjectorArgumentHandler extends DefaultMissingArgumentHandler {
             return injectable.get();
         }
 
-        return super.resolve(invocationContext, commandContext, command, param, index);
+        return super.resolve(invocation, data, command, param, index);
     }
 }

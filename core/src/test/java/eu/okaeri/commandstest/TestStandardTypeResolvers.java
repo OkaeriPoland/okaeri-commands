@@ -1,8 +1,8 @@
 package eu.okaeri.commandstest;
 
 import eu.okaeri.commands.meta.ArgumentMeta;
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 import eu.okaeri.commands.type.resolver.BooleanTypeResolver;
 import eu.okaeri.commands.type.resolver.ByteTypeResolver;
 import org.junit.jupiter.api.Test;
@@ -11,8 +11,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class TestStandardTypeResolvers {
 
-    private static final InvocationContext DUMMY_IC = InvocationContext.of("dummy", "");
-    private static final CommandContext DUMMY_CC = new CommandContext();
+    private static final Invocation DUMMY_IC = Invocation.of("dummy", "");
+    private static final CommandData DUMMY_CC = new CommandData();
     private static final ArgumentMeta DUMMY_AM = new ArgumentMeta();
 
     @Test

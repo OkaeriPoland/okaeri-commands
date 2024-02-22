@@ -1,9 +1,9 @@
 package eu.okaeri.commands.handler.error;
 
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 import lombok.NonNull;
 
 public interface ErrorHandler {
-    Object handle(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull Throwable exception);
+    Object handle(@NonNull CommandData data, @NonNull Invocation invocation, @NonNull Throwable exception);
 }

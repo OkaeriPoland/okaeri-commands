@@ -1,6 +1,8 @@
 package eu.okaeri.commands.bukkit.response;
 
+import lombok.NonNull;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.World;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -13,18 +15,42 @@ import java.util.stream.Collectors;
 
 public interface BukkitResponse {
 
+    static RawResponse raw(@NonNull String... value) {
+        return RawResponse.of(value);
+    }
+
+    static ColorResponse color(@NonNull ChatColor color, @NonNull String... value) {
+        return ColorResponse.of(color, value);
+    }
+
+    static ColorResponse ok(@NonNull String... value) {
+        return color(ChatColor.GREEN, value);
+    }
+
+    static ColorResponse err(@NonNull String... value) {
+        return color(ChatColor.RED, value);
+    }
+
     String render();
 
     String raw();
 
-    BukkitResponse withField(String field, String value);
+    BukkitResponse with(@NonNull String field, String value);
 
-    default BukkitResponse sendTo(CommandSender target) {
+    /**
+     * @deprecated Use {@link #with(String, String)} instead.
+     */
+    @Deprecated
+    default BukkitResponse withField(@NonNull String field, String value) {
+        return this.with(field, value);
+    }
+
+    default BukkitResponse sendTo(@NonNull CommandSender target) {
         target.sendMessage(this.render());
         return this;
     }
 
-    default BukkitResponse sendTo(Collection<? extends CommandSender> targets) {
+    default BukkitResponse sendTo(@NonNull Collection<? extends CommandSender> targets) {
         String render = this.render();
         targets.forEach(target -> target.sendMessage(render));
         return this;
@@ -34,13 +60,13 @@ public interface BukkitResponse {
         return this.sendTo(new ArrayList<>(Bukkit.getOnlinePlayers()));
     }
 
-    default BukkitResponse sendToAllWithPermission(String permission) {
+    default BukkitResponse sendToAllWithPermission(@NonNull String permission) {
         return this.sendTo(new ArrayList<>(Bukkit.getOnlinePlayers()).stream()
             .filter(player -> player.hasPermission(permission))
             .collect(Collectors.toList()));
     }
 
-    default BukkitResponse sendToAllPlayersThatCanSee(Player player) {
+    default BukkitResponse sendToAllPlayersThatCanSee(@NonNull Player player) {
         return this.sendTo(new ArrayList<>(Bukkit.getOnlinePlayers()).stream()
             .filter(onlinePlayer -> onlinePlayer.canSee(player))
             .collect(Collectors.toList()));
@@ -50,30 +76,58 @@ public interface BukkitResponse {
         return this.sendTo(Bukkit.getConsoleSender());
     }
 
-    default BukkitResponse withField(String field, Double value) {
-        if (value == null) throw new IllegalArgumentException("value cannot be null");
-        return this.withField(field, String.format(Locale.US, "%.2f", value));
+    default BukkitResponse with(@NonNull String field, @NonNull Double value) {
+        return this.with(field, String.format(Locale.US, "%.2f", value));
     }
 
-    default BukkitResponse withField(String field, CommandSender value) {
-        if (value == null) throw new IllegalArgumentException("value cannot be null");
-        return this.withField(field, value.getName());
+    /**
+     * @deprecated Use {@link #with(String, Double)} instead.
+     */
+    @Deprecated
+    default BukkitResponse withField(@NonNull String field, @NonNull Double value) {
+        return this.with(field, value);
     }
 
-    default BukkitResponse withField(String field, World value) {
-        if (value == null) throw new IllegalArgumentException("value cannot be null");
-        return this.withField(field, value.getName());
+    default BukkitResponse with(@NonNull String field, @NonNull CommandSender value) {
+        return this.with(field, value.getName());
     }
 
-    default BukkitResponse withField(String field, ItemStack value) {
+    /**
+     * @deprecated Use {@link #with(String, CommandSender)} instead.
+     */
+    @Deprecated
+    default BukkitResponse withField(@NonNull String field, @NonNull CommandSender value) {
+        return this.with(field, value);
+    }
 
-        if (value == null) throw new IllegalArgumentException("value cannot be null");
+    default BukkitResponse with(@NonNull String field, @NonNull World value) {
+        return this.with(field, value.getName());
+    }
+
+    /**
+     * @deprecated Use {@link #with(String, World)} instead.
+     */
+    @Deprecated
+    default BukkitResponse withField(@NonNull String field, @NonNull World value) {
+        return this.with(field, value);
+    }
+
+    default BukkitResponse with(@NonNull String field, @NonNull ItemStack value) {
+
         String result = value.getType().name().replace("_", " ");
 
         if (value.hasItemMeta() && (value.getItemMeta().getDisplayName() != null)) {
             result += " ('" + value.getItemMeta().getDisplayName() + "')";
         }
 
-        return this.withField(field, result);
+        return this.with(field, result);
+    }
+
+    /**
+     * @deprecated Use {@link #with(String, ItemStack)} instead.
+     */
+    @Deprecated
+    default BukkitResponse withField(@NonNull String field, @NonNull ItemStack value) {
+        return this.with(field, value);
     }
 }
