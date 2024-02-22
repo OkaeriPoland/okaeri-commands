@@ -19,6 +19,7 @@
         <module>core</module>
         <module>acl</module>
         <module>bukkit</module>
+        <module>bungee</module>
         <module>injector</module>
         <module>validator</module>
         <module>brigadier</module>
