@@ -4,7 +4,7 @@ import com.destroystokyo.paper.event.brigadier.AsyncPlayerSendCommandsEvent;
 import eu.okaeri.commands.Commands;
 import eu.okaeri.commands.CommandsExtension;
 import eu.okaeri.commands.OkaeriCommands;
-import eu.okaeri.commands.service.CommandContext;
+import eu.okaeri.commands.service.CommandData;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.event.EventHandler;
@@ -35,9 +35,9 @@ public class CommandsBrigadierPaper extends CommandsBrigadierBase implements Com
             return;
         }
 
-        CommandContext commandContext = new CommandContext();
-        commandContext.add("sender", event.getPlayer());
+        CommandData data = new CommandData();
+        data.add("sender", event.getPlayer());
 
-        this.update(commandContext, event.getCommandNode());
+        this.update(data, event.getCommandNode());
     }
 }

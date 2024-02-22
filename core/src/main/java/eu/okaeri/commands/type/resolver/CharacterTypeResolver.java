@@ -1,8 +1,8 @@
 package eu.okaeri.commands.type.resolver;
 
 import eu.okaeri.commands.meta.ArgumentMeta;
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 import lombok.NonNull;
 
 public class CharacterTypeResolver extends BasicTypeResolver<Character> {
@@ -13,7 +13,7 @@ public class CharacterTypeResolver extends BasicTypeResolver<Character> {
     }
 
     @Override
-    public Character resolve(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull ArgumentMeta argumentMeta, @NonNull String text) {
+    public Character resolve(@NonNull Invocation invocation, @NonNull CommandData data, @NonNull ArgumentMeta argumentMeta, @NonNull String text) {
 
         if (text.length() != 1) {
             throw new IllegalArgumentException("non-char provided");

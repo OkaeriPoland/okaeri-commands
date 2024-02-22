@@ -22,7 +22,7 @@ public final class TestCommandComplete {
     public void prepare() {
         this.commands = new OkaeriCommands();
         this.commands.registerCommand(TabCompleteCommand.class);
-        this.commands.registerCompletion("scripts", (completion, argument, invocationContext, commandContext) -> Arrays.asList("script.py", "script.groovy"));
+        this.commands.registerCompletion("scripts", (completion, argument, invocation, data) -> Arrays.asList("script.py", "script.groovy"));
     }
 
     @Test

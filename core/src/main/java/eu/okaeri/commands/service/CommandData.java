@@ -7,7 +7,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @RequiredArgsConstructor
-public class CommandContext {
+public class CommandData {
 
     private final Map<String, Object> metadata = new LinkedHashMap<>();
 

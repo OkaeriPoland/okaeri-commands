@@ -2,8 +2,8 @@ package eu.okaeri.commands.handler.completion;
 
 import eu.okaeri.commands.Commands;
 import eu.okaeri.commands.meta.ArgumentMeta;
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 import lombok.NonNull;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,27 +19,27 @@ public class DefaultCompletionHandler implements CompletionHandler {
 
     @Override
     public void registerNamed(@NonNull Commands commands) {
-        commands.registerCompletion("default:enum", (completion, argument, invocationContext, commandContext) ->
-            this.completeEnum(invocationContext, argument.getType(), this.getLimit(argument, invocationContext)));
-        commands.registerCompletion("default:boolean", (completion, argument, invocationContext, commandContext) ->
+        commands.registerCompletion("default:enum", (completion, argument, invocation, data) ->
+            this.completeEnum(invocation, argument.getType(), this.getLimit(argument, invocation)));
+        commands.registerCompletion("default:boolean", (completion, argument, invocation, data) ->
             BOOLEAN_COMPLETIONS);
     }
 
-    protected List<String> completeEnum(@NotNull InvocationContext invocationContext, Class<?> type, int limit) {
-        return this.filter(limit, this.stringFilter(invocationContext), Arrays.stream(type.getEnumConstants())
+    protected List<String> completeEnum(@NotNull Invocation invocation, Class<?> type, int limit) {
+        return this.filter(limit, this.stringFilter(invocation), Arrays.stream(type.getEnumConstants())
             .map(Enum.class::cast)
             .map(Enum::name)
             .map(String::toLowerCase));
     }
 
     @Override
-    public List<String> complete(@NonNull ArgumentMeta argument, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
+    public List<String> complete(@NonNull ArgumentMeta argument, @NonNull Invocation invocation, @NonNull CommandData data) {
 
         Class<?> type = argument.getType();
-        int limit = this.getLimit(argument, invocationContext);
+        int limit = this.getLimit(argument, invocation);
 
         if (type.isEnum()) {
-            return this.completeEnum(invocationContext, type, limit);
+            return this.completeEnum(invocation, type, limit);
         }
 
         if (boolean.class.isAssignableFrom(type)) {
@@ -49,12 +49,12 @@ public class DefaultCompletionHandler implements CompletionHandler {
         return Collections.emptyList();
     }
 
-    protected int getLimit(@NonNull ArgumentMeta argumentMeta, @NonNull InvocationContext invocationContext) {
-        return CompletionHandler.getLimit(argumentMeta, invocationContext);
+    protected int getLimit(@NonNull ArgumentMeta argumentMeta, @NonNull Invocation invocation) {
+        return CompletionHandler.getLimit(argumentMeta, invocation);
     }
 
-    protected <T> T getData(@NonNull ArgumentMeta argumentMeta, @NonNull InvocationContext invocationContext, @NonNull String name, @NonNull Supplier<T> fallback, @NonNull Function<String, T> resolver) {
-        return CompletionHandler.getData(argumentMeta, invocationContext, name, fallback, resolver);
+    protected <T> T getData(@NonNull ArgumentMeta argumentMeta, @NonNull Invocation invocation, @NonNull String name, @NonNull Supplier<T> fallback, @NonNull Function<String, T> resolver) {
+        return CompletionHandler.getData(argumentMeta, invocation, name, fallback, resolver);
     }
 
     @Deprecated
@@ -66,7 +66,7 @@ public class DefaultCompletionHandler implements CompletionHandler {
         return CompletionHandler.filter(limit, filter, stream);
     }
 
-    protected Predicate<String> stringFilter(@NonNull InvocationContext invocationContext) {
-        return CompletionHandler.stringFilter(invocationContext);
+    protected Predicate<String> stringFilter(@NonNull Invocation invocation) {
+        return CompletionHandler.stringFilter(invocation);
     }
 }

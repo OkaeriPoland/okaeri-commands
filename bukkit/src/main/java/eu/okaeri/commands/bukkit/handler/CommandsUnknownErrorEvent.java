@@ -1,7 +1,7 @@
 package eu.okaeri.commands.bukkit.handler;
 
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
@@ -14,20 +14,20 @@ public class CommandsUnknownErrorEvent extends Event {
 
     private static final HandlerList HANDLER_LIST = new HandlerList();
 
-    private final CommandContext commandContext;
-    private final InvocationContext invocationContext;
+    private final CommandData data;
+    private final Invocation invocation;
     private final Throwable cause;
     private final String errorId;
     private boolean sendMessage;
 
-    public CommandsUnknownErrorEvent(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull Throwable cause, @NonNull String errorId, boolean sendMessage) {
-        this(false, commandContext, invocationContext, cause, errorId, sendMessage);
+    public CommandsUnknownErrorEvent(@NonNull CommandData data, @NonNull Invocation invocation, @NonNull Throwable cause, @NonNull String errorId, boolean sendMessage) {
+        this(false, data, invocation, cause, errorId, sendMessage);
     }
 
-    public CommandsUnknownErrorEvent(boolean isAsync, @NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull Throwable cause, @NonNull String errorId, boolean sendMessage) {
+    public CommandsUnknownErrorEvent(boolean isAsync, @NonNull CommandData data, @NonNull Invocation invocation, @NonNull Throwable cause, @NonNull String errorId, boolean sendMessage) {
         super(isAsync);
-        this.commandContext = commandContext;
-        this.invocationContext = invocationContext;
+        this.data = data;
+        this.invocation = invocation;
         this.cause = cause;
         this.errorId = errorId;
         this.sendMessage = sendMessage;

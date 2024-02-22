@@ -1,8 +1,8 @@
 package eu.okaeri.commands.type.resolver;
 
 import eu.okaeri.commands.meta.ArgumentMeta;
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 import lombok.NonNull;
 import lombok.SneakyThrows;
 
@@ -21,7 +21,7 @@ public class EnumTypeResolver extends BasicTypeResolver<Enum> {
     @Override
     @SneakyThrows
     @SuppressWarnings("unchecked")
-    public Enum resolve(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull ArgumentMeta argumentMeta, @NonNull String text) {
+    public Enum resolve(@NonNull Invocation invocation, @NonNull CommandData data, @NonNull ArgumentMeta argumentMeta, @NonNull String text) {
 
         Class<? extends Enum> enumType = (Class<? extends Enum>) argumentMeta.getType();
 

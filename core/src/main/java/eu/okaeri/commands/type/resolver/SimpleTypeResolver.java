@@ -1,8 +1,8 @@
 package eu.okaeri.commands.type.resolver;
 
 import eu.okaeri.commands.meta.ArgumentMeta;
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 
@@ -18,7 +18,7 @@ public class SimpleTypeResolver<T> extends BasicTypeResolver<T> {
     }
 
     @Override
-    public T resolve(@NonNull InvocationContext inv, @NonNull CommandContext com, @NonNull ArgumentMeta arg, @NonNull String text) {
+    public T resolve(@NonNull Invocation inv, @NonNull CommandData com, @NonNull ArgumentMeta arg, @NonNull String text) {
         return this.adapter.resolve(inv, com, arg, text);
     }
 }

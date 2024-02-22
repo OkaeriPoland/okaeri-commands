@@ -3,17 +3,17 @@ package eu.okaeri.commands.bukkit.handler;
 import eu.okaeri.commands.bukkit.response.BukkitResponse;
 import eu.okaeri.commands.bukkit.response.RawResponse;
 import eu.okaeri.commands.handler.result.ResultHandler;
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 import lombok.NonNull;
 import org.bukkit.command.CommandSender;
 
 public class BukkitResultHandler implements ResultHandler {
 
     @Override
-    public boolean handle(Object result, @NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext) {
+    public boolean handle(Object result, @NonNull CommandData data, @NonNull Invocation invocation) {
 
-        CommandSender sender = commandContext.get("sender", CommandSender.class);
+        CommandSender sender = data.get("sender", CommandSender.class);
         if (sender == null) {
             throw new RuntimeException("cannot return result, no sender found");
         }

@@ -6,8 +6,8 @@ import eu.okaeri.commands.exception.NoAccessException;
 import eu.okaeri.commands.handler.access.AccessHandler;
 import eu.okaeri.commands.meta.ExecutorMeta;
 import eu.okaeri.commands.meta.ServiceMeta;
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.bukkit.command.CommandSender;
@@ -23,13 +23,13 @@ public class BukkitAccessHandler implements AccessHandler {
     public final Commands commands;
 
     @Override
-    public boolean allowAccess(@NonNull ServiceMeta service, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, boolean checkExecutors) {
+    public boolean allowAccess(@NonNull ServiceMeta service, @NonNull Invocation invocation, @NonNull CommandData data, boolean checkExecutors) {
 
-        if (!commandContext.has("sender", CommandSender.class)) {
+        if (!data.has("sender", CommandSender.class)) {
             throw new RuntimeException("Cannot process command without sender in the context!");
         }
 
-        CommandSender sender = commandContext.get("sender", CommandSender.class);
+        CommandSender sender = data.get("sender", CommandSender.class);
         if (sender.isOp() || sender.hasPermission("*")) {
             // SPEEEEEEEED
             return true;
@@ -37,24 +37,24 @@ public class BukkitAccessHandler implements AccessHandler {
 
         if (checkExecutors) {
             boolean noExecutorAccess = this.commands.findByLabel(service.getLabel()).stream()
-                .noneMatch(command -> this.allowAccess(command.getExecutor(), invocationContext, commandContext));
+                .noneMatch(command -> this.allowAccess(command.getExecutor(), invocation, data));
             if (noExecutorAccess) {
                 return false;
             }
         }
 
-        Set<String> permissions = this.getPermissions(service, invocationContext, commandContext);
+        Set<String> permissions = this.getPermissions(service, invocation, data);
         return this.hasPermissions(sender, permissions, this.getMode(service));
     }
 
     @Override
-    public void checkAccess(@NonNull ServiceMeta service, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, boolean checkExecutors) {
+    public void checkAccess(@NonNull ServiceMeta service, @NonNull Invocation invocation, @NonNull CommandData data, boolean checkExecutors) {
 
-        if (this.allowAccess(service, invocationContext, commandContext, checkExecutors)) {
+        if (this.allowAccess(service, invocation, data, checkExecutors)) {
             return;
         }
 
-        String[] perms = this.getPermissions(service, invocationContext, commandContext).toArray(new String[0]);
+        String[] perms = this.getPermissions(service, invocation, data).toArray(new String[0]);
         Permission.Mode mode = this.getMode(service);
 
         if (perms.length == 0) {
@@ -72,30 +72,30 @@ public class BukkitAccessHandler implements AccessHandler {
     }
 
     @Override
-    public boolean allowAccess(@NonNull ExecutorMeta executor, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
+    public boolean allowAccess(@NonNull ExecutorMeta executor, @NonNull Invocation invocation, @NonNull CommandData data) {
 
-        if (!commandContext.has("sender", CommandSender.class)) {
+        if (!data.has("sender", CommandSender.class)) {
             throw new RuntimeException("Cannot process command without sender in the context!");
         }
 
-        CommandSender sender = commandContext.get("sender", CommandSender.class);
+        CommandSender sender = data.get("sender", CommandSender.class);
         if (sender.isOp() || sender.hasPermission("*")) {
             // SPEEEEEEEED
             return true;
         }
 
-        Set<String> permissions = this.getPermissions(executor, invocationContext, commandContext);
+        Set<String> permissions = this.getPermissions(executor, invocation, data);
         return this.hasPermissions(sender, permissions, this.getMode(executor));
     }
 
     @Override
-    public void checkAccess(@NonNull ExecutorMeta executor, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
+    public void checkAccess(@NonNull ExecutorMeta executor, @NonNull Invocation invocation, @NonNull CommandData data) {
 
-        if (this.allowAccess(executor, invocationContext, commandContext)) {
+        if (this.allowAccess(executor, invocation, data)) {
             return;
         }
 
-        String[] perms = this.getPermissions(executor, invocationContext, commandContext).toArray(new String[0]);
+        String[] perms = this.getPermissions(executor, invocation, data).toArray(new String[0]);
         Permission.Mode mode = this.getMode(executor);
 
         if (perms.length == 0) {
@@ -112,17 +112,17 @@ public class BukkitAccessHandler implements AccessHandler {
         }
     }
 
-    protected Set<String> getPermissions(@NonNull ServiceMeta service, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
-        return this.getPermissions(service.getImplementor().getClass().getAnnotation(Permission.class), invocationContext, commandContext);
+    protected Set<String> getPermissions(@NonNull ServiceMeta service, @NonNull Invocation invocation, @NonNull CommandData data) {
+        return this.getPermissions(service.getImplementor().getClass().getAnnotation(Permission.class), invocation, data);
     }
 
-    protected Set<String> getPermissions(@NonNull ExecutorMeta executor, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
-        return this.getPermissions(executor.getMethod().getAnnotation(Permission.class), invocationContext, commandContext);
+    protected Set<String> getPermissions(@NonNull ExecutorMeta executor, @NonNull Invocation invocation, @NonNull CommandData data) {
+        return this.getPermissions(executor.getMethod().getAnnotation(Permission.class), invocation, data);
     }
 
-    protected Set<String> getPermissions(Permission permission, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
+    protected Set<String> getPermissions(Permission permission, @NonNull Invocation invocation, @NonNull CommandData data) {
         return (permission == null) ? Collections.emptySet() : Arrays.stream(permission.value())
-            .map(perm -> this.commands.resolveText(invocationContext, commandContext, perm))
+            .map(perm -> this.commands.resolveText(invocation, data, perm))
             .collect(Collectors.toSet());
 
     }

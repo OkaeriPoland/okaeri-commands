@@ -1,8 +1,8 @@
 package eu.okaeri.commands.type.resolver;
 
 import eu.okaeri.commands.meta.ArgumentMeta;
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 import lombok.NonNull;
 
 import java.math.BigDecimal;
@@ -15,7 +15,7 @@ public class IntegerTypeResolver extends BasicTypeResolver<Integer> {
     }
 
     @Override
-    public Integer resolve(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull ArgumentMeta argumentMeta, @NonNull String text) {
+    public Integer resolve(@NonNull Invocation invocation, @NonNull CommandData data, @NonNull ArgumentMeta argumentMeta, @NonNull String text) {
         return new BigDecimal(text).intValueExact();
     }
 }

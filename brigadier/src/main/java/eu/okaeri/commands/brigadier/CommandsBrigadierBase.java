@@ -15,8 +15,8 @@ import eu.okaeri.commands.meta.ServiceMeta;
 import eu.okaeri.commands.meta.pattern.PatternMeta;
 import eu.okaeri.commands.meta.pattern.element.PatternElement;
 import eu.okaeri.commands.meta.pattern.element.StaticElement;
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -55,7 +55,7 @@ public class CommandsBrigadierBase {
     }
 
     @SuppressWarnings("unchecked")
-    public void update(CommandContext commandContext, RootCommandNode commandNode) {
+    public void update(CommandData data, RootCommandNode commandNode) {
 
         // delay dumping all labels to first player
         if (this.allLabels == null) {
@@ -99,8 +99,8 @@ public class CommandsBrigadierBase {
 
             // check access (permissions)
             ServiceMeta service = metas.get(0).getService();
-            InvocationContext dummyContext = InvocationContext.of(service, service.getLabel(), new String[0]);
-            if (!this.commands.getAccessHandler().allowAccess(service, dummyContext, commandContext, false)) {
+            Invocation dummyContext = Invocation.of(service, service.getLabel(), new String[0]);
+            if (!this.commands.getAccessHandler().allowAccess(service, dummyContext, data, false)) {
                 continue;
             }
 
@@ -113,8 +113,8 @@ public class CommandsBrigadierBase {
                 PatternMeta pattern = executor.getPattern();
 
                 // check access
-                InvocationContext invocationContext = InvocationContext.of(meta, service.getLabel(), "");
-                if (!this.commands.getAccessHandler().allowAccess(executor, invocationContext, commandContext)) {
+                Invocation invocation = Invocation.of(meta, service.getLabel(), "");
+                if (!this.commands.getAccessHandler().allowAccess(executor, invocation, data)) {
                     continue;
                 }
 
@@ -175,9 +175,9 @@ public class CommandsBrigadierBase {
                             List<String> argumentCompletions;
                             NamedCompletionHandler typeCompletionHandler = this.commands.getTypeCompletionHandlers().get(argumentMeta.getType());
                             if (typeCompletionHandler != null) {
-                                argumentCompletions = typeCompletionHandler.complete(executor.getCompletion(), argumentMeta, invocationContext, commandContext);
+                                argumentCompletions = typeCompletionHandler.complete(executor.getCompletion(), argumentMeta, invocation, data);
                             } else {
-                                argumentCompletions = this.commands.getCompletionHandler().complete(argumentMeta, invocationContext, commandContext);
+                                argumentCompletions = this.commands.getCompletionHandler().complete(argumentMeta, invocation, data);
                             }
                             // this section bifurcates so we need to track it separately
                             List<CommandNode> newNodes = new ArrayList<>();

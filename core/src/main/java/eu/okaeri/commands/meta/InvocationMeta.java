@@ -1,8 +1,8 @@
 package eu.okaeri.commands.meta;
 
-import eu.okaeri.commands.service.CommandContext;
+import eu.okaeri.commands.service.CommandData;
 import eu.okaeri.commands.service.CommandService;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.Invocation;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -13,12 +13,12 @@ import java.util.Objects;
 @Data
 public class InvocationMeta {
 
-    private InvocationContext invocation;
-    private CommandContext command;
+    private Invocation invocation;
+    private CommandData command;
     private ExecutorMeta executor;
     private Object[] call;
 
-    public static InvocationMeta of(@NonNull InvocationContext invocation, @NonNull CommandContext command, @NonNull ExecutorMeta executor, Object[] call) {
+    public static InvocationMeta of(@NonNull Invocation invocation, @NonNull CommandData command, @NonNull ExecutorMeta executor, Object[] call) {
         InvocationMeta meta = new InvocationMeta();
         meta.invocation = invocation;
         meta.command = command;

@@ -1,8 +1,8 @@
 package eu.okaeri.commands.bukkit.type;
 
 import eu.okaeri.commands.meta.ArgumentMeta;
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 import eu.okaeri.commands.type.resolver.BasicTypeResolver;
 import lombok.NonNull;
 import org.bukkit.Bukkit;
@@ -17,7 +17,7 @@ public class PlayerTypeResolver extends BasicTypeResolver<Player> {
     }
 
     @Override
-    public Player resolve(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull ArgumentMeta argumentMeta, @NonNull String text) {
+    public Player resolve(@NonNull Invocation invocation, @NonNull CommandData data, @NonNull ArgumentMeta argumentMeta, @NonNull String text) {
 
         // no player no value
         Player argPlayer = Bukkit.getPlayer(text);
@@ -26,7 +26,7 @@ public class PlayerTypeResolver extends BasicTypeResolver<Player> {
         }
 
         // if player, make sure that player can see target or is bypassing the check
-        CommandSender sender = commandContext.get("sender", CommandSender.class);
+        CommandSender sender = data.get("sender", CommandSender.class);
         if (sender instanceof Player) {
             Player senderPlayer = (Player) sender;
             if (senderPlayer.canSee(argPlayer) || senderPlayer.hasPermission("okaeri.commands.invisible")) {

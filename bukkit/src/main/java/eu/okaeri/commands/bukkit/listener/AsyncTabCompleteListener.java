@@ -2,8 +2,8 @@ package eu.okaeri.commands.bukkit.listener;
 
 import eu.okaeri.commands.bukkit.CommandsBukkit;
 import eu.okaeri.commands.meta.CommandMeta;
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 import lombok.SneakyThrows;
 import org.bukkit.command.CommandSender;
 import org.bukkit.event.Event;
@@ -61,11 +61,11 @@ public class AsyncTabCompleteListener implements EventExecutor {
             return;
         }
 
-        CommandContext commandContext = new CommandContext();
-        commandContext.add("sender", sender);
+        CommandData data = new CommandData();
+        data.add("sender", sender);
 
-        InvocationContext dummyContext = InvocationContext.of(label, args);
-        List<String> completions = this.commands.complete(metas, dummyContext, commandContext);
+        Invocation dummyContext = Invocation.of(label, args);
+        List<String> completions = this.commands.complete(metas, dummyContext, data);
 
         this.AsyncTabCompleteEventSetCompletions.bindTo(event).invoke(completions);
         this.AsyncTabCompleteEventSetHandled.bindTo(event).invoke(true);

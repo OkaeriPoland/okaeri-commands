@@ -7,7 +7,7 @@ import lombok.NonNull;
 import org.jetbrains.annotations.Nullable;
 
 @Data
-public class InvocationContext {
+public class Invocation {
 
     private final CommandMeta command;
     private final ServiceMeta service;
@@ -16,7 +16,7 @@ public class InvocationContext {
     private final String lastArg;
     private final boolean openArgs;
 
-    protected InvocationContext(CommandMeta command, ServiceMeta service, String label, String args) {
+    protected Invocation(CommandMeta command, ServiceMeta service, String label, String args) {
         this.command = command;
         this.service = service;
         this.label = label;
@@ -26,16 +26,16 @@ public class InvocationContext {
         this.openArgs = args.endsWith(" ");
     }
 
-    public static InvocationContext of(@NonNull CommandMeta command, @NonNull String label, @NonNull String args) {
-        return new InvocationContext(command, null, label, String.join(" ", args));
+    public static Invocation of(@NonNull CommandMeta command, @NonNull String label, @NonNull String args) {
+        return new Invocation(command, null, label, String.join(" ", args));
     }
 
-    public static InvocationContext of(@NonNull String label, @NonNull String args) {
-        return new InvocationContext(null, null, label, args);
+    public static Invocation of(@NonNull String label, @NonNull String args) {
+        return new Invocation(null, null, label, args);
     }
 
-    public static InvocationContext of(@NonNull ServiceMeta service, @NonNull String label, @NonNull String[] args) {
-        return new InvocationContext(null, service, label, String.join(" ", args));
+    public static Invocation of(@NonNull ServiceMeta service, @NonNull String label, @NonNull String[] args) {
+        return new Invocation(null, service, label, String.join(" ", args));
     }
 
     @Nullable

@@ -25,10 +25,10 @@ public class ColorResponse extends RawResponse {
 
         if (this.color == null) {
             String render = ChatColor.translateAlternateColorCodes('&', super.raw());
-            render = ResponseUtils.replaceAll(render, this.fields());
+            render = replaceAll(render, this.fields());
             return render;
         }
 
-        return this.color + ResponseUtils.replaceAll(this.raw(), this.fields());
+        return this.color + replaceAll(this.raw(), this.fields());
     }
 }

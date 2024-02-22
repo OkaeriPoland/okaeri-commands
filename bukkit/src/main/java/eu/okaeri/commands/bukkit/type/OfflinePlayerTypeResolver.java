@@ -1,8 +1,8 @@
 package eu.okaeri.commands.bukkit.type;
 
 import eu.okaeri.commands.meta.ArgumentMeta;
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 import eu.okaeri.commands.type.resolver.BasicTypeResolver;
 import lombok.NonNull;
 import org.bukkit.Bukkit;
@@ -21,7 +21,7 @@ public class OfflinePlayerTypeResolver extends BasicTypeResolver<OfflinePlayer> 
     }
 
     @Override
-    public OfflinePlayer resolve(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull ArgumentMeta argumentMeta, @NonNull String text) {
+    public OfflinePlayer resolve(@NonNull Invocation invocation, @NonNull CommandData data, @NonNull ArgumentMeta argumentMeta, @NonNull String text) {
         try {
             UUID uniqueId = UUID.fromString(text);
             return Bukkit.getOfflinePlayer(uniqueId);
@@ -30,7 +30,7 @@ public class OfflinePlayerTypeResolver extends BasicTypeResolver<OfflinePlayer> 
             // explicit resolve before getOfflinePlayer gets called
             // who knows what is behind that scary implementation
             // that can make blocking net I/O in Server Thread
-            Player onlinePlayer = PLAYER_TYPE_RESOLVER.resolve(invocationContext, commandContext, argumentMeta, text);
+            Player onlinePlayer = PLAYER_TYPE_RESOLVER.resolve(invocation, data, argumentMeta, text);
             if (onlinePlayer != null) {
                 return onlinePlayer;
             }

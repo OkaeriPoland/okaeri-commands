@@ -1,12 +1,12 @@
 package eu.okaeri.commands.handler.text;
 
-import eu.okaeri.commands.service.CommandContext;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.CommandData;
+import eu.okaeri.commands.service.Invocation;
 import lombok.NonNull;
 
 public interface TextHandler {
 
     String resolve(@NonNull String text);
 
-    String resolve(@NonNull CommandContext commandContext, @NonNull InvocationContext invocationContext, @NonNull String text);
+    String resolve(@NonNull CommandData data, @NonNull Invocation invocation, @NonNull String text);
 }

@@ -26,10 +26,10 @@ import eu.okaeri.commands.meta.*;
 import eu.okaeri.commands.meta.pattern.PatternMeta;
 import eu.okaeri.commands.meta.pattern.element.PatternElement;
 import eu.okaeri.commands.meta.pattern.element.StaticElement;
-import eu.okaeri.commands.service.CommandContext;
+import eu.okaeri.commands.service.CommandData;
 import eu.okaeri.commands.service.CommandException;
 import eu.okaeri.commands.service.CommandService;
-import eu.okaeri.commands.service.InvocationContext;
+import eu.okaeri.commands.service.Invocation;
 import eu.okaeri.commands.type.DefaultCommandsTypes;
 import eu.okaeri.commands.type.resolver.SimpleTypeResolver;
 import eu.okaeri.commands.type.resolver.SimpleTypeResolverAdapter;
@@ -217,10 +217,10 @@ public class OkaeriCommands implements Commands {
     public Commands registerCompletion(@NonNull String name, @NonNull NamedCompletionHandler handler, boolean auto) {
 
         if (auto) {
-            this.namedCompletionHandlers.put(name, (completionData, argument, invocationContext, commandContext) -> CompletionHandler.filter(
-                CompletionHandler.getLimit(argument, invocationContext),
-                CompletionHandler.stringFilter(invocationContext),
-                handler.complete(completionData, argument, invocationContext, commandContext).stream()
+            this.namedCompletionHandlers.put(name, (completionData, argument, invocation, data) -> CompletionHandler.filter(
+                CompletionHandler.getLimit(argument, invocation),
+                CompletionHandler.stringFilter(invocation),
+                handler.complete(completionData, argument, invocation, data).stream()
             ));
             return this;
         }
@@ -231,20 +231,20 @@ public class OkaeriCommands implements Commands {
 
     @Override
     public Commands registerCompletion(@NonNull String name, @NonNull Supplier<Stream<String>> streamHandler) {
-        this.namedCompletionHandlers.put(name, (completionData, argument, invocationContext, commandContext) -> CompletionHandler.filter(
-            CompletionHandler.getLimit(argument, invocationContext),
-            CompletionHandler.stringFilter(invocationContext),
+        this.namedCompletionHandlers.put(name, (completionData, argument, invocation, data) -> CompletionHandler.filter(
+            CompletionHandler.getLimit(argument, invocation),
+            CompletionHandler.stringFilter(invocation),
             streamHandler.get()
         ));
         return this;
     }
 
     @Override
-    public Commands registerCompletion(@NonNull String name, @NonNull Function<CommandContext, Stream<String>> streamHandler) {
-        this.namedCompletionHandlers.put(name, (completionData, argument, invocationContext, commandContext) -> CompletionHandler.filter(
-            CompletionHandler.getLimit(argument, invocationContext),
-            CompletionHandler.stringFilter(invocationContext),
-            streamHandler.apply(commandContext)
+    public Commands registerCompletion(@NonNull String name, @NonNull Function<CommandData, Stream<String>> streamHandler) {
+        this.namedCompletionHandlers.put(name, (completionData, argument, invocation, data) -> CompletionHandler.filter(
+            CompletionHandler.getLimit(argument, invocation),
+            CompletionHandler.stringFilter(invocation),
+            streamHandler.apply(data)
         ));
         return this;
     }
@@ -253,10 +253,10 @@ public class OkaeriCommands implements Commands {
     public Commands registerCompletion(@NonNull Class<?> type, @NonNull NamedCompletionHandler handler, boolean auto) {
 
         if (auto) {
-            this.typeCompletionHandlers.put(type, (completionData, argument, invocationContext, commandContext) -> CompletionHandler.filter(
-                CompletionHandler.getLimit(argument, invocationContext),
-                CompletionHandler.stringFilter(invocationContext),
-                handler.complete(completionData, argument, invocationContext, commandContext).stream()
+            this.typeCompletionHandlers.put(type, (completionData, argument, invocation, data) -> CompletionHandler.filter(
+                CompletionHandler.getLimit(argument, invocation),
+                CompletionHandler.stringFilter(invocation),
+                handler.complete(completionData, argument, invocation, data).stream()
             ));
             return this;
         }
@@ -267,20 +267,20 @@ public class OkaeriCommands implements Commands {
 
     @Override
     public Commands registerCompletion(@NonNull Class<?> type, @NonNull Supplier<Stream<String>> streamHandler) {
-        this.typeCompletionHandlers.put(type, (completionData, argument, invocationContext, commandContext) -> CompletionHandler.filter(
-            CompletionHandler.getLimit(argument, invocationContext),
-            CompletionHandler.stringFilter(invocationContext),
+        this.typeCompletionHandlers.put(type, (completionData, argument, invocation, data) -> CompletionHandler.filter(
+            CompletionHandler.getLimit(argument, invocation),
+            CompletionHandler.stringFilter(invocation),
             streamHandler.get()
         ));
         return this;
     }
 
     @Override
-    public Commands registerCompletion(@NonNull Class<?> type, @NonNull Function<CommandContext, Stream<String>> streamHandler) {
-        this.typeCompletionHandlers.put(type, (completionData, argument, invocationContext, commandContext) -> CompletionHandler.filter(
-            CompletionHandler.getLimit(argument, invocationContext),
-            CompletionHandler.stringFilter(invocationContext),
-            streamHandler.apply(commandContext)
+    public Commands registerCompletion(@NonNull Class<?> type, @NonNull Function<CommandData, Stream<String>> streamHandler) {
+        this.typeCompletionHandlers.put(type, (completionData, argument, invocation, data) -> CompletionHandler.filter(
+            CompletionHandler.getLimit(argument, invocation),
+            CompletionHandler.stringFilter(invocation),
+            streamHandler.apply(data)
         ));
         return this;
     }
@@ -291,13 +291,13 @@ public class OkaeriCommands implements Commands {
     }
 
     @Override
-    public String resolveText(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull String text) {
-        return this.getTextHandler().resolve(commandContext, invocationContext, text);
+    public String resolveText(@NonNull Invocation invocation, @NonNull CommandData data, @NonNull String text) {
+        return this.getTextHandler().resolve(data, invocation, text);
     }
 
     @Override
-    public Object resolveMissingArgument(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
-        return this.getMissingArgumentHandler().resolve(invocationContext, commandContext, command, param, index);
+    public Object resolveMissingArgument(@NonNull Invocation invocation, @NonNull CommandData data, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
+        return this.getMissingArgumentHandler().resolve(invocation, data, command, param, index);
     }
 
     @Override
@@ -332,56 +332,56 @@ public class OkaeriCommands implements Commands {
     @SuppressWarnings("unchecked")
     public <T> T call(@NonNull String command) throws Exception {
 
-        Optional<InvocationContext> context = this.invocationMatch(command);
+        Optional<Invocation> context = this.invocationMatch(command);
         if (!context.isPresent()) {
             throw new NoSuchCommandException("cannot call '" + command + "', no executor available");
         }
 
-        InvocationContext invocationContext = context.get();
-        CommandContext commandContext = new CommandContext();
+        Invocation invocation = context.get();
+        CommandData data = new CommandData();
 
-        InvocationMeta invocationMeta = this.invocationPrepare(invocationContext, commandContext);
-        ServiceMeta service = invocationContext.getService();
+        InvocationMeta invocationMeta = this.invocationPrepare(invocation, data);
+        ServiceMeta service = invocation.getService();
 
         if (service != null) {
             CommandService implementor = service.getImplementor();
-            implementor.preInvoke(invocationContext, commandContext, invocationMeta);
+            implementor.preInvoke(invocation, data, invocationMeta);
         }
 
         return (T) invocationMeta.call();
     }
 
     @Override
-    public List<String> complete(@NonNull List<CommandMeta> metas, @NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
+    public List<String> complete(@NonNull List<CommandMeta> metas, @NonNull Invocation invocation, @NonNull CommandData data) {
 
         if (metas.isEmpty()) {
             return Collections.emptyList();
         }
 
-        String args = invocationContext.getArgs();
+        String args = invocation.getArgs();
         List<String> completions = new ArrayList<>();
 
         for (CommandMeta meta : metas) {
 
-            InvocationContext localInvocationContext = InvocationContext.of(
+            Invocation localInvocation = Invocation.of(
                 meta,
-                invocationContext.getLabel(),
-                invocationContext.getArgs()
+                invocation.getLabel(),
+                invocation.getArgs()
             );
 
             ServiceMeta service = meta.getService();
-            if (!this.getAccessHandler().allowAccess(service, localInvocationContext, commandContext, false)) {
+            if (!this.getAccessHandler().allowAccess(service, localInvocation, data, false)) {
                 continue;
             }
 
             ExecutorMeta executor = meta.getExecutor();
-            if (!this.getAccessHandler().allowAccess(executor, localInvocationContext, commandContext)) {
+            if (!this.getAccessHandler().allowAccess(executor, localInvocation, data)) {
                 continue;
             }
 
             PatternMeta pattern = executor.getPattern();
             Optional<PatternElement> elementOptional = pattern.getCurrentElement(args);
-            String lastArgLower = localInvocationContext.getLastArg().toLowerCase(Locale.ROOT);
+            String lastArgLower = localInvocation.getLastArg().toLowerCase(Locale.ROOT);
 
             if (!elementOptional.isPresent()) {
                 continue;
@@ -406,11 +406,11 @@ public class OkaeriCommands implements Commands {
                         // add completions from type completion handler
                         NamedCompletionHandler typeCompletionHandler = this.typeCompletionHandlers.get(argumentMeta.getType());
                         if (typeCompletionHandler != null) {
-                            completions.addAll(typeCompletionHandler.complete(executor.getCompletion(), argumentMeta, localInvocationContext, commandContext));
+                            completions.addAll(typeCompletionHandler.complete(executor.getCompletion(), argumentMeta, localInvocation, data));
                         }
                         // add completions from general completion handler
                         else {
-                            List<String> generalCompletions = this.getCompletionHandler().complete(argumentMeta, localInvocationContext, commandContext);
+                            List<String> generalCompletions = this.getCompletionHandler().complete(argumentMeta, localInvocation, data);
                             completions.addAll(generalCompletions);
                         }
                     }
@@ -424,11 +424,11 @@ public class OkaeriCommands implements Commands {
                                 NamedCompletionHandler completionHandler = this.namedCompletionHandlers.get(completionName);
                                 // if handled found receive completions and add all
                                 if (completionHandler != null) {
-                                    completions.addAll(completionHandler.complete(executor.getCompletion(), argumentMeta, localInvocationContext, commandContext));
+                                    completions.addAll(completionHandler.complete(executor.getCompletion(), argumentMeta, localInvocation, data));
                                 }
                             }
                             // simple completion, just add if matching
-                            else if (localInvocationContext.isOpenArgs() || completion.toLowerCase(Locale.ROOT).startsWith(lastArgLower)) {
+                            else if (localInvocation.isOpenArgs() || completion.toLowerCase(Locale.ROOT).startsWith(lastArgLower)) {
                                 completions.add(completion);
                             }
                         }
@@ -446,11 +446,11 @@ public class OkaeriCommands implements Commands {
         String label = parts[0];
         String args = (parts.length > 1) ? parts[1] : "";
         List<CommandMeta> metas = this.findByLabel(label);
-        return this.complete(metas, InvocationContext.of(label, args), new CommandContext());
+        return this.complete(metas, Invocation.of(label, args), new CommandData());
     }
 
     @Override
-    public Optional<InvocationContext> invocationMatch(@NonNull String command) {
+    public Optional<Invocation> invocationMatch(@NonNull String command) {
 
         String[] parts = command.split(" ", 2);
         String label = parts[0];
@@ -462,16 +462,16 @@ public class OkaeriCommands implements Commands {
         }
 
         CommandMeta commandMeta = commandMetas.get();
-        return Optional.of(InvocationContext.of(commandMeta, label, args));
+        return Optional.of(Invocation.of(commandMeta, label, args));
     }
 
     @Override
-    public InvocationMeta invocationPrepare(@NonNull InvocationContext invocationContext, @NonNull CommandContext commandContext) {
+    public InvocationMeta invocationPrepare(@NonNull Invocation invocation, @NonNull CommandData data) {
 
-        String args = invocationContext.getArgs();
-        CommandMeta commandMeta = invocationContext.getCommand();
+        String args = invocation.getArgs();
+        CommandMeta commandMeta = invocation.getCommand();
         if (commandMeta == null) {
-            throw new IllegalArgumentException("Cannot use dummy context for prepare: " + invocationContext);
+            throw new IllegalArgumentException("Cannot use dummy context for prepare: " + invocation);
         }
 
         ExecutorMeta executor = commandMeta.getExecutor();
@@ -489,7 +489,7 @@ public class OkaeriCommands implements Commands {
 
         // call pre-resolve
         CommandService implementor = commandMeta.getService().getImplementor();
-        implementor.preResolve(invocationContext, commandContext);
+        implementor.preResolve(invocation, data);
 
         // resolve command text arguments to value mappings
         for (ArgumentMeta argument : arguments) {
@@ -508,7 +508,7 @@ public class OkaeriCommands implements Commands {
                 } else if (argument.isOptional() && (value == null)) {
                     resolvedValue = null;
                 } else {
-                    resolvedValue = typeResolverOptional.get().resolve(invocationContext, commandContext, argument, value);
+                    resolvedValue = typeResolverOptional.get().resolve(invocation, data, argument, value);
                     if (!argument.isOptional() && (resolvedValue == null)) {
                         throw new IllegalArgumentException("cannot resolve argument");
                     }
@@ -562,14 +562,14 @@ public class OkaeriCommands implements Commands {
             // check for label
             if (param.getAnnotation(Label.class) != null) {
                 if (CharSequence.class.isAssignableFrom(paramType)) {
-                    call[i] = invocationContext.getLabel();
+                    call[i] = invocation.getLabel();
                     continue;
                 }
                 throw new IllegalArgumentException("@Label type cannot be " + paramType + " [allowed: String]");
             }
 
             // pass to adapter for missing elements
-            call[i] = this.resolveMissingArgument(invocationContext, commandContext, commandMeta, param, i);
+            call[i] = this.resolveMissingArgument(invocation, data, commandMeta, param, i);
         }
 
         // validate
@@ -578,7 +578,7 @@ public class OkaeriCommands implements Commands {
             Parameter param = methodParameters[i];
             Object value = call[i];
 
-            ValidationResult validationResult = this.parameterValidationHandler.validate(invocationContext, commandContext, commandMeta, param, value, i);
+            ValidationResult validationResult = this.parameterValidationHandler.validate(invocation, data, commandMeta, param, value, i);
             if (validationResult.isValid()) {
                 continue;
             }
@@ -588,7 +588,7 @@ public class OkaeriCommands implements Commands {
         }
 
         // check late access
-        InvocationMeta invocationMeta = InvocationMeta.of(invocationContext, commandContext, executor, call);
+        InvocationMeta invocationMeta = InvocationMeta.of(invocation, data, executor, call);
         this.accessHandler.checkCall(invocationMeta);
 
         // read to go!
