@@ -45,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
 public class CommandsBukkit extends OkaeriCommands {
 
@@ -78,7 +79,9 @@ public class CommandsBukkit extends OkaeriCommands {
 
     @Override
     public void close() throws IOException {
-        this.getRegisteredServices().forEach((label, service) -> CommandsBukkitUnsafe.unregister(label));
+        this.getRegisteredServices().values().stream()
+            .flatMap(service -> Stream.concat(Stream.of(service.getLabel()), service.getAliases().stream()))
+            .forEach(CommandsBukkitUnsafe::unregister);
     }
 
     @SuppressWarnings("unchecked")
