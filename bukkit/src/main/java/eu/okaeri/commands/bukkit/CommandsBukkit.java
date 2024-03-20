@@ -265,7 +265,7 @@ public class CommandsBukkit extends OkaeriCommands {
             return;
         }
 
-        throw new RuntimeException("Unknown return type for errorHandler [allowed: BukkitResponse, String, null]", throwable);
+        throw new RuntimeException("Unknown return value for errorHandler [allowed: BukkitResponse, CharSequence, null]", throwable);
     }
 
     private void handleExecution(@NonNull CommandSender sender, @NonNull Invocation invocation, @NonNull CommandData data) {
@@ -292,7 +292,7 @@ public class CommandsBukkit extends OkaeriCommands {
                 return;
             }
 
-            throw new RuntimeException("Unknown return type for executor [allowed: BukkitResponse, String, void]");
+            throw new RuntimeException("Unknown return value for executor [allowed: BukkitResponse, CharSequence, null]");
         } catch (Exception exception) {
             // unpack exception
             Throwable cause = exception.getCause();

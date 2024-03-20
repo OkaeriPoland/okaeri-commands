@@ -14,6 +14,10 @@ public class BungeeResultHandler implements ResultHandler {
     @Override
     public boolean handle(Object result, @NonNull CommandData data, @NonNull Invocation invocation) {
 
+        if (result == null) {
+            return true;
+        }
+
         CommandSender sender = data.get("sender", CommandSender.class);
         if (sender == null) {
             throw new RuntimeException("cannot return result, no sender found");
