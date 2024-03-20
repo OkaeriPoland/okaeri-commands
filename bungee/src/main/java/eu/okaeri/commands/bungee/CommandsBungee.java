@@ -227,7 +227,7 @@ public class CommandsBungee extends OkaeriCommands {
             return;
         }
 
-        throw new RuntimeException("Unknown return type for errorHandler [allowed: BukkitResponse, String, null]", throwable);
+        throw new RuntimeException("Unknown return value for errorHandler [allowed: BungeeResponse, CharSequence, null]", throwable);
     }
 
     private void handleExecution(@NonNull CommandSender sender, @NonNull Invocation invocation, @NonNull CommandData data) {
@@ -254,7 +254,7 @@ public class CommandsBungee extends OkaeriCommands {
                 return;
             }
 
-            throw new RuntimeException("Unknown return type for executor [allowed: BungeeResponse, String, void]");
+            throw new RuntimeException("Unknown return value for executor [allowed: BungeeResponse, CharSequence, null]");
         } catch (Exception exception) {
             // unpack exception
             Throwable cause = exception.getCause();
