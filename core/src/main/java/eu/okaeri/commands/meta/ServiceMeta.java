@@ -1,6 +1,7 @@
 package eu.okaeri.commands.meta;
 
 import eu.okaeri.commands.Commands;
+import eu.okaeri.commands.OkaeriCommands;
 import eu.okaeri.commands.annotation.Command;
 import eu.okaeri.commands.annotation.NestedCommand;
 import eu.okaeri.commands.service.CommandService;
@@ -38,7 +39,10 @@ public class ServiceMeta {
         meta.label = commands.resolveText(getResultingLabel(parent, descriptor.label()));
         meta.originalLabel = commands.resolveText(descriptor.label());
         meta.patternPrefix = commands.resolveText(getResultingPatternPrefix(parent, descriptor.label()));
-        meta.aliases = Arrays.stream(descriptor.aliases()).map(commands::resolveText).collect(Collectors.toList());
+        meta.aliases = Arrays.stream(descriptor.aliases())
+            .map(commands::resolveText)
+            .flatMap(pattern -> Arrays.stream(pattern.split(OkaeriCommands.SEPARATOR)))
+            .collect(Collectors.toList());
         meta.description = commands.resolveText(descriptor.description());
 
         meta.parent = parent;
