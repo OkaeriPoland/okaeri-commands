@@ -1,6 +1,7 @@
 package eu.okaeri.commands.meta;
 
 import eu.okaeri.commands.Commands;
+import eu.okaeri.commands.OkaeriCommands;
 import eu.okaeri.commands.annotation.Executor;
 import eu.okaeri.commands.meta.pattern.PatternMeta;
 import eu.okaeri.commands.meta.pattern.element.PatternElement;
@@ -45,6 +46,7 @@ public class ExecutorMeta {
 
         return patterns.stream()
             .map(commands::resolveText)
+            .flatMap(pattern -> Arrays.stream(pattern.split(OkaeriCommands.SEPARATOR)))
             .map(pattern -> {
 
                 // create

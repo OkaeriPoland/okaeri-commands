@@ -50,6 +50,8 @@ import java.util.stream.Stream;
 @Data
 public class OkaeriCommands implements Commands {
 
+    public static final String SEPARATOR = ";";
+
     protected static final Comparator<CommandMeta> META_COMPARATOR = Comparator
         .comparing((CommandMeta meta) -> {
             List<PatternElement> elements = meta.getExecutor().getPattern().getElements();
