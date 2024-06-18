@@ -78,7 +78,7 @@ public class CommandsBukkit extends OkaeriCommands {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         this.getRegisteredServices().values().stream()
             .flatMap(service -> Stream.concat(Stream.of(service.getLabel()), service.getAliases().stream()))
             .forEach(CommandsBukkitUnsafe::unregister);
