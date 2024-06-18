@@ -20,11 +20,11 @@ public class BungeeCompletionHandler extends DefaultCompletionHandler {
     @Override
     public void registerNamed(@NonNull Commands commands) {
         super.registerNamed(commands);
-        commands.registerCompletion("bukkit:player:name", (completion, argument, invocation, data) ->
+        commands.registerCompletion("bungee:player:name", (completion, argument, invocation, data) ->
             this.completePlayer(argument, invocation, data, ProxiedPlayer::getName));
-        commands.registerCompletion("bukkit:player:address", (completion, argument, invocation, data) ->
+        commands.registerCompletion("bungee:player:address", (completion, argument, invocation, data) ->
             this.completePlayer(argument, invocation, data, player -> player.getAddress().getAddress().getHostAddress()));
-        commands.registerCompletion("bukkit:player:uuid", (completion, argument, invocation, data) ->
+        commands.registerCompletion("bungee:player:uuid", (completion, argument, invocation, data) ->
             this.completePlayer(argument, invocation, data, player -> player.getUniqueId().toString()));
     }
 
