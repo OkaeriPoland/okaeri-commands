@@ -602,6 +602,6 @@ public class OkaeriCommands implements Commands {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
     }
 }

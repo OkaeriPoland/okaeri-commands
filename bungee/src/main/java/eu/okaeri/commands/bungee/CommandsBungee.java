@@ -69,7 +69,7 @@ public class CommandsBungee extends OkaeriCommands {
     }
 
     @Override
-    public void close() throws IOException {
+    public void close() {
         ProxyServer.getInstance().getPluginManager().getCommands().stream()
             .filter(entry -> this.registeredServices.containsKey(entry.getKey()))
             .forEach(entry -> ProxyServer.getInstance().getPluginManager().unregisterCommand(entry.getValue()));
