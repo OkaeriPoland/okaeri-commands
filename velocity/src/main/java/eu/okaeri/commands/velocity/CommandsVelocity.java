@@ -17,8 +17,6 @@ import eu.okaeri.commands.service.CommandData;
 import eu.okaeri.commands.service.CommandException;
 import eu.okaeri.commands.service.CommandService;
 import eu.okaeri.commands.service.Invocation;
-import eu.okaeri.commands.velocity.annotation.Async;
-import eu.okaeri.commands.velocity.annotation.Sync;
 import eu.okaeri.commands.velocity.handler.VelocityAccessHandler;
 import eu.okaeri.commands.velocity.handler.VelocityCompletionHandler;
 import eu.okaeri.commands.velocity.handler.VelocityErrorHandler;
@@ -28,11 +26,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
-import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -46,12 +41,6 @@ import java.util.stream.Stream;
 public class CommandsVelocity extends OkaeriCommands {
 
     private static final Logger LOGGER = Logger.getLogger(CommandsVelocity.class.getSimpleName());
-
-    public static final Duration PRE_INVOKE_SYNC_WARN_TIME = Duration.ofMillis(5);
-    public static final Duration TOTAL_SYNC_WARN_TIME = Duration.ofMillis(10);
-
-    private final Map<Method, Boolean> isAsyncCacheMethod = new ConcurrentHashMap<>();
-    private final Map<Class<? extends CommandService>, Boolean> isAsyncCacheService = new ConcurrentHashMap<>();
 
     private final Map<String, List<CommandMeta>> registeredCommands = new ConcurrentHashMap<>();
     @Getter private final Map<String, ServiceMeta> registeredServices = new ConcurrentHashMap<>();
@@ -212,26 +201,7 @@ public class CommandsVelocity extends OkaeriCommands {
 
         ExecutorMeta executor = invocation.getCommand().getExecutor();
         this.getAccessHandler().checkAccess(executor, invocation, data);
-        Duration durationToPreInvoke = Duration.between(Instant.now(), start);
-
-        if (durationToPreInvoke.compareTo(PRE_INVOKE_SYNC_WARN_TIME) > 0) {
-            this.syncTimeWarn(service, executor, fullCommand, data, durationToPreInvoke, "pre-invoke");
-        }
-
-        if (this.isAsync(invocation)) {
-            Runnable prepareAndExecuteAsync = () -> this.handleExecution(sender, invocation, data);
-            this.proxy.getScheduler().buildTask(this.plugin, prepareAndExecuteAsync).schedule();
-            return;
-        }
-
         this.handleExecution(sender, invocation, data);
-        Duration durationWithInvoke = Duration.between(Instant.now(), start);
-
-        if (durationWithInvoke.compareTo(TOTAL_SYNC_WARN_TIME) <= 0) {
-            return;
-        }
-
-        this.syncTimeWarn(service, executor, fullCommand, data, durationWithInvoke, "total");
     }
 
     private void handleError(@NonNull CommandData data, @NonNull Invocation invocation, @NonNull Throwable throwable) {
@@ -299,73 +269,5 @@ public class CommandsVelocity extends OkaeriCommands {
             }
             this.handleError(data, invocation, cause);
         }
-    }
-
-    private boolean isAsync(@NonNull Invocation invocation) {
-
-        if ((invocation.getCommand() == null) || (invocation.getService() == null)) {
-            throw new IllegalArgumentException("Cannot use dummy context: " + invocation);
-        }
-
-        Class<? extends CommandService> serviceClass = invocation.getService().getImplementor().getClass();
-        boolean serviceAsync = this.isAsyncCacheService.computeIfAbsent(serviceClass, this::isAsync);
-
-        Method executorMethod = invocation.getCommand().getExecutor().getMethod();
-        Boolean methodAsync = this.isAsyncCacheMethod.computeIfAbsent(executorMethod, this::isAsync);
-
-        // method overrides
-        if (methodAsync != null) {
-            return methodAsync;
-        }
-
-        // defaults
-        return serviceAsync;
-    }
-
-    @Nullable
-    private Boolean isAsync(@NonNull Method method) {
-
-        Async methodAsync = method.getAnnotation(Async.class);
-        Sync methodSync = method.getAnnotation(Sync.class);
-
-        if ((methodAsync != null) && (methodSync != null)) {
-            throw new RuntimeException("Cannot use @Async and @Sync annotations simultaneously: " + method);
-        }
-
-        if ((methodAsync == null) && (methodSync == null)) {
-            return null;
-        }
-
-        return methodAsync != null;
-    }
-
-    private boolean isAsync(@NonNull Class<? extends CommandService> service) {
-
-        Async serviceAsync = service.getAnnotation(Async.class);
-        Sync serviceSync = service.getAnnotation(Sync.class);
-
-        if ((serviceAsync != null) && (serviceSync != null)) {
-            throw new RuntimeException("Cannot use @Async and @Sync annotations simultaneously: " + service);
-        }
-
-        return serviceAsync != null;
-    }
-
-    private void syncTimeWarn(ServiceMeta service, ExecutorMeta executor, String fullCommand, CommandData data, Duration duration, String type) {
-
-        // my.package.MyCommand#my_method
-        String implementorName = service.getImplementor().getClass().getName();
-        String methodName = executor.getMethod().getName();
-        String signature = implementorName + "#" + methodName;
-
-        // (cmd: mycmd params, context={sender=CraftPlayer{name=Player1}, some=value})
-        String context = "(cmd: " + fullCommand + ", context: " + data.all() + ")";
-
-        // main thread, 11 ms
-        String thread = Thread.currentThread().getName();
-        String durationText = duration.toMillis() + " ms";
-
-        // dump!
-        LOGGER.warning(signature + " " + context + " execution took " + durationText + "! [" + thread + "] [" + type + "]");
     }
 }
