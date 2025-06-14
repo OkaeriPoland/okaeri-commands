@@ -7,6 +7,7 @@ import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.mojang.brigadier.tree.RootCommandNode;
 import eu.okaeri.commands.OkaeriCommands;
+import eu.okaeri.commands.brigadier.annotation.BrigadierDisabled;
 import eu.okaeri.commands.handler.completion.NamedCompletionHandler;
 import eu.okaeri.commands.meta.ArgumentMeta;
 import eu.okaeri.commands.meta.CommandMeta;
@@ -101,6 +102,11 @@ public class CommandsBrigadierBase {
             ServiceMeta service = metas.get(0).getService();
             Invocation dummyContext = Invocation.of(service, service.getLabel(), new String[0]);
             if (!this.commands.getAccessHandler().allowAccess(service, dummyContext, data, false)) {
+                continue;
+            }
+
+            // brigadier support is disabled for this service
+            if (service.getImplementor().getClass().isAnnotationPresent(BrigadierDisabled.class)) {
                 continue;
             }
 
