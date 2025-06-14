@@ -222,6 +222,9 @@ public class CommandsBrigadierBase {
     }
 
     protected boolean canAssumeStatic(Class<?> type) {
-        return type.isEnum() || this.staticTypes.contains(type);
+        if (type.isEnum() && (type.getEnumConstants().length <= 10)) {
+            return true;
+        }
+        return this.staticTypes.contains(type);
     }
 }
