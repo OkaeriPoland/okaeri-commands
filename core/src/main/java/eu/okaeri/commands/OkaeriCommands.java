@@ -37,7 +37,6 @@ import eu.okaeri.commands.type.resolver.TypeResolver;
 import lombok.Data;
 import lombok.NonNull;
 
-import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.Type;
@@ -516,7 +515,7 @@ public class OkaeriCommands implements Commands {
                     }
                 }
             } catch (Exception exception) {
-                throw new CommandException(argument.getName() + " - " + exception.getMessage());
+                throw new CommandException(argument.getName() + " - " + exception.getMessage(), exception);
             }
 
             cmdIndexToObjectMap.put(argument.getIndex(), argument.wrap(resolvedValue));
