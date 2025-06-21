@@ -35,12 +35,13 @@ public class OkaeriParameterValidationHandler extends DefaultParameterValidation
             .map(provider -> (ValidationProvider) provider)
             .flatMap(provider -> {
                 Object unwrappedValue = this.unwrapValue(value);
+                Class<?> unwrappedBaseType = this.unwrapBaseType(param);
                 Type unwrappedType = this.unwrapType(param);
                 Set<ConstraintViolation> violations = provider.validate(
                     param.getAnnotation(provider.getAnnotation()),
                     param,
                     unwrappedValue,
-                    ((Class<?>) unwrappedType),
+                    unwrappedBaseType,
                     unwrappedType,
                     param.getName());
                 return violations.stream();
@@ -73,6 +74,17 @@ public class OkaeriParameterValidationHandler extends DefaultParameterValidation
             return parameterizedType.getActualTypeArguments()[0];
         }
         return type;
+    }
+
+    private Class<?> unwrapBaseType(@NonNull Parameter param) {
+        Type baseType = this.unwrapType(param);
+        if (baseType instanceof Class) {
+            return (Class<?>) baseType;
+        }
+        if (baseType instanceof ParameterizedType) {
+            return (Class<?>) ((ParameterizedType) baseType).getRawType();
+        }
+        throw new IllegalArgumentException("Validation of complex types is not supported: " + param);
     }
 
     @SuppressWarnings("unchecked")
