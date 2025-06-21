@@ -11,6 +11,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static eu.okaeri.commands.annotation.Arg.NULL;
+
 @Command(label = "example-oa")
 public class ExampleOptionalArgsCommand implements CommandService {
 
@@ -26,6 +28,21 @@ public class ExampleOptionalArgsCommand implements CommandService {
 
     @Executor(pattern = "single-argument ?")
     public Object _static_optional(@Arg Option<String> name) {
+        return name;
+    }
+
+    @Executor(pattern = "single-argument-nullable ?")
+    public Object _static_optionalrawnull(@Arg(or = NULL) String name) {
+        return name;
+    }
+
+    @Executor(pattern = "single-argument-or ?")
+    public Object _static_optionalrawdef(@Arg(or = "def") String name) {
+        return name;
+    }
+
+    @Executor(pattern = "single-argument-oro ?")
+    public Object _static_optionaloptdef(@Arg(or = "def") Option<String> name) {
         return name;
     }
 

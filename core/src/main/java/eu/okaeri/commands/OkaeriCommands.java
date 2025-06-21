@@ -1,5 +1,6 @@
 package eu.okaeri.commands;
 
+import eu.okaeri.commands.annotation.Arg;
 import eu.okaeri.commands.annotation.Executor;
 import eu.okaeri.commands.annotation.Label;
 import eu.okaeri.commands.annotation.RawArgs;
@@ -507,7 +508,14 @@ public class OkaeriCommands implements Commands {
                 if (!argument.isOptional() && (value == null)) {
                     throw new IllegalArgumentException("non-optional argument was null");
                 } else if (argument.isOptional() && (value == null)) {
-                    resolvedValue = null;
+                    if (argument.getDefaultValue().isEmpty() || Arg.NULL.equals(argument.getDefaultValue())) {
+                        resolvedValue = null;
+                    } else {
+                        resolvedValue = typeResolverOptional.get().resolve(invocation, data, argument, argument.getDefaultValue());
+                        if (resolvedValue == null) {
+                            throw new IllegalArgumentException("cannot resolve argument from default value");
+                        }
+                    }
                 } else {
                     resolvedValue = typeResolverOptional.get().resolve(invocation, data, argument, value);
                     if (!argument.isOptional() && (resolvedValue == null)) {

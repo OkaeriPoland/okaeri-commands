@@ -17,6 +17,8 @@ public class ArgumentMeta {
 
     private boolean optional;
     private String name;
+    private String defaultValue;
+
     private int index;
     private Class<?> type;
     private Class<?> rawType;
@@ -30,18 +32,18 @@ public class ArgumentMeta {
     public static ArgumentMeta of(@NonNull Commands commands, @NonNull Parameter parameter, int index) {
 
         Arg arg = parameter.getAnnotation(Arg.class);
-
         if (arg == null) {
             throw new IllegalArgumentException("cannot create ArgumentMeta from Parameter without @Arg annotation");
         }
 
         ArgumentMeta meta = new ArgumentMeta();
         meta.name = commands.resolveText(arg.value().isEmpty() ? parameter.getName() : arg.value());
+        meta.defaultValue = arg.or();
         meta.index = index;
         meta.rawType = parameter.getType();
         meta.parameterizedType = parameter.getParameterizedType();
         meta.type = resolveType(meta.rawType, meta.parameterizedType);
-        meta.optional = Option.class.isAssignableFrom(meta.rawType) || Optional.class.isAssignableFrom(meta.rawType);
+        meta.optional = !arg.or().isEmpty() || Option.class.isAssignableFrom(meta.rawType) || Optional.class.isAssignableFrom(meta.rawType);
 
         return meta;
     }

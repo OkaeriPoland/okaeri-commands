@@ -240,6 +240,27 @@ public final class TestCommandCall {
     }
 
     @Test
+    @SneakyThrows
+    public void test_static_optionalraw() {
+        assertEquals("Hello", this.commands.call("example-oa single-argument-nullable Hello"));
+        assertNull(this.commands.call("example-oa single-argument-nullable"));
+    }
+
+    @Test
+    @SneakyThrows
+    public void test_static_optionalraw_default() {
+        assertEquals("Hello", this.commands.call("example-oa single-argument-or Hello"));
+        assertEquals("def", this.commands.call("example-oa single-argument-or"));
+    }
+
+    @Test
+    @SneakyThrows
+    public void test_static_optionalopt_default() {
+        assertEquals(Option.of("Hello"), this.commands.call("example-oa single-argument-oro Hello"));
+        assertEquals(Option.of("def"), this.commands.call("example-oa single-argument-oro"));
+    }
+
+    @Test
     public void test_static_optional_too_long() {
         assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-oa single-argument Player ???"));
         assertThrows(NoSuchCommandException.class, () -> this.commands.call("example-oa single-argument unknown ? ? ?"));
