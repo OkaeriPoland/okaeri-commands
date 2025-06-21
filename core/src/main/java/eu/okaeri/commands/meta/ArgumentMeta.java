@@ -54,10 +54,13 @@ public class ArgumentMeta {
 
         Type paramType = ((ParameterizedType) parameterizedType).getRawType();
         if (paramType instanceof Class<?>) {
-            rawType = (Class<?>) paramType;
+            Type[] args = ((ParameterizedType) parameterizedType).getActualTypeArguments();
+            if (args[0] instanceof Class<?>) {
+                return (Class<?>) args[0];
+            }
         }
 
-        return rawType;
+        throw new RuntimeException("Complex types are not supported: " + parameterizedType);
     }
 
     public Object wrap(Object value) {
