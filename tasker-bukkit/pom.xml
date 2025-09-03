@@ -5,7 +5,7 @@
     <parent>
         <artifactId>okaeri-commands</artifactId>
         <groupId>eu.okaeri</groupId>
-        <version>0.9.13</version>
+        <version>0.9.15</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -29,14 +29,14 @@
         <dependency>
             <groupId>eu.okaeri</groupId>
             <artifactId>okaeri-commands-bukkit</artifactId>
-            <version>0.9.13</version>
+            <version>0.9.15</version>
             <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>eu.okaeri</groupId>
             <artifactId>okaeri-commands-tasker</artifactId>
-            <version>0.9.13</version>
+            <version>0.9.15</version>
             <scope>compile</scope>
         </dependency>
 
