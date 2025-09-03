@@ -7,6 +7,7 @@ import eu.okaeri.commands.handler.completion.NamedCompletionHandler;
 import eu.okaeri.commands.handler.error.ErrorHandler;
 import eu.okaeri.commands.handler.instance.InstanceCreatorHandler;
 import eu.okaeri.commands.handler.result.ResultHandler;
+import eu.okaeri.commands.handler.scheduling.SchedulingHandler;
 import eu.okaeri.commands.handler.text.TextHandler;
 import eu.okaeri.commands.handler.validation.ParameterValidationHandler;
 import eu.okaeri.commands.meta.CommandMeta;
@@ -45,6 +46,8 @@ public interface Commands extends Closeable {
 
     OkaeriCommands parameterValidationHandler(@NonNull ParameterValidationHandler validationHandler);
 
+    OkaeriCommands schedulingHandler(@NonNull SchedulingHandler schedulingHandler);
+
     ErrorHandler getErrorHandler();
 
     ResultHandler getResultHandler();
@@ -58,6 +61,8 @@ public interface Commands extends Closeable {
     CompletionHandler getCompletionHandler();
 
     InstanceCreatorHandler getInstanceCreatorHandler();
+
+    SchedulingHandler getSchedulingHandler();
 
     Commands registerCommand(@NonNull Class<? extends CommandService> clazz);
 

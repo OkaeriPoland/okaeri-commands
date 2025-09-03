@@ -2,13 +2,8 @@ package eu.okaeri.commands.bukkit;
 
 import eu.okaeri.commands.OkaeriCommands;
 import eu.okaeri.commands.annotation.Context;
-import eu.okaeri.commands.bukkit.annotation.Async;
 import eu.okaeri.commands.bukkit.annotation.Sender;
-import eu.okaeri.commands.bukkit.annotation.Sync;
-import eu.okaeri.commands.bukkit.handler.BukkitAccessHandler;
-import eu.okaeri.commands.bukkit.handler.BukkitCompletionHandler;
-import eu.okaeri.commands.bukkit.handler.BukkitErrorHandler;
-import eu.okaeri.commands.bukkit.handler.BukkitResultHandler;
+import eu.okaeri.commands.bukkit.handler.*;
 import eu.okaeri.commands.bukkit.listener.AsyncTabCompleteListener;
 import eu.okaeri.commands.bukkit.listener.PlayerCommandSendListener;
 import eu.okaeri.commands.bukkit.type.CommandsBukkitTypes;
@@ -33,10 +28,7 @@ import org.bukkit.event.Event;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
 import java.time.Duration;
 import java.time.Instant;
@@ -50,13 +42,10 @@ import java.util.stream.Stream;
 public class CommandsBukkit extends OkaeriCommands {
 
     public static final Duration PRE_INVOKE_SYNC_WARN_TIME = Duration.ofMillis(5);
-    public static final Duration TOTAL_SYNC_WARN_TIME = Duration.ofMillis(10);
-
-    private final Map<Method, Boolean> isAsyncCacheMethod = new ConcurrentHashMap<>();
-    private final Map<Class<? extends CommandService>, Boolean> isAsyncCacheService = new ConcurrentHashMap<>();
+    public static final Duration INVOKE_SYNC_WARN_TIME = Duration.ofMillis(10);
 
     private final Map<String, List<CommandMeta>> registeredCommands = new ConcurrentHashMap<>();
-    @Getter private final Map<String, ServiceMeta> registeredServices = new ConcurrentHashMap<>();
+    private final @Getter Map<String, ServiceMeta> registeredServices = new ConcurrentHashMap<>();
 
     private final CommandMap commandMap;
     private final JavaPlugin plugin;
@@ -69,6 +58,7 @@ public class CommandsBukkit extends OkaeriCommands {
         this.resultHandler(new BukkitResultHandler());
         this.accessHandler(new BukkitAccessHandler(this));
         this.completionHandler(new BukkitCompletionHandler());
+        this.schedulingHandler(new BukkitSchedulingHandler(plugin));
     }
 
     public static CommandsBukkit of(@NonNull JavaPlugin plugin) {
@@ -227,25 +217,14 @@ public class CommandsBukkit extends OkaeriCommands {
 
         ExecutorMeta executor = invocation.getCommand().getExecutor();
         this.getAccessHandler().checkAccess(executor, invocation, data);
-        Duration durationToPreInvoke = Duration.between(Instant.now(), start);
+        Duration preInvokeTime = Duration.between(start, Instant.now());
 
-        if (durationToPreInvoke.compareTo(PRE_INVOKE_SYNC_WARN_TIME) > 0) {
-            this.syncTimeWarn(service, executor, fullCommand, data, durationToPreInvoke, "pre-invoke");
+        if (preInvokeTime.compareTo(PRE_INVOKE_SYNC_WARN_TIME) > 0) { // TODO: replace with TimingHandler?
+            this.plugin.getLogger().warning(BukkitSchedulingHandler.syncTimeWarn(data, invocation, preInvokeTime, "pre-invoke"));
         }
 
-        if (this.isAsync(invocation)) {
-            Runnable prepareAndExecuteAsync = () -> this.handleExecution(sender, invocation, data);
-            this.plugin.getServer().getScheduler().runTaskAsynchronously(this.plugin, prepareAndExecuteAsync);
-            return true;
-        }
-
-        this.handleExecution(sender, invocation, data);
-        Duration durationWithInvoke = Duration.between(Instant.now(), start);
-
-        if (durationWithInvoke.compareTo(TOTAL_SYNC_WARN_TIME) > 0) {
-            this.syncTimeWarn(service, executor, fullCommand, data, durationWithInvoke, "total");
-        }
-
+        Runnable prepareAndExecute = () -> this.handleExecution(sender, invocation, data);
+        this.getSchedulingHandler().run(data, invocation, prepareAndExecute);
         return true;
     }
 
@@ -314,73 +293,5 @@ public class CommandsBukkit extends OkaeriCommands {
             }
             this.handleError(data, invocation, cause);
         }
-    }
-
-    private boolean isAsync(@NonNull Invocation invocation) {
-
-        if ((invocation.getCommand() == null) || (invocation.getService() == null)) {
-            throw new IllegalArgumentException("Cannot use dummy context: " + invocation);
-        }
-
-        Class<? extends CommandService> serviceClass = invocation.getService().getImplementor().getClass();
-        boolean serviceAsync = this.isAsyncCacheService.computeIfAbsent(serviceClass, this::isAsync);
-
-        Method executorMethod = invocation.getCommand().getExecutor().getMethod();
-        Boolean methodAsync = this.isAsyncCacheMethod.computeIfAbsent(executorMethod, this::isAsync);
-
-        // method overrides
-        if (methodAsync != null) {
-            return methodAsync;
-        }
-
-        // defaults
-        return serviceAsync;
-    }
-
-    @Nullable
-    private Boolean isAsync(@NonNull Method method) {
-
-        Async methodAsync = method.getAnnotation(Async.class);
-        Sync methodSync = method.getAnnotation(Sync.class);
-
-        if ((methodAsync != null) && (methodSync != null)) {
-            throw new RuntimeException("Cannot use @Async and @Sync annotations simultaneously: " + method);
-        }
-
-        if ((methodAsync == null) && (methodSync == null)) {
-            return null;
-        }
-
-        return methodAsync != null;
-    }
-
-    private boolean isAsync(@NonNull Class<? extends CommandService> service) {
-
-        Async serviceAsync = service.getAnnotation(Async.class);
-        Sync serviceSync = service.getAnnotation(Sync.class);
-
-        if ((serviceAsync != null) && (serviceSync != null)) {
-            throw new RuntimeException("Cannot use @Async and @Sync annotations simultaneously: " + service);
-        }
-
-        return serviceAsync != null;
-    }
-
-    private void syncTimeWarn(ServiceMeta service, ExecutorMeta executor, String fullCommand, CommandData data, Duration duration, String type) {
-
-        // my.package.MyCommand#my_method
-        String implementorName = service.getImplementor().getClass().getName();
-        String methodName = executor.getMethod().getName();
-        String signature = implementorName + "#" + methodName;
-
-        // (cmd: mycmd params, context={sender=CraftPlayer{name=Player1}, some=value})
-        String context = "(cmd: " + fullCommand + ", context: " + data.all() + ")";
-
-        // main thread, 11 ms
-        String thread = Thread.currentThread().getName();
-        String durationText = duration.toMillis() + " ms";
-
-        // dump!
-        this.plugin.getLogger().warning(signature + " " + context + " execution took " + durationText + "! [" + thread + "] [" + type + "]");
     }
 }

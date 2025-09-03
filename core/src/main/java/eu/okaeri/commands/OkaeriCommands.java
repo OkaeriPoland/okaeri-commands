@@ -18,6 +18,8 @@ import eu.okaeri.commands.handler.instance.DefaultInstanceCreatorHandler;
 import eu.okaeri.commands.handler.instance.InstanceCreatorHandler;
 import eu.okaeri.commands.handler.result.DefaultResultHandler;
 import eu.okaeri.commands.handler.result.ResultHandler;
+import eu.okaeri.commands.handler.scheduling.DefaultSchedulingHandler;
+import eu.okaeri.commands.handler.scheduling.SchedulingHandler;
 import eu.okaeri.commands.handler.text.DefaultTextHandler;
 import eu.okaeri.commands.handler.text.TextHandler;
 import eu.okaeri.commands.handler.validation.DefaultParameterValidationHandler;
@@ -77,6 +79,7 @@ public class OkaeriCommands implements Commands {
     protected CompletionHandler completionHandler = new DefaultCompletionHandler();
     protected InstanceCreatorHandler instanceCreatorHandler = new DefaultInstanceCreatorHandler();
     protected ParameterValidationHandler parameterValidationHandler = new DefaultParameterValidationHandler();
+    protected SchedulingHandler schedulingHandler = new DefaultSchedulingHandler();
 
     public OkaeriCommands() {
         this.registerType(new DefaultCommandsTypes());
@@ -128,6 +131,12 @@ public class OkaeriCommands implements Commands {
     @Override
     public OkaeriCommands parameterValidationHandler(@NonNull ParameterValidationHandler validationHandler) {
         this.parameterValidationHandler = validationHandler;
+        return this;
+    }
+
+    @Override
+    public OkaeriCommands schedulingHandler(@NonNull SchedulingHandler schedulingHandler) {
+        this.schedulingHandler = schedulingHandler;
         return this;
     }
 

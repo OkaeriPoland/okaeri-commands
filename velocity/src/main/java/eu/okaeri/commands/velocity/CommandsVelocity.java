@@ -43,7 +43,7 @@ public class CommandsVelocity extends OkaeriCommands {
     private static final Logger LOGGER = Logger.getLogger(CommandsVelocity.class.getSimpleName());
 
     private final Map<String, List<CommandMeta>> registeredCommands = new ConcurrentHashMap<>();
-    @Getter private final Map<String, ServiceMeta> registeredServices = new ConcurrentHashMap<>();
+    private final @Getter Map<String, ServiceMeta> registeredServices = new ConcurrentHashMap<>();
 
     private final ProxyServer proxy;
     private final PluginContainer plugin;
