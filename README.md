@@ -167,7 +167,9 @@ public class ExampleCommand implements CommandService {
     @Completion(arg = "flag", value = {"-silent"})
     @Executor(pattern = "player * set2 * * ?", description = "Complex command test")
     public String complex2(@Arg String name, int huh, @Arg String perm, @RawArgs String[] args, @Arg String value, String randomElement, @Arg Option<String> flag) {
-        return (">> " + name + " " + perm + " " + value + " " + flag + "\n" + Arrays.toString(args));
+        // join/detach/sync dsl (BukkitTaskerLite.X) is available with CommandsBukkitTasker extension from tasker-bukkit module
+        String playerName = join(() -> Optional.ofNullable(Bukkit.getPlayer(name)).map(Player::getDisplayName).orElse(name));
+        return (">> " + playerName + " " + perm + " " + value + " " + flag + "\n" + Arrays.toString(args));
     }
 }
 ```

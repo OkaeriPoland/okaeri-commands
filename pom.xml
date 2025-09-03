@@ -25,6 +25,7 @@
         <module>acl</module>
         <module>injector</module>
         <module>tasker</module>
+        <module>tasker-bukkit</module>
         <module>validator</module>
 
         <module>brigadier</module>
