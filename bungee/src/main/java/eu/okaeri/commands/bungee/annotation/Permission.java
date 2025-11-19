@@ -13,6 +13,8 @@ public @interface Permission {
 
     Mode mode() default Mode.ANY;
 
+    String deny() default "";
+
     enum Mode {
         ANY,
         ALL

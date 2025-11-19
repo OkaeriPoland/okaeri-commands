@@ -54,6 +54,13 @@ public class VelocityAccessHandler implements AccessHandler {
             return;
         }
 
+        Permission permission = service.getImplementor().getClass().getAnnotation(Permission.class);
+        String customDeny = this.getDenyMessage(permission, invocation, data);
+
+        if ((customDeny != null) && !customDeny.isEmpty()) {
+            throw new NoAccessException(customDeny);
+        }
+
         String[] perms = this.getPermissions(service, invocation, data).toArray(new String[0]);
         Permission.Mode mode = this.getMode(service);
 
@@ -93,6 +100,13 @@ public class VelocityAccessHandler implements AccessHandler {
 
         if (this.allowAccess(executor, invocation, data)) {
             return;
+        }
+
+        Permission permission = executor.getMethod().getAnnotation(Permission.class);
+        String customDeny = this.getDenyMessage(permission, invocation, data);
+
+        if ((customDeny != null) && !customDeny.isEmpty()) {
+            throw new NoAccessException(customDeny);
         }
 
         String[] perms = this.getPermissions(executor, invocation, data).toArray(new String[0]);
@@ -161,5 +175,12 @@ public class VelocityAccessHandler implements AccessHandler {
             default:
                 throw new IllegalArgumentException("Unknown mode: " + mode);
         }
+    }
+
+    protected String getDenyMessage(Permission permission, @NonNull Invocation invocation, @NonNull CommandData data) {
+        if ((permission == null) || permission.deny().isEmpty()) {
+            return null;
+        }
+        return this.commands.resolveText(invocation, data, permission.deny());
     }
 }
