@@ -2,6 +2,7 @@ package eu.okaeri.commands.velocity.handler;
 
 import com.velocitypowered.api.proxy.ProxyServer;
 import eu.okaeri.commands.Commands;
+import eu.okaeri.commands.exception.InvalidContextException;
 import eu.okaeri.commands.exception.NoAccessException;
 import eu.okaeri.commands.exception.NoSuchCommandException;
 import eu.okaeri.commands.handler.error.ErrorHandler;
@@ -95,6 +96,30 @@ public class VelocityErrorHandler implements ErrorHandler {
                 "${commandSystemAccessMessageError}",
                 "<red>{message}"
             ).replace("{message}", message));
+        }
+
+        if (throwable instanceof InvalidContextException) {
+            InvalidContextException contextException = (InvalidContextException) throwable;
+
+            // custom message provided
+            if (!message.isEmpty()) {
+                // variable
+                if (message.startsWith("${") && message.endsWith("}")) {
+                    return MINI_MESSAGE.deserialize(this.resolveText(data, invocation, message, message));
+                }
+                // other
+                return MINI_MESSAGE.deserialize(this.resolveText(data, invocation,
+                    "${commandSystemContextMessageError}",
+                    "<red>{message}"
+                ).replace("{message}", message));
+            }
+
+            // default message with type info
+            String expectedName = contextException.getExpectedType().getSimpleName();
+            return MINI_MESSAGE.deserialize(this.resolveText(data, invocation,
+                "${commandSystemContextError}",
+                "<red>This command can only be executed by {expected}!"
+            ).replace("{expected}", expectedName));
         }
 
         if (throwable instanceof NoSuchCommandException) {

@@ -1,6 +1,7 @@
 package eu.okaeri.commands.bukkit.handler;
 
 import eu.okaeri.commands.Commands;
+import eu.okaeri.commands.exception.InvalidContextException;
 import eu.okaeri.commands.exception.NoAccessException;
 import eu.okaeri.commands.exception.NoSuchCommandException;
 import eu.okaeri.commands.handler.error.ErrorHandler;
@@ -84,6 +85,30 @@ public class BukkitErrorHandler implements ErrorHandler {
                 "${commandSystemAccessMessageError}",
                 ChatColor.RED + "{message}"
             ).replace("{message}", message);
+        }
+
+        if (throwable instanceof InvalidContextException) {
+            InvalidContextException contextException = (InvalidContextException) throwable;
+
+            // custom message provided
+            if (!message.isEmpty()) {
+                // variable
+                if (message.startsWith("${") && message.endsWith("}")) {
+                    return this.resolveText(data, invocation, message, message);
+                }
+                // other
+                return this.resolveText(data, invocation,
+                    "${commandSystemContextMessageError}",
+                    ChatColor.RED + "{message}"
+                ).replace("{message}", message);
+            }
+
+            // default message with type info
+            String expectedName = contextException.getExpectedType().getSimpleName();
+            return this.resolveText(data, invocation,
+                "${commandSystemContextError}",
+                ChatColor.RED + "This command can only be executed by {expected}!"
+            ).replace("{expected}", expectedName);
         }
 
         if (throwable instanceof NoSuchCommandException) {

@@ -4,10 +4,12 @@ import com.velocitypowered.api.command.Command;
 import com.velocitypowered.api.command.CommandSource;
 import com.velocitypowered.api.command.SimpleCommand;
 import com.velocitypowered.api.plugin.PluginContainer;
+import com.velocitypowered.api.proxy.ConsoleCommandSource;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.proxy.ProxyServer;
 import eu.okaeri.commands.OkaeriCommands;
 import eu.okaeri.commands.annotation.Context;
+import eu.okaeri.commands.exception.InvalidContextException;
 import eu.okaeri.commands.exception.NoSuchCommandException;
 import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.meta.ExecutorMeta;
@@ -78,17 +80,41 @@ public class CommandsVelocity extends OkaeriCommands {
     public Object resolveMissingArgument(@NonNull Invocation invocation, @NonNull CommandData data, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
 
         Class<?> paramType = param.getType();
+        Object sender = data.get("sender");
 
-        // TODO: player only command
+        // player only command
         if (Player.class.equals(paramType) && (param.getAnnotation(Context.class) != null)) {
-            return data.get("sender", Player.class);
+            if (sender instanceof Player) {
+                return sender;
+            }
+            String customInvalid = this.getContextInvalidMessage(param, invocation, data);
+            Class<?> actualType = (sender == null) ? null : sender.getClass();
+            throw new InvalidContextException(customInvalid, Player.class, actualType);
         }
 
-        if (CommandSource.class.equals(paramType) && data.has("sender", CommandSource.class)) {
-            return data.get("sender");
+        // console only command
+        if (ConsoleCommandSource.class.equals(paramType) && (param.getAnnotation(Context.class) != null)) {
+            if (sender instanceof ConsoleCommandSource) {
+                return sender;
+            }
+            String customInvalid = this.getContextInvalidMessage(param, invocation, data);
+            Class<?> actualType = (sender == null) ? null : sender.getClass();
+            throw new InvalidContextException(customInvalid, ConsoleCommandSource.class, actualType);
+        }
+
+        if (CommandSource.class.equals(paramType) && (sender instanceof CommandSource)) {
+            return sender;
         }
 
         return super.resolveMissingArgument(invocation, data, command, param, index);
+    }
+
+    protected String getContextInvalidMessage(@NonNull Parameter param, @NonNull Invocation invocation, @NonNull CommandData data) {
+        Context context = param.getAnnotation(Context.class);
+        if ((context != null) && !context.invalid().isEmpty()) {
+            return this.resolveText(invocation, data, context.invalid());
+        }
+        return "";
     }
 
     @Override
@@ -142,7 +168,7 @@ public class CommandsVelocity extends OkaeriCommands {
         private List<CommandMeta> metas;
 
         @Override
-        public void execute(com.velocitypowered.api.command.SimpleCommand.Invocation invocation) {
+        public void execute(SimpleCommand.Invocation invocation) {
 
             String name = invocation.alias();
             String[] args = invocation.arguments();

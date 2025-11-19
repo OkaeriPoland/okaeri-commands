@@ -4,6 +4,7 @@ import eu.okaeri.commands.OkaeriCommands;
 import eu.okaeri.commands.annotation.Context;
 import eu.okaeri.commands.bungee.handler.*;
 import eu.okaeri.commands.bungee.type.CommandsBungeeTypes;
+import eu.okaeri.commands.exception.InvalidContextException;
 import eu.okaeri.commands.exception.NoSuchCommandException;
 import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.meta.ExecutorMeta;
@@ -72,17 +73,32 @@ public class CommandsBungee extends OkaeriCommands {
     public Object resolveMissingArgument(@NonNull Invocation invocation, @NonNull CommandData data, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
 
         Class<?> paramType = param.getType();
+        Object sender = data.get("sender");
 
-        // TODO: player only command
+        // player only command
         if (ProxiedPlayer.class.equals(paramType) && (param.getAnnotation(Context.class) != null)) {
-            return data.get("sender", ProxiedPlayer.class);
+            if (sender instanceof ProxiedPlayer) {
+                return sender;
+            }
+            String customInvalid = this.getContextInvalidMessage(param, invocation, data);
+            Class<?> actualType = (sender == null) ? null : sender.getClass();
+            throw new InvalidContextException(customInvalid, ProxiedPlayer.class, actualType);
         }
 
-        if (CommandSender.class.equals(paramType) && data.has("sender", CommandSender.class)) {
-            return data.get("sender");
+        // other sender (allows both console and players)
+        if (CommandSender.class.equals(paramType) && (sender instanceof CommandSender)) {
+            return sender;
         }
 
         return super.resolveMissingArgument(invocation, data, command, param, index);
+    }
+
+    protected String getContextInvalidMessage(@NonNull Parameter param, @NonNull Invocation invocation, @NonNull CommandData data) {
+        Context context = param.getAnnotation(Context.class);
+        if ((context != null) && !context.invalid().isEmpty()) {
+            return this.resolveText(invocation, data, context.invalid());
+        }
+        return "";
     }
 
     @Override
