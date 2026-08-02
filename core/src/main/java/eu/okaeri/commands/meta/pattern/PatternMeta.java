@@ -234,9 +234,9 @@ public class PatternMeta {
                 }
             }
 
-            // return element if got this far
-            // and is at searched arg index
-            if (argIndex == argAtIndex) {
+            // return element if got this far and the searched arg index falls
+            // anywhere in its span, a wider element covering more than one
+            if ((argAtIndex >= argIndex) && ((element.getWidth() == -1) || (argAtIndex < (argIndex + element.getWidth())))) {
                 return Optional.of(element);
             }
 
@@ -275,7 +275,8 @@ public class PatternMeta {
         for (PatternElement element : elements) {
 
             // no such index in arguments and not optional (missing element)
-            if ((argsArr.length <= patternIndex) && !(element instanceof OptionalElement)) {
+            // counted in arguments, not in elements: a wider element consumes more than one
+            if ((argsArr.length <= argIndex) && !(element instanceof OptionalElement)) {
                 return false;
             }
 

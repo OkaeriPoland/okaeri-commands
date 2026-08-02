@@ -63,6 +63,20 @@ public final class TestCommandComplete {
         assertIterableEquals(Collections.singletonList("ask"), this.commands.complete("tab1 join player1 a"));
     }
 
+    @Test
+    public void test_complete_boolean() {
+        assertIterableEquals(Arrays.asList("false", "true"), this.commands.complete("tab1 toggle "));
+        assertIterableEquals(Collections.singletonList("true"), this.commands.complete("tab1 toggle t"));
+        assertIterableEquals(Collections.singletonList("false"), this.commands.complete("tab1 toggle f"));
+        assertIterableEquals(Collections.emptyList(), this.commands.complete("tab1 toggle x"));
+    }
+
+    @Test
+    public void test_complete_enum() {
+        assertIterableEquals(Arrays.asList("all", "none", "some"), this.commands.complete("tab1 mode "));
+        assertIterableEquals(Collections.singletonList("some"), this.commands.complete("tab1 mode s"));
+    }
+
     @Command(label = "tab1")
     public static class TabCompleteCommand implements CommandService {
 
@@ -94,5 +108,19 @@ public final class TestCommandComplete {
         public String _join_ask(@Arg String player) {
             return player;
         }
+
+        @Executor(pattern = "toggle *")
+        public boolean _toggle(@Arg("state") boolean state) {
+            return state;
+        }
+
+        @Executor(pattern = "mode *")
+        public String _mode(@Arg("mode") Mode mode) {
+            return mode.name();
+        }
+    }
+
+    public enum Mode {
+        ALL, NONE, SOME
     }
 }
