@@ -22,7 +22,7 @@ public class DefaultCompletionHandler implements CompletionHandler {
         commands.registerCompletion("default:enum", (completion, argument, invocation, data) ->
             this.completeEnum(invocation, argument.getType(), this.getLimit(argument, invocation)));
         commands.registerCompletion("default:boolean", (completion, argument, invocation, data) ->
-            BOOLEAN_COMPLETIONS);
+            this.completeBoolean(invocation, this.getLimit(argument, invocation)));
     }
 
     protected List<String> completeEnum(@NotNull Invocation invocation, Class<?> type, int limit) {
@@ -30,6 +30,10 @@ public class DefaultCompletionHandler implements CompletionHandler {
             .map(Enum.class::cast)
             .map(Enum::name)
             .map(String::toLowerCase));
+    }
+
+    protected List<String> completeBoolean(@NotNull Invocation invocation, int limit) {
+        return this.filter(limit, this.stringFilter(invocation), BOOLEAN_COMPLETIONS.stream());
     }
 
     @Override
@@ -43,7 +47,7 @@ public class DefaultCompletionHandler implements CompletionHandler {
         }
 
         if (boolean.class.isAssignableFrom(type)) {
-            return BOOLEAN_COMPLETIONS;
+            return this.completeBoolean(invocation, limit);
         }
 
         return Collections.emptyList();

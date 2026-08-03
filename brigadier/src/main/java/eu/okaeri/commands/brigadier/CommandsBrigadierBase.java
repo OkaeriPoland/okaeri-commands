@@ -1,10 +1,11 @@
 package eu.okaeri.commands.brigadier;
 
+import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.*;
+import com.mojang.brigadier.builder.ArgumentBuilder;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.ArgumentCommandNode;
 import com.mojang.brigadier.tree.CommandNode;
-import com.mojang.brigadier.tree.LiteralCommandNode;
 import com.mojang.brigadier.tree.RootCommandNode;
 import eu.okaeri.commands.OkaeriCommands;
 import eu.okaeri.commands.brigadier.annotation.BrigadierDisabled;
@@ -14,12 +15,15 @@ import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.meta.ExecutorMeta;
 import eu.okaeri.commands.meta.ServiceMeta;
 import eu.okaeri.commands.meta.pattern.PatternMeta;
+import eu.okaeri.commands.meta.pattern.element.OptionalElement;
 import eu.okaeri.commands.meta.pattern.element.PatternElement;
 import eu.okaeri.commands.meta.pattern.element.StaticElement;
 import eu.okaeri.commands.service.CommandData;
 import eu.okaeri.commands.service.Invocation;
 
+import java.lang.reflect.Field;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -32,6 +36,9 @@ public class CommandsBrigadierBase {
 
     private static final boolean TRACE = Boolean.parseBoolean(System.getProperty("okaeri.platform.trace", "false"));
     private static final Logger LOGGER = Logger.getLogger(CommandsBrigadierBase.class.getSimpleName());
+
+    private static final Command<Object> NOOP = context -> Command.SINGLE_SUCCESS;
+    private static final List<Field> CHILD_FIELDS = resolveChildFields();
 
     protected final Map<Class<?>, ArgumentType<?>> argumentTypes = new HashMap<>();
     protected final Set<Class<?>> staticTypes = new HashSet<>();
@@ -55,7 +62,7 @@ public class CommandsBrigadierBase {
         this.staticTypes.add(Boolean.class);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public void update(CommandData data, RootCommandNode commandNode) {
 
         // delay dumping all labels to first player
@@ -92,31 +99,38 @@ public class CommandsBrigadierBase {
             ArgumentCommandNode args = (ArgumentCommandNode) argsChild;
             SuggestionProvider askServerSuggestion = args.getCustomSuggestions();
 
+            // nodes without a command are rendered as unknown by the client,
+            // so every complete path needs to carry the original one over
+            Command executes = firstNonNull(args.getCommand(), oldNode.getCommand(), NOOP);
+
             // get metas for label
             List<CommandMeta> metas = this.commands.findByLabel(label);
             if (metas.isEmpty()) {
                 continue;
             }
 
-            // check access (permissions)
-            ServiceMeta service = metas.get(0).getService();
-            Invocation dummyContext = Invocation.of(service, service.getLabel(), new String[0]);
-            if (!this.commands.getAccessHandler().allowAccess(service, dummyContext, data, false)) {
-                continue;
-            }
-
-            // brigadier support is disabled for this service
-            if (service.getImplementor().getClass().isAnnotationPresent(BrigadierDisabled.class)) {
+            // any service behind this label opting out keeps the plain ask_server node
+            boolean disabled = metas.stream()
+                .map(meta -> meta.getService().getImplementor().getClass())
+                .anyMatch(implementor -> implementor.isAnnotationPresent(BrigadierDisabled.class));
+            if (disabled) {
                 continue;
             }
 
             // clear current node
-            oldNode.getChildren().clear();
+            clearChildren(oldNode);
             for (CommandMeta meta : metas) {
 
                 // we may need that later
+                ServiceMeta service = meta.getService();
                 ExecutorMeta executor = meta.getExecutor();
                 PatternMeta pattern = executor.getPattern();
+
+                // check access (permissions)
+                Invocation serviceInvocation = Invocation.of(service, service.getLabel(), new String[0]);
+                if (!this.commands.getAccessHandler().allowAccess(service, serviceInvocation, data, false)) {
+                    continue;
+                }
 
                 // check access
                 Invocation invocation = Invocation.of(meta, service.getLabel(), "");
@@ -125,17 +139,20 @@ public class CommandsBrigadierBase {
                 }
 
                 // track tree position
+                List<PatternElement> elements = pattern.getElements();
                 List<CommandNode> currentNodes = new ArrayList<>(Collections.singletonList(oldNode));
 
                 // transform pattern elements into nodes
-                for (PatternElement patternElement : pattern.getElements()) {
+                for (int index = 0; index < elements.size(); index++) {
+
+                    PatternElement patternElement = elements.get(index);
+
+                    // the command is complete here when nothing but optionals follow
+                    Command command = terminates(elements, index) ? executes : null;
 
                     // static elements are easy, just use literal
                     if (patternElement instanceof StaticElement) {
-                        LiteralCommandNode<Object> literal = literal(patternElement.getName()).build();
-                        currentNodes.forEach(node -> node.addChild(literal));
-                        currentNodes.clear();
-                        currentNodes.add(literal);
+                        currentNodes = this.attach(currentNodes, () -> literal(patternElement.getName()).executes(command).build());
                         continue;
                     }
 
@@ -152,63 +169,179 @@ public class CommandsBrigadierBase {
                             // dynamic completion
                             if (completion.startsWith("@")) {
                                 ArgumentType type = this.resolveType(argumentMeta, patternElement);
-                                ArgumentCommandNode argument = argument(patternElement.getName(), type).suggests(askServerSuggestion).build();
-                                currentNodes.forEach(node -> node.addChild(argument));
-                                newNodes.add(argument);
+                                addDistinct(newNodes, this.attach(currentNodes, () -> argument(patternElement.getName(), type).suggests(askServerSuggestion).executes(command).build()));
                             }
                             // static completion
                             else {
-                                LiteralCommandNode<Object> literal = literal(completion).build();
-                                currentNodes.forEach(node -> node.addChild(literal));
-                                newNodes.add(literal);
+                                addDistinct(newNodes, this.attach(currentNodes, () -> literal(completion).executes(command).build()));
                             }
                         }
                         // update current nodes with new list
-                        currentNodes.clear();
-                        currentNodes.addAll(newNodes);
+                        currentNodes = newNodes;
                         continue;
                     }
 
                     // try generating static completions
-                    if (argumentMeta != null) {
+                    if ((argumentMeta != null) && this.canAssumeStatic(argumentMeta.getType())) {
 
-                        // get already resolved type
-                        Class<?> type = argumentMeta.getType();
-
-                        // only certain types can be assumed as static
-                        if (this.canAssumeStatic(type)) {
-                            // resolve completions using completion handler
-                            List<String> argumentCompletions;
-                            NamedCompletionHandler typeCompletionHandler = this.commands.getTypeCompletionHandlers().get(argumentMeta.getType());
-                            if (typeCompletionHandler != null) {
-                                argumentCompletions = typeCompletionHandler.complete(executor.getCompletion(), argumentMeta, invocation, data);
-                            } else {
-                                argumentCompletions = this.commands.getCompletionHandler().complete(argumentMeta, invocation, data);
-                            }
-                            // this section bifurcates so we need to track it separately
-                            List<CommandNode> newNodes = new ArrayList<>();
-                            // every completion needs to be added separately
-                            for (String completion : argumentCompletions) {
-                                LiteralCommandNode<Object> literal = literal(completion).build();
-                                currentNodes.forEach(node -> node.addChild(literal));
-                                newNodes.add(literal);
-                            }
-                            // update current nodes with new list
-                            currentNodes.clear();
-                            currentNodes.addAll(newNodes);
-                            continue;
+                        // resolve completions using completion handler
+                        List<String> argumentCompletions;
+                        NamedCompletionHandler typeCompletionHandler = this.commands.getTypeCompletionHandlers().get(argumentMeta.getType());
+                        if (typeCompletionHandler != null) {
+                            argumentCompletions = typeCompletionHandler.complete(executor.getCompletion(), argumentMeta, invocation, data);
+                        } else {
+                            argumentCompletions = this.commands.getCompletionHandler().complete(argumentMeta, invocation, data);
                         }
+
+                        // this section bifurcates so we need to track it separately
+                        List<CommandNode> newNodes = new ArrayList<>();
+                        // every completion needs to be added separately
+                        for (String completion : argumentCompletions) {
+                            addDistinct(newNodes, this.attach(currentNodes, () -> literal(completion).executes(command).build()));
+                        }
+
+                        // these completions are derived from the type and the resolver behind
+                        // it takes more than they list (any case, and yes/on/1 for booleans),
+                        // so an argument node keeps the client from rejecting valid input.
+                        // deliberately without the meta: the mapped type would be just as
+                        // narrow as the literals it is meant to widen
+                        ArgumentType fallbackType = this.resolveType(null, patternElement);
+                        addDistinct(newNodes, this.attach(currentNodes, () -> argument(patternElement.getName(), fallbackType).suggests(askServerSuggestion).executes(command).build()));
+
+                        // update current nodes with new list
+                        currentNodes = newNodes;
+                        continue;
                     }
 
                     // dynamic elements may be complicated, use ask_server
                     ArgumentType type = this.resolveType(argumentMeta, patternElement);
-                    ArgumentCommandNode argument = argument(patternElement.getName(), type).suggests(askServerSuggestion).build();
-                    currentNodes.forEach(node -> node.addChild(argument));
-                    currentNodes.clear();
-                    currentNodes.add(argument);
+
+                    // a wider element stands for that many arguments and brigadier
+                    // has no notion of it, so it takes one node per consumed argument
+                    int width = Math.max(patternElement.getWidth(), 1);
+                    for (int token = 0; token < width; token++) {
+                        Command last = ((token + 1) == width) ? command : null;
+                        currentNodes = this.attach(currentNodes, () -> argument(patternElement.getName(), type).suggests(askServerSuggestion).executes(last).build());
+                    }
                 }
             }
         }
+    }
+
+    /**
+     * Adds a freshly built node under every current node and returns the nodes
+     * the tree actually ended up with, which is what the next pattern element
+     * has to be attached to.
+     */
+    @SuppressWarnings("rawtypes")
+    protected List<CommandNode> attach(List<CommandNode> parents, Supplier<CommandNode> factory) {
+        List<CommandNode> attached = new ArrayList<>();
+        for (CommandNode parent : parents) {
+            addDistinct(attached, Collections.singletonList(this.merge(parent, factory.get())));
+        }
+        return attached;
+    }
+
+    /**
+     * Brigadier merges same-named children onto the node already present in the
+     * tree and discards the instance passed to addChild. Building further
+     * elements on the discarded node silently drops whole executor branches,
+     * so the node that ended up in the tree has to be handed back instead.
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    protected CommandNode merge(CommandNode parent, CommandNode node) {
+
+        CommandNode existing = parent.getChild(node.getName());
+        if (existing == null) {
+            parent.addChild(node);
+            return node;
+        }
+
+        // sibling patterns may describe the same argument with different types
+        // and a single node cannot represent both, so no client side type is
+        // used at all: a plain word accepts whatever any of the branches takes
+        // and the suggestions were being asked of the server anyway
+        if (this.conflicting(existing, node) && !this.isWord(existing)) {
+            return this.replaceChild(parent, existing, this.generic(existing, node));
+        }
+
+        // merges the command and (still empty) children onto the existing node
+        parent.addChild(node);
+        return existing;
+    }
+
+    /**
+     * Swaps a child for another, carrying over its command and subtree.
+     * Brigadier has no removal API, hence the rebuild of the whole child list.
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    protected CommandNode replaceChild(CommandNode parent, CommandNode old, CommandNode replacement) {
+
+        ArgumentBuilder builder = replacement.createBuilder();
+        if (replacement.getCommand() == null) {
+            builder.executes(old.getCommand());
+        }
+        old.getChildren().forEach(child -> builder.then((CommandNode) child));
+        CommandNode merged = builder.build();
+
+        List<CommandNode> siblings = new ArrayList<>(parent.getChildren());
+        clearChildren(parent);
+        for (CommandNode sibling : siblings) {
+            parent.addChild((sibling == old) ? merged : sibling);
+        }
+
+        return merged;
+    }
+
+    /**
+     * Whether two same-named nodes describe the same argument in a way a single
+     * node can express. A literal never conflicts: it is matched before any
+     * argument, so both still parse.
+     */
+    @SuppressWarnings("rawtypes")
+    protected boolean conflicting(CommandNode existing, CommandNode node) {
+
+        if (!(existing instanceof ArgumentCommandNode) || !(node instanceof ArgumentCommandNode)) {
+            return false;
+        }
+
+        ArgumentType<?> existingType = ((ArgumentCommandNode) existing).getType();
+        ArgumentType<?> nodeType = ((ArgumentCommandNode) node).getType();
+
+        if (existingType.getClass() != nodeType.getClass()) {
+            return true;
+        }
+
+        // greedy and single word are the same class but consume differently
+        return (existingType instanceof StringArgumentType)
+            && (((StringArgumentType) existingType).getType() != ((StringArgumentType) nodeType).getType());
+    }
+
+    @SuppressWarnings("rawtypes")
+    protected boolean isWord(CommandNode node) {
+        return (node instanceof ArgumentCommandNode)
+            && (((ArgumentCommandNode) node).getType() instanceof StringArgumentType)
+            && (((StringArgumentType) ((ArgumentCommandNode) node).getType()).getType() == StringArgumentType.StringType.SINGLE_WORD);
+    }
+
+    /**
+     * The untyped node two conflicting ones fall back to. A single word rather
+     * than a greedy one even when a branch was greedy: greedy would swallow the
+     * elements the other branch still has to suggest.
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    protected CommandNode generic(CommandNode existing, CommandNode node) {
+
+        SuggestionProvider suggestions = firstNonNull(
+            ((ArgumentCommandNode) node).getCustomSuggestions(),
+            ((ArgumentCommandNode) existing).getCustomSuggestions());
+
+        Command command = firstNonNull(node.getCommand(), existing.getCommand());
+
+        return argument(node.getName(), StringArgumentType.word())
+            .suggests(suggestions)
+            .executes(command)
+            .build();
     }
 
     protected ArgumentType resolveType(ArgumentMeta argument, PatternElement patternElement) {
@@ -232,5 +365,70 @@ public class CommandsBrigadierBase {
             return true;
         }
         return this.staticTypes.contains(type);
+    }
+
+    private static boolean terminates(List<PatternElement> elements, int index) {
+        for (int i = index + 1; i < elements.size(); i++) {
+            if (!(elements.get(i) instanceof OptionalElement)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @SuppressWarnings("rawtypes")
+    private static void addDistinct(List<CommandNode> target, Collection<CommandNode> nodes) {
+        for (CommandNode node : nodes) {
+            if (target.stream().noneMatch(present -> present == node)) {
+                target.add(node);
+            }
+        }
+    }
+
+    /**
+     * {@code getChildren().clear()} only empties one of the three maps a
+     * CommandNode keeps; the literals/arguments indexes brigadier parses
+     * through would keep matching the removed nodes.
+     */
+    @SuppressWarnings("rawtypes")
+    protected static void clearChildren(CommandNode node) {
+
+        if (CHILD_FIELDS.isEmpty()) {
+            node.getChildren().clear();
+            return;
+        }
+
+        try {
+            for (Field field : CHILD_FIELDS) {
+                ((Map<?, ?>) field.get(node)).clear();
+            }
+        } catch (IllegalAccessException exception) {
+            throw new IllegalStateException("Failed to clear children of " + node.getName(), exception);
+        }
+    }
+
+    private static List<Field> resolveChildFields() {
+        List<Field> fields = new ArrayList<>();
+        for (String name : new String[]{"children", "literals", "arguments"}) {
+            try {
+                Field field = CommandNode.class.getDeclaredField(name);
+                field.setAccessible(true);
+                fields.add(field);
+            } catch (Exception exception) {
+                LOGGER.warning("Unsupported brigadier version, stale command nodes may remain: " + exception);
+                return Collections.emptyList();
+            }
+        }
+        return fields;
+    }
+
+    @SafeVarargs
+    private static <T> T firstNonNull(T... values) {
+        for (T value : values) {
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
     }
 }
