@@ -9,6 +9,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class CommandData {
 
+    /**
+     * Key under which every platform adapter stores the command sender.
+     */
+    public static final String SENDER = "sender";
+
     private final Map<String, Object> metadata = new LinkedHashMap<>();
 
     public boolean has(String key) {

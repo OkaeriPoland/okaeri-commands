@@ -1,9 +1,11 @@
 package eu.okaeri.commands;
 
 import eu.okaeri.commands.annotation.Arg;
+import eu.okaeri.commands.annotation.Context;
 import eu.okaeri.commands.annotation.Executor;
 import eu.okaeri.commands.annotation.Label;
 import eu.okaeri.commands.annotation.RawArgs;
+import eu.okaeri.commands.exception.InvalidContextException;
 import eu.okaeri.commands.exception.NoSuchCommandException;
 import eu.okaeri.commands.handler.access.AccessHandler;
 import eu.okaeri.commands.handler.access.DefaultAccessHandler;
@@ -308,6 +310,33 @@ public class OkaeriCommands implements Commands {
 
     @Override
     public Object resolveMissingArgument(@NonNull Invocation invocation, @NonNull CommandData data, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
+
+        ContextMeta context = command.getExecutor().getContexts().stream()
+            .filter(meta -> meta.getIndex() == index)
+            .findFirst()
+            .orElse(null);
+
+        if (context != null) {
+
+            Object sender = data.get(CommandData.SENDER);
+            if (context.accepts(sender)) {
+                return sender;
+            }
+
+            // narrowed by its declared type alone and there is no sender to narrow against
+            // (headless Commands#call, programmatic use) - leave it to the handler, as before
+            if (!context.isRequired() && (sender == null)) {
+                return this.getMissingArgumentHandler().resolve(invocation, data, command, param, index);
+            }
+
+            String customInvalid = context.getInvalid().isEmpty()
+                ? ""
+                : this.resolveText(invocation, data, context.getInvalid());
+
+            Class<?> actualType = (sender == null) ? null : sender.getClass();
+            throw new InvalidContextException(customInvalid, context.getType(), actualType);
+        }
+
         return this.getMissingArgumentHandler().resolve(invocation, data, command, param, index);
     }
 
@@ -386,7 +415,7 @@ public class OkaeriCommands implements Commands {
             }
 
             ExecutorMeta executor = meta.getExecutor();
-            if (!this.getAccessHandler().allowAccess(executor, localInvocation, data)) {
+            if (!this.allowExecutor(executor, localInvocation, data)) {
                 continue;
             }
 

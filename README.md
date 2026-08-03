@@ -174,6 +174,49 @@ public class ExampleCommand implements CommandService {
 }
 ```
 
+## Sender narrowing
+
+Any executor parameter typed as the platform's sender (`CommandSender` on bukkit/bungee,
+`CommandSource` on velocity) or one of its subtypes is filled with the sender. Declaring a
+*narrower* type restricts the executor to matching senders — no annotation needed:
+
+```java
+@Command(label = "home")
+public class HomeCommand implements CommandService {
+
+    // any sender, console included
+    @Executor
+    public String list(CommandSender sender) { ... }
+
+    // players only
+    @Executor
+    public String set(Player player, @Arg String name) { ... }
+
+    // console only, with a custom message for everyone else
+    @Executor(pattern = "reload")
+    public String reload(@Context(invalid = "${consoleOnly}") ConsoleCommandSender sender) { ... }
+}
+```
+
+Narrowing applies everywhere the command is exposed: tab completion, the generated help, the
+brigadier client tree and the command list sent to players all hide executors the sender cannot
+use. Running one anyway fails with `InvalidContextException`, rendered as *"This command can only
+be executed by {expected}!"*.
+
+`@Context` is only needed to customise that message via `invalid()`, which accepts plain text or an
+`${i18n key}` resolved through the `TextHandler`. Global templates: `${commandSystemContextError}`
+(with `{expected}`) and `${commandSystemContextMessageError}` (with `{message}`).
+
+Two limits worth knowing:
+
+- A sender-typed parameter is owned by narrowing, so it cannot also be supplied by DI or a custom
+  `MissingArgumentHandler` — those still run for every other parameter, and for a sender-typed one
+  whenever there is no sender in the `CommandData` at all (headless `Commands#call`). Annotating it
+  `@Context` opts out of that fallback and always requires a matching sender.
+- Executors are matched by pattern only, so you cannot overload the *same* pattern on sender type
+  and have each get its own executor — the most specific pattern wins and a mismatched sender gets
+  `InvalidContextException`. Give the variants different patterns instead.
+
 ## Recommendations
 
 It is highly recommended to use `-parameters` compiler flag for better overall feature support.

@@ -23,6 +23,7 @@ public class ExecutorMeta {
 
     private Method method;
     private List<ArgumentMeta> arguments;
+    private List<ContextMeta> contexts;
     private PatternMeta pattern;
     private CompletionMeta completion;
     private String description;
@@ -54,14 +55,19 @@ public class ExecutorMeta {
                 cmdExecutor.method = method;
 
                 List<ArgumentMeta> arguments = new ArrayList<>();
+                List<ContextMeta> contexts = new ArrayList<>();
                 for (int i = 0; i < method.getParameters().length; i++) {
                     Parameter parameter = method.getParameters()[i];
-                    if (!ArgumentMeta.isArg(parameter)) {
+                    if (ArgumentMeta.isArg(parameter)) {
+                        arguments.add(ArgumentMeta.of(commands, parameter, i));
                         continue;
                     }
-                    arguments.add(ArgumentMeta.of(commands, parameter, i));
+                    if (commands.isContextParameter(parameter)) {
+                        contexts.add(ContextMeta.of(commands, parameter, i));
+                    }
                 }
                 cmdExecutor.arguments = Collections.unmodifiableList(arguments);
+                cmdExecutor.contexts = Collections.unmodifiableList(contexts);
 
                 cmdExecutor.pattern = PatternMeta.of(commands, patternPrefix, pattern, cmdExecutor.arguments, emptyPattern);
                 cmdExecutor.completion = CompletionMeta.of(commands, method);
