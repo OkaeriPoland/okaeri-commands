@@ -134,7 +134,7 @@ public class CommandsBrigadierBase {
 
                 // check access
                 Invocation invocation = Invocation.of(meta, service.getLabel(), "");
-                if (!this.commands.getAccessHandler().allowAccess(executor, invocation, data)) {
+                if (!this.commands.allowExecutor(executor, invocation, data)) {
                     continue;
                 }
 

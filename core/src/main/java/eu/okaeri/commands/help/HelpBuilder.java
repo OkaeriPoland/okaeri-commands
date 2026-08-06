@@ -49,7 +49,7 @@ public abstract class HelpBuilder {
             .findByLabel(invocation.getLabel())
             .stream()
             .filter(meta -> meta.getExecutor().getIndex() == 0)
-            .filter(meta -> commands.getAccessHandler().allowAccess(meta.getExecutor(), invocation, data))
+            .filter(meta -> commands.allowExecutor(meta.getExecutor(), invocation, data))
             .sorted(Comparator.comparing(meta -> meta.getExecutor().getPattern().getRaw()))
             .collect(Collectors.groupingBy(meta -> meta.getExecutor().getPattern().getRaw().split(" ")[0]))
             .values()

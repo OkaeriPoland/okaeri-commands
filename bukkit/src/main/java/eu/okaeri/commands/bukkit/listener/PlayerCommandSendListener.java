@@ -46,7 +46,7 @@ public class PlayerCommandSendListener implements EventExecutor {
         Set<String> disallowedLabels = this.commands.getRegisteredServices().values().stream()
             .filter(service -> {
                 Invocation invocation = Invocation.of(service, service.getLabel(), new String[0]);
-                return !this.commands.getAccessHandler().allowAccess(service, invocation, data);
+                return !this.commands.allowService(service, invocation, data);
             })
             .flatMap(service -> {
                 List<String> labels = new ArrayList<>();

@@ -1,13 +1,11 @@
 package eu.okaeri.commands.bukkit;
 
 import eu.okaeri.commands.OkaeriCommands;
-import eu.okaeri.commands.annotation.Context;
 import eu.okaeri.commands.bukkit.annotation.Sender;
 import eu.okaeri.commands.bukkit.handler.*;
 import eu.okaeri.commands.bukkit.listener.AsyncTabCompleteListener;
 import eu.okaeri.commands.bukkit.listener.PlayerCommandSendListener;
 import eu.okaeri.commands.bukkit.type.CommandsBukkitTypes;
-import eu.okaeri.commands.exception.InvalidContextException;
 import eu.okaeri.commands.exception.NoSuchCommandException;
 import eu.okaeri.commands.meta.CommandMeta;
 import eu.okaeri.commands.meta.ExecutorMeta;
@@ -23,8 +21,6 @@ import lombok.Setter;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandMap;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.ConsoleCommandSender;
-import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
@@ -98,45 +94,14 @@ public class CommandsBukkit extends OkaeriCommands {
     }
 
     @Override
-    public Object resolveMissingArgument(@NonNull Invocation invocation, @NonNull CommandData data, @NonNull CommandMeta command, @NonNull Parameter param, int index) {
-
-        Class<?> paramType = param.getType();
-        Object sender = data.get("sender");
-
-        // player only command
-        if (Player.class.equals(paramType) && ((param.getAnnotation(Context.class) != null) || (param.getAnnotation(Sender.class) != null))) {
-            if (sender instanceof Player) {
-                return sender;
-            }
-            String customInvalid = this.getContextInvalidMessage(param, invocation, data);
-            Class<?> actualType = (sender == null) ? null : sender.getClass();
-            throw new InvalidContextException(customInvalid, Player.class, actualType);
-        }
-
-        // console only command
-        if (ConsoleCommandSender.class.equals(paramType)) {
-            if (sender instanceof ConsoleCommandSender) {
-                return sender;
-            }
-            String customInvalid = this.getContextInvalidMessage(param, invocation, data);
-            Class<?> actualType = (sender == null) ? null : sender.getClass();
-            throw new InvalidContextException(customInvalid, ConsoleCommandSender.class, actualType);
-        }
-
-        // other sender
-        if (CommandSender.class.equals(paramType) && (sender instanceof CommandSender)) {
-            return sender;
-        }
-
-        return super.resolveMissingArgument(invocation, data, command, param, index);
+    public Class<?> getSenderType() {
+        return CommandSender.class;
     }
 
-    protected String getContextInvalidMessage(@NonNull Parameter param, @NonNull Invocation invocation, @NonNull CommandData data) {
-        Context context = param.getAnnotation(Context.class);
-        if ((context != null) && !context.invalid().isEmpty()) {
-            return this.resolveText(invocation, data, context.invalid());
-        }
-        return "";
+    @Override
+    @SuppressWarnings("deprecation")
+    public boolean isContextRequired(@NonNull Parameter param) {
+        return (param.getAnnotation(Sender.class) != null) || super.isContextRequired(param);
     }
 
     @Override
